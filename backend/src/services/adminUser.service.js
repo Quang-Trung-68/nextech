@@ -1,0 +1,134 @@
+const prisma = require('../utils/prisma');
+
+const createError = (message, statusCode = 400) => {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+};
+
+const USER_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+/**
+ * Admin: Danh sách users với phân trang + filter
+ */
+const getUsers = async ({ role, isActive, sortBy, sortOrder, page, limit }) => {
+  const where = {};
+  if (role !== undefined) where.role = role;
+  if (isActive !== undefined) where.isActive = isActive;
+
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        ...USER_SELECT,
+        _count: { select: { orders: true } },
+      },
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return {
+    users,
+    pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+  };
+};
+
+/**
+ * Admin: Chi tiết 1 user + lịch sử đơn hàng (phân trang)
+ */
+const getUserById = async (userId, orderPage = 1, orderLimit = 10) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: USER_SELECT,
+  });
+
+  if (!user) throw createError('Người dùng không tồn tại', 404);
+
+  const orderSkip = (orderPage - 1) * orderLimit;
+
+  const [orders, totalOrders] = await Promise.all([
+    prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      skip: orderSkip,
+      take: orderLimit,
+      include: {
+        orderItems: {
+          include: { product: { select: { id: true, name: true } } },
+        },
+      },
+    }),
+    prisma.order.count({ where: { userId } }),
+  ]);
+
+  return {
+    user,
+    orders,
+    orderPagination: {
+      total: totalOrders,
+      page: orderPage,
+      limit: orderLimit,
+      totalPages: Math.ceil(totalOrders / orderLimit),
+    },
+  };
+};
+
+/**
+ * Admin: Toggle isActive — không được khoá chính mình.
+ * Khi khoá: revoke toàn bộ RefreshToken trong cùng $transaction
+ * để user không thể lấy Access Token mới qua /api/auth/refresh.
+ */
+const toggleUserStatus = async (targetUserId, requestingAdminId) => {
+  if (targetUserId === requestingAdminId) {
+    throw createError('Không thể khoá tài khoản của chính mình', 400);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: USER_SELECT,
+  });
+
+  if (!user) throw createError('Người dùng không tồn tại', 404);
+
+  const newIsActive = !user.isActive;
+
+  // Khi khoá (false): xoá toàn bộ RefreshToken trong cùng transaction
+  // → user không thể dùng /auth/refresh để lấy Access Token mới nữa
+  // Khi mở khoá (true): không cần làm gì thêm với token
+  const ops = [
+    prisma.user.update({
+      where: { id: targetUserId },
+      data: { isActive: newIsActive },
+      select: USER_SELECT,
+    }),
+  ];
+
+  if (!newIsActive) {
+    ops.push(prisma.refreshToken.deleteMany({ where: { userId: targetUserId } }));
+  }
+
+  const [updated] = await prisma.$transaction(ops);
+
+  return {
+    user: updated,
+    action: updated.isActive ? 'unlocked' : 'locked',
+    message: updated.isActive
+      ? `Tài khoản ${updated.email} đã được mở khoá`
+      : `Tài khoản ${updated.email} đã bị khoá và toàn bộ phiên đăng nhập đã bị thu hồi`,
+  };
+};
+
+module.exports = { getUsers, getUserById, toggleUserStatus };

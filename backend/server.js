@@ -12,7 +12,11 @@ app.use(cors({
   credentials: true
 }));
 
+// ⚠️ QUAN TRỌNG: Webhook mount TRƯỚC express.json()
+// express.raw() giúp giữ body dưới dạng Buffer — Stripe cần raw body để verify signature
+// Chỉ apply cho /webhook, các route khác (/intent, /status) dùng JSON bình thường
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }), require('./src/routes/payment.routes'));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());  // Parse cookies — required for refresh token flow
@@ -22,6 +26,10 @@ app.use('/api/auth', require('./src/routes/auth.routes'));
 app.use('/api/products', require('./src/routes/product.routes'));
 app.use('/api/cart', require('./src/routes/cart.routes'));
 app.use('/api/orders', require('./src/routes/order.routes'));
+app.use('/api/admin/orders', require('./src/routes/admin.order.routes'));
+app.use('/api/admin', require('./src/routes/admin.routes'));       // Stats, Products, Users
+app.use('/api/payments', require('./src/routes/payment.routes')); // GET intent/status
+
 
 // Health check endpoint
 app.get('/health', (req, res) => {

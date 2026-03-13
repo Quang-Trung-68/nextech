@@ -5,13 +5,48 @@ const { protect, restrictTo } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
 const {
   createOrderSchema,
-  updateOrderStatusSchema,
+  cancelOrderSchema,
+  listMyOrdersQuerySchema,
   orderParamsSchema,
 } = require('../validations/order.validation');
 
-router.post('/', protect, validate(createOrderSchema), orderController.createOrder);
-router.get('/my', protect, orderController.getMyOrders);
-router.get('/:id', protect, validate(orderParamsSchema, 'params'), orderController.getOrderById);
-router.put('/:id/status', protect, restrictTo('ADMIN'), validate(orderParamsSchema, 'params'), validate(updateOrderStatusSchema), orderController.updateOrderStatus);
+// ─── User Routes (auth required) ─────────────────────────────────────────────
+
+// POST /api/orders — Tạo đơn từ Cart (COD hoặc STRIPE)
+router.post(
+  '/',
+  protect,
+  validate(createOrderSchema),
+  orderController.createOrder
+);
+
+// GET /api/orders — Lịch sử đơn của mình, filter + phân trang
+router.get(
+  '/',
+  protect,
+  validate(listMyOrdersQuerySchema, 'query'),
+  orderController.getMyOrders
+);
+
+// GET /api/orders/:id — Chi tiết 1 đơn (chỉ của mình)
+router.get(
+  '/:id',
+  protect,
+  validate(orderParamsSchema, 'params'),
+  orderController.getOrderById
+);
+
+// PATCH /api/orders/:id/cancel — Tự huỷ đơn (chỉ PENDING/PROCESSING)
+router.patch(
+  '/:id/cancel',
+  protect,
+  validate(orderParamsSchema, 'params'),
+  validate(cancelOrderSchema),
+  orderController.cancelOrder
+);
+
+// ─── Admin Routes ─────────────────────────────────────────────────────────────
+// Mounted dưới /api/orders/admin/* — nhưng để tách rõ hơn, admin routes
+// sẽ được mount riêng tại server.js (/api/admin/orders → admin.order.routes.js)
 
 module.exports = router;

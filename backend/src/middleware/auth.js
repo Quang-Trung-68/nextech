@@ -43,6 +43,7 @@ const protect = async (req, res, next) => {
         name: true,
         email: true,
         role: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -50,6 +51,12 @@ const protect = async (req, res, next) => {
 
     if (!user) {
       const error = new Error('The user belonging to this token no longer exists.');
+      error.statusCode = 401;
+      return next(error);
+    }
+
+    if (!user.isActive) {
+      const error = new Error('Account is deactivated. Please contact support.');
       error.statusCode = 401;
       return next(error);
     }

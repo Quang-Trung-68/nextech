@@ -17,41 +17,68 @@ const shippingAddressSchema = z.object({
 });
 
 /**
- * Schema validate body cho POST /orders (tạo đơn hàng)
+ * Schema validate body cho POST /api/orders
  */
 const createOrderSchema = z.object({
   shippingAddress: shippingAddressSchema,
 
   paymentMethod: z.enum(['COD', 'STRIPE'], {
-    errorMap: () => ({ message: 'Phương thức thanh toán không hợp lệ' }),
+    errorMap: () => ({ message: 'Phương thức thanh toán không hợp lệ (COD hoặc STRIPE)' }),
   }),
 });
 
 /**
- * Schema validate body cho PUT /orders/:id/status (admin cập nhật trạng thái)
- * Nếu status = CANCELLED thì reason là bắt buộc (tối thiểu 10 ký tự)
+ * Schema validate body cho PATCH /api/orders/:id/cancel (user tự huỷ)
  */
-const updateOrderStatusSchema = z
-  .object({
-    status: z.enum(
-      ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'],
-      {
-        errorMap: () => ({ message: 'Trạng thái đơn hàng không hợp lệ' }),
-      }
-    ),
+const cancelOrderSchema = z.object({
+  reason: z
+    .string({ required_error: 'Lý do huỷ đơn là bắt buộc' })
+    .min(10, 'Lý do huỷ đơn tối thiểu 10 ký tự')
+    .max(500)
+    .trim(),
+});
 
-    // Lý do khi huỷ đơn (CANCELLED)
-    reason: z.string().max(500).trim().optional(),
-  })
-  .refine(
-    (data) =>
-      data.status !== 'CANCELLED' ||
-      (data.reason !== undefined && data.reason.length >= 10),
-    {
-      message: 'Vui lòng nhập lý do huỷ đơn (tối thiểu 10 ký tự)',
-      path: ['reason'],
-    }
-  );
+/**
+ * Schema validate body cho PATCH /api/admin/orders/:id/status (admin cập nhật)
+ * Flow hợp lệ: PROCESSING → SHIPPED → DELIVERED
+ * Không được set CANCELLED ở đây (dùng cancel endpoint của user)
+ * Không được set PENDING (trạng thái ban đầu, không đi ngược)
+ */
+const adminUpdateOrderStatusSchema = z.object({
+  status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED'], {
+    errorMap: () => ({
+      message: 'Trạng thái không hợp lệ. Admin chỉ có thể cập nhật: PROCESSING → SHIPPED → DELIVERED',
+    }),
+  }),
+});
+
+/**
+ * Schema validate req.query cho GET /api/orders (user xem lịch sử)
+ */
+const listMyOrdersQuerySchema = z.object({
+  status: z
+    .enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
+      errorMap: () => ({ message: 'Giá trị status không hợp lệ' }),
+    })
+    .optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(10),
+});
+
+/**
+ * Schema validate req.query cho GET /api/admin/orders (admin xem tất cả)
+ */
+const adminListOrdersQuerySchema = z.object({
+  status: z
+    .enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'])
+    .optional(),
+  paymentStatus: z.enum(['UNPAID', 'PAID', 'REFUNDED']).optional(),
+  userId: z.string().cuid('userId không hợp lệ').optional(),
+  sortBy: z.enum(['createdAt', 'updatedAt', 'totalAmount']).optional().default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+});
 
 /**
  * Schema validate req.params cho các route có :id
@@ -63,6 +90,9 @@ const orderParamsSchema = z.object({
 module.exports = {
   shippingAddressSchema,
   createOrderSchema,
-  updateOrderStatusSchema,
+  cancelOrderSchema,
+  adminUpdateOrderStatusSchema,
+  listMyOrdersQuerySchema,
+  adminListOrdersQuerySchema,
   orderParamsSchema,
 };
