@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useProduct, useAddToCart } from '../features/product/hooks/useProduct';
 import { ProductGallery } from '../features/product/components/ProductGallery';
 import { Button } from '../components/ui/button';
@@ -10,6 +10,13 @@ import { Skeleton } from '../components/ui/skeleton';
 import { formatCurrency } from '../utils/formatCurrency';
 import useAuthStore from '../stores/useAuthStore';
 import { toast } from 'sonner';
+
+const CATEGORY_MAP = {
+  'smartphone': 'Điện thoại',
+  'laptop': 'Laptop',
+  'tablet': 'Máy tính bảng',
+  'accessory': 'Phụ kiện'
+};
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -107,6 +114,18 @@ const ProductDetailPage = () => {
 
   return (
     <div className="container py-8 max-w-6xl mx-auto px-4 md:px-6">
+      
+      {/* Breadcrumb */}
+      <div className="flex flex-wrap items-center text-[13px] text-apple-secondary mb-8 gap-2">
+        <Link to="/" className="hover:text-apple-dark transition-colors text-apple-dark font-medium">NexTech</Link>
+        <ChevronRight className="w-3.5 h-3.5" />
+        <Link to={`/products?category=${category}`} className="hover:text-apple-dark transition-colors">
+          {CATEGORY_MAP[category] || category}
+        </Link>
+        <ChevronRight className="w-3.5 h-3.5" />
+        <span className="text-apple-secondary font-medium line-clamp-1">{name}</span>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
         {/* Gallery ảnh hiển thị */}
         <div className="md:sticky md:top-24 h-fit">
@@ -116,7 +135,7 @@ const ProductDetailPage = () => {
         {/* Thông tin sản phẩm chi tiết */}
         <div className="flex flex-col space-y-6">
           <div className="space-y-2 text-muted-foreground text-sm uppercase font-semibold tracking-wider">
-             {category}
+             {CATEGORY_MAP[category] || category}
           </div>
 
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight">

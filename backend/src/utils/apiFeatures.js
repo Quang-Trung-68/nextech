@@ -16,7 +16,19 @@ class ApiFeatures {
 
   filter() {
     if (this.queryParams.category) {
-      this.queryString.category = this.queryParams.category;
+      if (typeof this.queryParams.category === 'string' && this.queryParams.category.includes(',')) {
+        this.queryString.category = { in: this.queryParams.category.split(',') };
+      } else {
+        this.queryString.category = this.queryParams.category;
+      }
+    }
+
+    if (this.queryParams.brand) {
+      if (typeof this.queryParams.brand === 'string' && this.queryParams.brand.includes(',')) {
+        this.queryString.brand = { in: this.queryParams.brand.split(',') };
+      } else {
+        this.queryString.brand = this.queryParams.brand;
+      }
     }
 
     if (this.queryParams.minPrice || this.queryParams.maxPrice) {

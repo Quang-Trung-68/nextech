@@ -7,7 +7,17 @@ export default {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', 'sans-serif'],
+      },
   		colors: {
+        apple: {
+          gray: '#f5f5f7',
+          dark: '#1d1d1f',
+          secondary: '#6e6e73',
+          blue: '#0071e3',
+          black: '#000000',
+        },
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -53,8 +63,20 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
-  	}
+  		},
+      keyframes: {
+        'fade-up': {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
+      },
+      animation: {
+        'fade-up': 'fade-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+      }
+    }
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    // eslint-disable-next-line no-undef
+    require("tailwindcss-animate")
+  ],
 }

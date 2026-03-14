@@ -5,12 +5,14 @@ import AdminRoute from './components/AdminRoute';
 import MainLayout from './components/MainLayout';
 import AdminLayout from './components/AdminLayout';
 import LoadingSkeleton from './components/LoadingSkeleton';
+import ScrollToTop from './components/ScrollToTop';
 
 // Public pages - Loaded normally
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ProductsPage from './pages/ProductsPage';
 
 // Private/heavy pages - Lazy loaded
 const CartPage = lazy(() => import('./pages/CartPage'));
@@ -30,11 +32,13 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Suspense fallback={<LoadingSkeleton />}>
         <Routes>
           {/* Main Public & Protected Routes inside MainLayout */}
           <Route element={<MainLayout />}>
             <Route path="/" element={<HomePage />} />
+            <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/:id" element={<ProductDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
