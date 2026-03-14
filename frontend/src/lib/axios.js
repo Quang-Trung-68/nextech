@@ -12,28 +12,16 @@ let isRefreshing = false;
 // failedQueue: Hàng đợi lưu các request bị lỗi 401 khi isRefreshing = true
 let failedQueue = [];
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+const processQueue = (error) => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve();
     }
   });
   failedQueue = [];
 };
-
-// Request Interceptor: Tự động đính kèm accessToken từ Zustand
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().accessToken;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response Interceptor: Xử lý lỗi 401 & Silent Refresh
 axiosInstance.interceptors.response.use(
@@ -44,17 +32,25 @@ axiosInstance.interceptors.response.use(
     // Bắt lỗi 401 (Unauthorized) và đảm bảo chưa từng retry request này
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       
+      // Không tự động refresh token nếu request gốc là login, register, hoặc refresh
+      if (
+        originalRequest.url.includes('/auth/login') ||
+        originalRequest.url.includes('/auth/register') ||
+        originalRequest.url.includes('/auth/refresh')
+      ) {
+        return Promise.reject(error);
+      }
+      
       // Nếu đang trong quá trình refresh token từ 1 request khác -> Đẩy vào queue
       if (isRefreshing) {
         return new Promise(function(resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
-          .then(token => {
-            // Khi refresh xong mới retry lại request trong queue bằng token mới
-            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          .then(() => {
+            // Khi refresh xong mới retry lại request trong queue (cookie mới sẽ tự động được gửi)
             return axiosInstance(originalRequest);
           })
-          .catch(err => {
+          .catch((err) => {
             return Promise.reject(err);
           });
       }
@@ -66,27 +62,21 @@ axiosInstance.interceptors.response.use(
 
       try {
         // Dùng axios gốc để gọi refresh API nhằm tránh vòng lặp vô tận (nếu dùng axiosInstance)
-        const { data } = await axios.post(
+        await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
           {},
           { withCredentials: true } // Gửi kèm refresh token trong HttpOnly Cookie
         );
 
-        const newAccessToken = data.accessToken;
-        
-        // Cập nhật token mới vào Zustand (memory)
-        useAuthStore.getState().updateToken(newAccessToken);
-
         // Xử lý các request bị lỗi 401 khác trong queue
-        processQueue(null, newAccessToken);
+        processQueue(null);
 
-        // Retry lại request hiện tại với token mới
-        originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+        // Retry lại request hiện tại (trình duyệt sẽ tự gắn HttpOnly Cookie access_token mới)
         return axiosInstance(originalRequest);
         
       } catch (refreshError) {
         // Nếu refresh thất bại (VD: refreshToken hết hạn) -> Xóa queue, clear auth và redirect
-        processQueue(refreshError, null);
+        processQueue(refreshError);
         useAuthStore.getState().clearAuth();
         
         window.location.href = '/login'; // Chuyển hướng người dùng về trang login

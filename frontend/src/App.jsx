@@ -27,6 +27,7 @@ const AdminOrderPage = lazy(() => import('./pages/AdminOrderPage'));
 const AdminUserPage = lazy(() => import('./pages/AdminUserPage'));
 
 function App() {
+
   return (
     <BrowserRouter>
       <Suspense fallback={<LoadingSkeleton />}>

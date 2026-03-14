@@ -11,11 +11,13 @@ const queryClient = new QueryClient({
     },
   }),
   mutationCache: new MutationCache({
-    onError: (error) => {
-      // Toast thông báo lỗi global cho các hàm mutation
-       if(error?.response?.status !== 401) {
-          toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra!');
-       }
+    onError: (error, _variables, _context, mutation) => {
+      // Bỏ qua nếu mutation tự handle lỗi (ví dụ: auth forms hiển thị alert đỏ riêng)
+      if (mutation.options.meta?.suppressErrorToast) return;
+      // Toast thông báo lỗi global cho các hàm mutation còn lại
+      if (error?.response?.status !== 401) {
+        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra!');
+      }
     },
   }),
   defaultOptions: {

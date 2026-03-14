@@ -1,13 +1,234 @@
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft } from 'lucide-react';
+import { useProduct, useAddToCart } from '../features/product/hooks/useProduct';
+import { ProductGallery } from '../features/product/components/ProductGallery';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Badge } from '../components/ui/badge';
+import { Skeleton } from '../components/ui/skeleton';
+import { formatCurrency } from '../utils/formatCurrency';
+import useAuthStore from '../stores/useAuthStore';
+import { toast } from 'sonner';
 
 const ProductDetailPage = () => {
   const { id } = useParams();
-  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const { data: response, isLoading, isError } = useProduct(id);
+  const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
+
+  const [quantity, setQuantity] = useState(1);
+
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <div className="container py-8 max-w-6xl mx-auto px-4">
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+          {/* Gallery Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="w-full aspect-square rounded-2xl" />
+            <div className="flex gap-4">
+               {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="w-20 h-20 rounded-xl" />)}
+            </div>
+          </div>
+          {/* Detail Skeleton */}
+          <div className="space-y-6">
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-8 w-1/3" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-12 w-1/2" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found hoặc lỗi API 
+  const product = response?.product;
+  if (isError || !product) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 text-center">
+        <Package className="w-16 h-16 text-muted-foreground opacity-50 block mb-2" />
+        <h2 className="text-2xl font-bold tracking-tight">Không tìm thấy sản phẩm!</h2>
+        <p className="text-muted-foreground w-80">
+          Sản phẩm này có thể đã bị xóa hoặc không dồn tại trên hệ thống.
+        </p>
+        <Button asChild className="mt-4" variant="outline">
+          <Link to="/">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại trang chủ
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const { name, description, price, stock, category, rating, numReviews, images } = product;
+  const isOutOfStock = stock === 0;
+
+  // Xử lý tăng giảm số lượng input
+  const handleQuantityChange = (type) => {
+    if (type === 'dec' && quantity > 1) {
+      setQuantity((q) => q - 1);
+    }
+    if (type === 'inc' && quantity < stock) {
+      setQuantity((q) => q + 1);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > stock) val = stock;
+    setQuantity(val);
+  };
+
+  // Submit giỏ hàng
+  const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+      return navigate('/login', { state: { from: location } });
+    }
+
+    addToCart(
+      { productId: id, quantity },
+      {
+        onSuccess: () => {
+          toast.success('Đã thêm sản phẩm vào giỏ hàng!');
+        },
+        onError: (err) => {
+          toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+        }
+      }
+    );
+  };
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Product details for ID: {id}</h1>
-      <p className="text-muted-foreground">Product details view placeholder</p>
+    <div className="container py-8 max-w-6xl mx-auto px-4 md:px-6">
+      <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
+        {/* Gallery ảnh hiển thị */}
+        <div className="md:sticky md:top-24 h-fit">
+          <ProductGallery images={images} productName={name} />
+        </div>
+
+        {/* Thông tin sản phẩm chi tiết */}
+        <div className="flex flex-col space-y-6">
+          <div className="space-y-2 text-muted-foreground text-sm uppercase font-semibold tracking-wider">
+             {category}
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
+            {name}
+          </h1>
+
+          {/* Giá và Rating layout */}
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-3xl font-bold text-primary tracking-tighter">
+              {formatCurrency(price)}
+            </span>
+
+            <div className="h-6 w-px bg-border hidden sm:block" />
+
+            {/* Stars Review Box */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center">
+                 <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                 <span className="ml-1.5 font-bold text-base leading-none pt-0.5">{rating > 0 ? rating.toFixed(1) : 0}</span>
+              </div>
+              <span className="text-sm text-muted-foreground border-l pl-2">
+                 ({numReviews} đánh giá)
+              </span>
+            </div>
+          </div>
+
+          {/* Tồn Kho Status Badges */}
+          <div>
+            {isOutOfStock ? (
+               <Badge variant="destructive" className="px-3 py-1 font-semibold tracking-wide">
+                 HẾT HÀNG
+               </Badge>
+            ) : stock <= 10 ? (
+               <Badge className="bg-amber-500 hover:bg-amber-600 px-3 py-1 font-semibold tracking-wide border-transparent text-white">
+                 CHỈ CÒN {stock} SẢN PHẨM
+               </Badge>
+            ) : (
+               <Badge variant="secondary" className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500 hover:bg-green-200 border-none font-semibold">
+                 CÒN HÀNG (Sẵn {stock})
+               </Badge>
+            )}
+          </div>
+
+          <hr className="bg-border my-2" />
+
+          {/* Description Markdown text (or simple text) */}
+          <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+            {description}
+          </div>
+
+          {/* Action Row Add To Cart */}
+          <div className="pt-6 space-y-4">
+            <p className="font-medium text-sm">Số lượng</p>
+            <div className="flex flex-wrap items-center gap-4">
+              
+              {/* Stepper Số Lượng Input */}
+              <div className="flex items-center w-36 h-12 bg-muted/50 rounded-lg p-1 border">
+                 <Button 
+                   variant="ghost" 
+                   size="icon" 
+                   className="h-full w-10 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
+                   onClick={() => handleQuantityChange('dec')}
+                   disabled={isOutOfStock || quantity <= 1}
+                 >
+                   <Minus className="w-4 h-4" />
+                 </Button>
+
+                 <Input 
+                   type="number" 
+                   className="h-full border-0 bg-transparent text-center font-bold text-lg remove-arrow px-0 outline-none focus-visible:ring-0 shadow-none flex-1 font-mono"
+                   value={quantity}
+                   onChange={handleInputChange}
+                   disabled={isOutOfStock}
+                   min={1}
+                   max={stock}
+                 />
+
+                 <Button 
+                   variant="ghost" 
+                   size="icon" 
+                   className="h-full w-10 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
+                   onClick={() => handleQuantityChange('inc')}
+                   disabled={isOutOfStock || quantity >= stock}
+                 >
+                   <Plus className="w-4 h-4" />
+                 </Button>
+              </div>
+
+              {/* Botton Add To Cart */}
+              <Button 
+                size="lg" 
+                className="flex-1 min-w-[200px] h-12 text-base font-semibold shadow-md active:scale-[0.98] transition-all"
+                disabled={isOutOfStock || isAddingToCart}
+                onClick={handleAddToCart}
+              >
+                {isAddingToCart ? (
+                    'Đang thêm...'
+                ) : (
+                  <>
+                     <ShoppingCart className="w-5 h-5 mr-2" />
+                     {isOutOfStock ? 'Sản phẩm tạm hết' : 'Thêm vào giỏ'}
+                  </>
+                )}
+              </Button>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 };
+
 export default ProductDetailPage;

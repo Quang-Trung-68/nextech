@@ -11,7 +11,7 @@ const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = requir
  * @returns {{ accessToken: string, refreshTokenData: { token: string, expiresAt: Date } }}
  */
 const _createTokenPair = async (user, meta) => {
-  const { token: accessToken } = generateAccessToken({
+  const accessTokenData = generateAccessToken({
     userId: user.id,
     role: user.role,
   });
@@ -31,7 +31,7 @@ const _createTokenPair = async (user, meta) => {
   });
 
   return {
-    accessToken,
+    accessTokenData,
     refreshTokenData: { token: refreshToken, expiresAt },
   };
 };
@@ -52,10 +52,10 @@ const register = async (name, email, password, meta) => {
     data: { name, email, password: hashedPassword },
   });
 
-  const { accessToken, refreshTokenData } = await _createTokenPair(user, meta);
+  const { accessTokenData, refreshTokenData } = await _createTokenPair(user, meta);
 
   const { password: _, ...userWithoutPassword } = user;
-  return { user: userWithoutPassword, accessToken, refreshTokenData };
+  return { user: userWithoutPassword, accessTokenData, refreshTokenData };
 };
 
 const login = async (email, password, meta) => {
@@ -70,10 +70,10 @@ const login = async (email, password, meta) => {
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) throw authError;
 
-  const { accessToken, refreshTokenData } = await _createTokenPair(user, meta);
+  const { accessTokenData, refreshTokenData } = await _createTokenPair(user, meta);
 
   const { password: _, ...userWithoutPassword } = user;
-  return { user: userWithoutPassword, accessToken, refreshTokenData };
+  return { user: userWithoutPassword, accessTokenData, refreshTokenData };
 };
 
 const refresh = async (refreshTokenFromCookie, meta) => {
@@ -129,9 +129,9 @@ const refresh = async (refreshTokenFromCookie, meta) => {
   await prisma.refreshToken.delete({ where: { token: refreshTokenFromCookie } });
 
   // 6. Issue new token pair
-  const { accessToken, refreshTokenData } = await _createTokenPair(user, meta);
+  const { accessTokenData, refreshTokenData } = await _createTokenPair(user, meta);
 
-  return { accessToken, refreshTokenData };
+  return { accessTokenData, refreshTokenData };
 };
 
 const logout = async (refreshTokenFromCookie, userId) => {

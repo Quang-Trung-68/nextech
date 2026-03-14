@@ -10,15 +10,21 @@ const prisma = require('../utils/prisma');
  */
 const protect = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    let token = req.cookies['access_token'];
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Fallback cho Authorization header nếu có gửi kèm (tương thích cũ hoặc external API)
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
+
+    if (!token) {
       const error = new Error('No token provided. Please log in to get access.');
       error.statusCode = 401;
       return next(error);
     }
-
-    const token = authHeader.split(' ')[1];
 
     let payload;
     try {

@@ -1,25 +1,33 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-const useAuthStore = create((set) => ({
-  accessToken: null,
-  user: null, // { id, name, email, role }
-  isAuthenticated: false,
+const useAuthStore = create(
+  persist(
+    (set) => ({
+      user: null, // { id, name, email, role }
+      isAuthenticated: false,
 
-  setAuth: (accessToken, user) => set({
-    accessToken,
-    user,
-    isAuthenticated: true
-  }),
+      setAuth: (user) =>
+        set({
+          user,
+          isAuthenticated: true,
+        }),
 
-  clearAuth: () => set({
-    accessToken: null,
-    user: null,
-    isAuthenticated: false
-  }),
-
-  updateToken: (accessToken) => set({
-    accessToken
-  })
-}))
+      clearAuth: () =>
+        set({
+          user: null,
+          isAuthenticated: false,
+        }),
+    }),
+    {
+      name: 'auth-storage',
+      // Chỉ lưu trữ user và isAuthenticated vào localStorage
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);
 
 export default useAuthStore;

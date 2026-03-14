@@ -1,5 +1,10 @@
 const authService = require('../services/auth.service');
-const { setRefreshTokenCookie, clearRefreshTokenCookie } = require('../utils/cookie');
+const { 
+  setRefreshTokenCookie, 
+  clearRefreshTokenCookie,
+  setAccessTokenCookie,
+  clearAccessTokenCookie
+} = require('../utils/cookie');
 
 /** Helper to extract metadata from the request */
 const _getMeta = (req) => ({
@@ -10,16 +15,17 @@ const _getMeta = (req) => ({
 const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
-    const { user, accessToken, refreshTokenData } = await authService.register(
+    const { user, accessTokenData, refreshTokenData } = await authService.register(
       name,
       email,
       password,
       _getMeta(req)
     );
 
+    setAccessTokenCookie(res, accessTokenData.token, accessTokenData.expiresAt);
     setRefreshTokenCookie(res, refreshTokenData.token, refreshTokenData.expiresAt);
 
-    res.status(201).json({ success: true, user, accessToken });
+    res.status(201).json({ success: true, user });
   } catch (error) {
     next(error);
   }
@@ -28,15 +34,16 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const { user, accessToken, refreshTokenData } = await authService.login(
+    const { user, accessTokenData, refreshTokenData } = await authService.login(
       email,
       password,
       _getMeta(req)
     );
 
+    setAccessTokenCookie(res, accessTokenData.token, accessTokenData.expiresAt);
     setRefreshTokenCookie(res, refreshTokenData.token, refreshTokenData.expiresAt);
 
-    res.status(200).json({ success: true, user, accessToken });
+    res.status(200).json({ success: true, user });
   } catch (error) {
     next(error);
   }
@@ -52,15 +59,16 @@ const refresh = async (req, res, next) => {
       return next(error);
     }
 
-    const { accessToken, refreshTokenData } = await authService.refresh(
+    const { accessTokenData, refreshTokenData } = await authService.refresh(
       refreshToken,
       _getMeta(req)
     );
 
-    // Set the NEW rotated refresh token cookie
+    // Set the NEW rotated refresh token cookie and access token cookie
+    setAccessTokenCookie(res, accessTokenData.token, accessTokenData.expiresAt);
     setRefreshTokenCookie(res, refreshTokenData.token, refreshTokenData.expiresAt);
 
-    res.status(200).json({ success: true, accessToken });
+    res.status(200).json({ success: true });
   } catch (error) {
     next(error);
   }
@@ -85,6 +93,7 @@ const logout = async (req, res, next) => {
 
     const { message } = await authService.logout(refreshToken, userId);
 
+    clearAccessTokenCookie(res);
     clearRefreshTokenCookie(res);
 
     res.status(200).json({ success: true, message });
