@@ -17,7 +17,13 @@ const getProducts = async (queryParams) => {
   if (queryParams.sort === 'stock_desc') orderBy = { stock: 'desc' };
 
   const [products, total] = await Promise.all([
-    prisma.product.findMany({ where: q.where, orderBy, skip: q.skip, take: q.take }),
+    prisma.product.findMany({ 
+      where: q.where, 
+      orderBy, 
+      skip: q.skip, 
+      take: q.take,
+      include: { images: true }
+    }),
     prisma.product.count({ where: q.where }),
   ]);
 
@@ -35,20 +41,44 @@ const getProducts = async (queryParams) => {
 const getProductById = async (id) => {
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { reviews: { include: { user: { select: { name: true } } } } },
+    include: { images: true, reviews: { include: { user: { select: { name: true } } } } },
   });
   if (!product) throw createError('Sản phẩm không tồn tại', 404);
   return product;
 };
 
 const createProduct = async (data) => {
-  return prisma.product.create({ data });
+  const payload = { ...data };
+  if (payload.images && payload.images.length > 0) {
+    payload.images = {
+      create: payload.images.map((url) => ({
+        url,
+        publicId: url.split('/').pop().split('.')[0] || 'unknown',
+      })),
+    };
+  } else {
+    delete payload.images; // Nếu mảng rỗng thì bỏ qua field này
+  }
+  return prisma.product.create({ data: payload, include: { images: true } });
 };
 
 const updateProduct = async (id, data) => {
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) throw createError('Sản phẩm không tồn tại', 404);
-  return prisma.product.update({ where: { id }, data });
+
+  const payload = { ...data };
+  if (payload.images) {
+    // Delete old images & create new ones nếu client truyền lên mảng ảnh mới (Update toàn bộ)
+    payload.images = {
+      deleteMany: {},
+      create: payload.images.map((url) => ({
+        url,
+        publicId: url.split('/').pop().split('.')[0] || 'unknown',
+      })),
+    };
+  }
+
+  return prisma.product.update({ where: { id }, data: payload, include: { images: true } });
 };
 
 const deleteProduct = async (id) => {

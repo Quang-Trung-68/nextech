@@ -8,7 +8,7 @@ const _getOrCreateCart = async (userId) => {
     include: {
       items: {
         include: {
-          product: true,
+          product: { include: { images: true } }
         },
         orderBy: {
           createdAt: 'asc',
@@ -32,7 +32,7 @@ const _formatCart = (cart) => {
       productId: item.productId,
       name: item.product.name,
       price: item.product.price,
-      image: item.product.images[0] ?? null,
+      image: item.product.images && item.product.images.length > 0 ? item.product.images[0].url : null,
       stock: item.product.stock,
       quantity: item.quantity,
       subtotal,

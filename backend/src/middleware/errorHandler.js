@@ -4,6 +4,7 @@ const serverConfig = require('../configs/server.config');
  * Centralized error handler middleware
  */
 module.exports = (err, req, res, next) => {
+
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
 
@@ -16,6 +17,32 @@ module.exports = (err, req, res, next) => {
       errors: err.errors, // object { field: [messages] }
       ...(serverConfig.nodeEnv === 'development' && { stack: err.stack }),
     });
+  }
+
+  // --- Multer Errors ---
+  if (err.name === 'MulterError' || err.message === 'INVALID_FILE_FORMAT') {
+    // Nếu upload nhiều file mà bị lỗi 1 phần, tiến hành rollback các file đã đưa lên Cloudinary thành công
+    if (req.files && req.files.length > 0) {
+      const cloudinary = require('../utils/cloudinary');
+      Promise.all(req.files.map(file => {
+        if (file.filename) return cloudinary.uploader.destroy(file.filename);
+        return null;
+      })).catch(console.error);
+    }
+    
+    statusCode = 400;
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      message = 'Kích thước file quá lớn (tối đa 5MB)';
+      return res.status(400).json({ success: false, message, errors: { files: [message] } });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      message = 'Vượt quá số lượng file cho phép hoặc sai tên biến field';
+      return res.status(400).json({ success: false, message, errors: { files: [message] } });
+    }
+    if (err.code === 'INVALID_FILE_FORMAT' || err.message === 'INVALID_FILE_FORMAT') {
+      message = 'Định dạng file không hợp lệ (chỉ nhận jpg, png, webp)';
+      return res.status(400).json({ success: false, message, errors: { files: [message] } });
+    }
   }
 
   // --- Prisma Errors ---

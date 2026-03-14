@@ -57,6 +57,10 @@ router.patch(
   adminController.updateProduct
 );
 
+// Mouting ProductImage sub-router
+const productImageRouter = require('./admin.productImage.routes');
+router.use('/products/:id/images', productImageRouter);
+
 // DELETE /api/admin/products/:id
 router.delete(
   '/products/:id',

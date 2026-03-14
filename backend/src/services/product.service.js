@@ -16,6 +16,7 @@ const getProducts = async (queryParams) => {
       orderBy: queryDetails.orderBy,
       skip: queryDetails.skip,
       take: queryDetails.take,
+      include: { images: true }
     }),
     prisma.product.count({ where: queryDetails.where }),
   ]);
@@ -34,6 +35,7 @@ const getProductById = async (id) => {
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
+      images: true,
       reviews: {
         include: {
           user: {
@@ -54,9 +56,18 @@ const getProductById = async (id) => {
 };
 
 const createProduct = async (data) => {
-  return prisma.product.create({
-    data,
-  });
+  const payload = { ...data };
+  if (payload.images && payload.images.length > 0) {
+    payload.images = {
+      create: payload.images.map((url) => ({
+        url,
+        publicId: url.split('/').pop().split('.')[0] || 'unknown',
+      })),
+    };
+  } else {
+    delete payload.images;
+  }
+  return prisma.product.create({ data: payload, include: { images: true } });
 };
 
 const updateProduct = async (id, data) => {
@@ -68,10 +79,18 @@ const updateProduct = async (id, data) => {
     throw error;
   }
 
-  return prisma.product.update({
-    where: { id },
-    data,
-  });
+  const payload = { ...data };
+  if (payload.images) {
+    payload.images = {
+      deleteMany: {},
+      create: payload.images.map((url) => ({
+        url,
+        publicId: url.split('/').pop().split('.')[0] || 'unknown',
+      })),
+    };
+  }
+
+  return prisma.product.update({ where: { id }, data: payload, include: { images: true } });
 };
 
 const deleteProduct = async (id) => {
