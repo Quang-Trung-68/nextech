@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xác thực tài khoản của bạn</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#2563eb;padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">
+                <%= appName %>
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 40px 32px 40px;">
+              <h2 style="margin:0 0 16px 0;color:#1e293b;font-size:20px;font-weight:600;">
+                Xác thực tài khoản của bạn
+              </h2>
+              <p style="margin:0 0 12px 0;color:#475569;font-size:15px;line-height:1.6;">
+                Xin chào <strong style="color:#1e293b;"><%= name %></strong>,
+              </p>
+              <p style="margin:0 0 24px 0;color:#475569;font-size:15px;line-height:1.6;">
+                Cảm ơn bạn đã đăng ký tài khoản tại <strong><%= appName %></strong>. 
+                Để hoàn tất quá trình đăng ký và bắt đầu mua sắm, vui lòng xác thực địa chỉ email của bạn bằng cách nhấn vào nút bên dưới.
+              </p>
+
+              <!-- CTA Button -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px auto;">
+                <tr>
+                  <td style="background-color:#2563eb;border-radius:6px;">
+                    <a href="<%= verifyUrl %>"
+                       style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:6px;letter-spacing:0.3px;">
+                      Xác thực ngay
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback link -->
+              <p style="margin:0 0 8px 0;color:#94a3b8;font-size:13px;line-height:1.5;">
+                Nếu nút trên không hoạt động, hãy sao chép và dán đường link sau vào trình duyệt:
+              </p>
+              <p style="margin:0 0 24px 0;word-break:break-all;">
+                <a href="<%= verifyUrl %>" style="color:#2563eb;font-size:13px;"><%= verifyUrl %></a>
+              </p>
+
+              <!-- Notice -->
+              <div style="background-color:#f8fafc;border-left:4px solid #e2e8f0;padding:16px 20px;border-radius:4px;">
+                <p style="margin:0 0 6px 0;color:#64748b;font-size:13px;line-height:1.5;">
+                  ⏱ Liên kết này sẽ <strong>hết hạn sau 1 giờ</strong>.
+                </p>
+                <p style="margin:0;color:#64748b;font-size:13px;line-height:1.5;">
+                  🔒 Nếu bạn không thực hiện đăng ký này, hãy bỏ qua email và không cần làm gì thêm.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px;border-top:1px solid #e2e8f0;text-align:center;">
+              <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.5;">
+                © <%= new Date().getFullYear() %> <%= appName %>. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

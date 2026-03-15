@@ -23,12 +23,31 @@ const processQueue = (error) => {
   failedQueue = [];
 };
 
-// Response Interceptor: Xử lý lỗi 401 & Silent Refresh
+// Response Interceptor: Xử lý lỗi 401 & Silent Refresh + 403 EMAIL_NOT_VERIFIED
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    // ── 403 EMAIL_NOT_VERIFIED ─────────────────────────────────────────────────
+    // Không logout, chỉ redirect về trang thông báo xác thực email.
+    // Bỏ qua nếu request đang đến endpoint xác thực để tránh vòng lặp.
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.code === 'EMAIL_NOT_VERIFIED'
+    ) {
+      const url = originalRequest?.url ?? '';
+      const isVerificationEndpoint =
+        url.includes('/auth/send-verification-email') ||
+        url.includes('/auth/verify-email');
+
+      if (!isVerificationEndpoint) {
+        window.location.href = '/verify-email-notice';
+      }
+      return Promise.reject(error);
+    }
+
+    // ── 401 Silent Refresh ─────────────────────────────────────────────────────
     // Bắt lỗi 401 (Unauthorized) và đảm bảo chưa từng retry request này
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       

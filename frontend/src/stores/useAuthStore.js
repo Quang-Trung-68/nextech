@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 const useAuthStore = create(
   persist(
     (set) => ({
-      user: null, // { id, name, email, role }
+      user: null, // { id, name, email, role, isEmailVerified }
       isAuthenticated: false,
 
       setAuth: (user) =>
@@ -18,6 +18,12 @@ const useAuthStore = create(
           user: null,
           isAuthenticated: false,
         }),
+
+      /** Update isEmailVerified flag in-place after successful verification */
+      updateEmailVerified: (verified = true) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, isEmailVerified: verified } : state.user,
+        })),
     }),
     {
       name: 'auth-storage',

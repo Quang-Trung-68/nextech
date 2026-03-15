@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle';
 
 const CheckoutFailedPage = () => {
+  usePageTitle('Đặt hàng thất bại');
   return (
     <div className="text-center py-20">
       <h1 className="text-4xl font-bold text-red-600 mb-4">Payment Failed</h1>

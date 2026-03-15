@@ -41,3 +41,53 @@ const loginSchema = z.object({
 });
 
 module.exports = { registerSchema, loginSchema };
+
+// ─── Password strength regex (reused across schemas) ──────────────────────────
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+const passwordField = z
+  .string()
+  .min(8, 'Mật khẩu tối thiểu 8 ký tự')
+  .max(72, 'Mật khẩu tối đa 72 ký tự')
+  .regex(passwordRegex, 'Mật khẩu phải có chữ hoa, chữ thường và số');
+
+/**
+ * PATCH /auth/change-password
+ */
+const changePasswordSchema = z
+  .object({
+    newPassword: passwordField,
+    confirmPassword: z.string().min(1, 'Vui lòng nhập lại mật khẩu'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  });
+
+/**
+ * POST /auth/forgot-password
+ */
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Email không đúng định dạng').toLowerCase().trim(),
+});
+
+/**
+ * POST /auth/reset-password
+ */
+const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, 'Token không hợp lệ'),
+    newPassword: passwordField,
+    confirmPassword: z.string().min(1, 'Vui lòng nhập lại mật khẩu'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  });
+
+module.exports = {
+  registerSchema,
+  loginSchema,
+  changePasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+};

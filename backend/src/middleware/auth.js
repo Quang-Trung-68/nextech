@@ -50,6 +50,7 @@ const protect = async (req, res, next) => {
         email: true,
         role: true,
         isActive: true,
+        isEmailVerified: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -75,6 +76,23 @@ const protect = async (req, res, next) => {
 };
 
 /**
+ * Middleware: require email to be verified.
+ * Must be used AFTER `protect`.
+ * Routes that call this will return 403 if the user's email is not verified.
+ * Use for sensitive actions (change password, checkout, etc.).
+ */
+const requireEmailVerified = (req, res, next) => {
+  if (!req.user.isEmailVerified) {
+    return res.status(403).json({
+      success: false,
+      message: 'Vui lòng xác thực email trước khi tiếp tục.',
+      code: 'EMAIL_NOT_VERIFIED',
+    });
+  }
+  next();
+};
+
+/**
  * Restrict access to specific roles.
  * Must be used AFTER `protect`.
  * @param {...string} roles
@@ -90,4 +108,4 @@ const restrictTo = (...roles) => {
   };
 };
 
-module.exports = { protect, restrictTo };
+module.exports = { protect, restrictTo, requireEmailVerified };

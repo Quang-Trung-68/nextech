@@ -1,4 +1,8 @@
+import usePageTitle from '../hooks/usePageTitle';
+
 const CartPage = () => {
+  usePageTitle('Giỏ hàng'); // → "Giỏ hàng | NexTech"
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Shopping Cart</h1>

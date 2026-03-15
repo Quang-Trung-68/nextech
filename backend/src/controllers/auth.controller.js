@@ -111,4 +111,112 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, refresh, logout, getMe };
+// ─── Email Verification ───────────────────────────────────────────────────────
+
+/**
+ * POST /api/auth/send-verification-email
+ * Protected (requires login) but does NOT require isEmailVerified.
+ */
+const sendVerificationEmail = async (req, res, next) => {
+  try {
+    await authService.sendEmailVerification(req.user);
+    res.status(200).json({
+      success: true,
+      message: 'Email xác thực đã được gửi. Vui lòng kiểm tra hộp thư.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/auth/verify-email?token=<rawToken>
+ * Public endpoint — called when user clicks the link in the email.
+ */
+const verifyEmail = async (req, res, next) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      const error = new Error('Token xác thực không được cung cấp.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    await authService.verifyEmail(token);
+    res.status(200).json({
+      success: true,
+      message: 'Email đã được xác thực thành công. Bạn có thể tiếp tục sử dụng dịch vụ.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Change Password ──────────────────────────────────────────────────────────
+
+/**
+ * PATCH /api/auth/change-password
+ * Protected + requires verified email.
+ */
+const changePassword = async (req, res, next) => {
+  try {
+    const { newPassword } = req.body;
+    await authService.changePassword(req.user, newPassword);
+    res.status(200).json({
+      success: true,
+      message: 'Mật khẩu đã được thay đổi thành công. Vui lòng đăng nhập lại.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Forgot / Reset Password ──────────────────────────────────────────────────
+
+/**
+ * POST /api/auth/forgot-password
+ * Public — always returns 200 to prevent user enumeration.
+ */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.forgotPassword(email);
+    // Always respond with 200 regardless of whether the email exists
+    res.status(200).json({
+      success: true,
+      message: 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/auth/reset-password
+ * Public — uses the token from the reset email.
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    await authService.resetPassword(token, newPassword);
+    res.status(200).json({
+      success: true,
+      message: 'Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập với mật khẩu mới.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  refresh,
+  logout,
+  getMe,
+  sendVerificationEmail,
+  verifyEmail,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+};

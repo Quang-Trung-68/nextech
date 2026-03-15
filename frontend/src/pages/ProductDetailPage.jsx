@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import usePageTitle from '../hooks/usePageTitle';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useProduct, useAddToCart } from '../features/product/hooks/useProduct';
@@ -28,6 +29,9 @@ const ProductDetailPage = () => {
   const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
 
   const [quantity, setQuantity] = useState(1);
+
+  const productName = response?.product?.name;
+  usePageTitle(productName || ''); // → "iPhone 15 Pro | NexTech" | "→ NexTech" khi đang load
 
   // Loading skeleton
   if (isLoading) {

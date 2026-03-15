@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle';
 import { ShoppingBag } from 'lucide-react';
 import useAuthStore from '../stores/useAuthStore';
 import {
@@ -11,6 +12,7 @@ import {
 import RegisterForm from '../features/auth/components/RegisterForm';
 
 const RegisterPage = () => {
+  usePageTitle('Đăng ký');
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   // Nếu đã đăng nhập → redirect về trang chủ ngay

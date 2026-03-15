@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import usePageTitle from '../hooks/usePageTitle';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axiosInstance from '../lib/axios';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -29,6 +30,11 @@ const ProductsPage = () => {
   // Derive categories from URL
   const categoryParam = searchParams.get('category');
   const categories = categoryParam ? categoryParam.split(',') : [];
+
+  const pageLabel = categories.length === 1
+    ? CATEGORIES.find(c => c.id === categories[0])?.label
+    : null;
+  usePageTitle(pageLabel || 'Sản phẩm'); // → "Điện thoại | NexTech" or "Sản phẩm | NexTech"
 
   const [brands, setBrands] = useState([]);
   const [priceRanges, setPriceRanges] = useState([]);

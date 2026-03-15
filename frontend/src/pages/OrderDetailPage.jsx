@@ -1,6 +1,8 @@
 import { useParams } from 'react-router-dom';
+import usePageTitle from '../hooks/usePageTitle';
 
 const OrderDetailPage = () => {
+  usePageTitle('Chi tiết đơn hàng');
   const { id } = useParams();
   
   return (

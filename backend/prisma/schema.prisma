@@ -27,20 +27,24 @@ enum PaymentStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String    @id @default(cuid())
+  name                   String
+  email                  String    @unique
+  password               String
+  role                   Role      @default(USER)
+  isActive               Boolean   @default(true)
+  isEmailVerified        Boolean   @default(false)
+  emailVerifyToken       String?   @unique
+  emailVerifyTokenExpiry DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
-  orders        Order[]
-  reviews       Review[]
-  refreshTokens RefreshToken[]
-  revokedTokens RevokedToken[]
-  cart          Cart?
+  orders             Order[]
+  reviews            Review[]
+  refreshTokens      RefreshToken[]
+  revokedTokens      RevokedToken[]
+  cart               Cart?
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -67,6 +71,18 @@ model RevokedToken {
   reason    String?
 
   @@map("revoked_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
 }
 
 model Product {
