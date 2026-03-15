@@ -1,0 +1,153 @@
+import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../../../components/ui/alert-dialog";
+import { formatCurrency } from '../../../utils/formatCurrency';
+import { Link } from 'react-router-dom';
+
+export function CartItem({ item, onUpdateQuantity, onRemove }) {
+  const { id, productId, name, price, image, stock, quantity, subtotal } = item;
+  const itemImage = image || '/placeholder.png'; // Fallback image
+
+  const handleInputChange = (e) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > stock) val = stock;
+    onUpdateQuantity(productId, val);
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      onUpdateQuantity(productId, quantity - 1);
+    }
+  };
+
+  const increaseQuantity = () => {
+    if (quantity < stock) {
+      onUpdateQuantity(productId, quantity + 1);
+    }
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row gap-4 p-4 bg-white rounded-xl border border-border">
+      <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden border border-border mx-auto sm:mx-0">
+        <img src={itemImage} alt={name} className="w-full h-full object-cover" />
+      </div>
+      <div className="flex flex-col flex-1 justify-between">
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <div>
+            <Link to={`/products/${productId}`} className="font-semibold text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
+              {name}
+            </Link>
+            <div className="font-bold text-lg mt-1 text-primary">
+              {formatCurrency(price)}
+            </div>
+          </div>
+          
+          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
+            <div className="font-bold text-apple-dark">
+              {formatCurrency(subtotal)}
+            </div>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10 px-2 mt-auto">
+                  <Trash2 className="w-4 h-4 mr-1.5" /> <span className="hidden sm:inline">Xóa</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xóa sản phẩm?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Bạn có chắc chắn muốn xóa "{name}" khỏi giỏ hàng?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white">
+                    Xóa
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 mt-4">
+          <div className="flex items-center h-9 bg-muted/50 rounded-lg p-1 border">
+            {quantity <= 1 ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-full w-8 text-muted-foreground hover:text-destructive shrink-0 rounded-md">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Xóa sản phẩm?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white">
+                      Xóa
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-full w-8 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
+                onClick={decreaseQuantity}
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </Button>
+            )}
+
+            <Input 
+              type="number" 
+              className="h-full w-12 border-0 bg-transparent text-center font-semibold text-sm remove-arrow px-0 outline-none focus-visible:ring-0 shadow-none font-mono"
+              value={quantity}
+              onChange={handleInputChange}
+              onBlur={(e) => {
+                let val = parseInt(e.target.value);
+                if (isNaN(val) || val < 1) val = 1;
+                if (val !== quantity) onUpdateQuantity(productId, val);
+              }}
+              min={1}
+              max={stock}
+            />
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-full w-8 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
+              onClick={increaseQuantity}
+              disabled={quantity >= stock}
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+          
+          <span className="text-xs text-muted-foreground">
+            Sẵn có: {stock}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import usePageTitle from '../hooks/usePageTitle';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft, ChevronRight } from 'lucide-react';
-import { useProduct, useAddToCart } from '../features/product/hooks/useProduct';
+import { useProduct } from '../features/product/hooks/useProduct';
+import { useAddToCart } from '../features/cart/hooks/useCartMutations';
 import { ProductGallery } from '../features/product/components/ProductGallery';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -68,8 +69,9 @@ const ProductDetailPage = () => {
           Sản phẩm này có thể đã bị xóa hoặc không dồn tại trên hệ thống.
         </p>
         <Button asChild className="mt-4" variant="outline">
-          <Link to="/">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại trang chủ
+          <Link to="/" className="flex items-center justify-center gap-2">
+            <ArrowLeft className="w-4 h-4" /> 
+            <span>Quay lại trang chủ</span>
           </Link>
         </Button>
       </div>

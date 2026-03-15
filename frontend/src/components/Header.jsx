@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Heart, User, ShoppingCart, Menu, X } from 'lucide-react';
 import useAuthStore from '../stores/useAuthStore';
-import { useQuery } from '@tanstack/react-query';
-import axiosInstance from '../lib/axios';
+import { useCart } from '../features/cart/hooks/useCart';
+import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '../features/cart/hooks/useCartMutations';
+import { formatCurrency } from '../utils/formatCurrency';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,16 +15,12 @@ const Header = () => {
 
   const { isAuthenticated, user, clearAuth } = useAuthStore();
 
-  const { data: cartData } = useQuery({
-    queryKey: ['cart'],
-    queryFn: async () => {
-      const res = await axiosInstance.get('/cart');
-      return res.data;
-    },
-    enabled: isAuthenticated,
-  });
-
-  const cartItemCount = cartData?.items?.length || 0;
+  const { totalItems, cartItems, totalPrice } = useCart();
+  const cartItemCount = totalItems || 0;
+  
+  const { mutate: updateQuantity } = useUpdateCartItem();
+  const { mutate: removeItem } = useRemoveCartItem();
+  const { mutate: clearCart } = useClearCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,14 +85,18 @@ const Header = () => {
                   </Link>
                   
                   {/* Cart */}
-                  <div className="relative">
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => setIsCartOpen(true)}
+                    onMouseLeave={() => setIsCartOpen(false)}
+                  >
                     <button 
-                      onClick={() => setIsCartOpen(!isCartOpen)} 
-                      className="hover:text-apple-blue transition-colors relative flex items-center"
+                      className="hover:text-apple-blue transition-colors relative flex items-center py-2"
+                      onClick={() => navigate('/cart')}
                     >
                       <ShoppingCart size={18} strokeWidth={1.5} />
                       {cartItemCount > 0 && (
-                        <span className="absolute -top-[6px] -right-[8px] bg-apple-blue text-white text-[9px] rounded-full w-[15px] h-[15px] flex items-center justify-center font-bold shadow-sm">
+                        <span className="absolute top-[2px] -right-[8px] bg-apple-blue text-white text-[9px] rounded-full w-[15px] h-[15px] flex items-center justify-center font-bold shadow-sm">
                           {cartItemCount}
                         </span>
                       )}
@@ -103,28 +104,118 @@ const Header = () => {
                     
                     {/* Mini Cart Placeholder */}
                     {isCartOpen && (
-                      <div className="absolute right-0 top-[140%] bg-white border border-[#d2d2d7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-5 w-[320px] z-50 animate-in fade-in slide-in-from-top-2">
-                        <div className="mb-4">
-                          <h4 className="font-semibold text-apple-dark">Giỏ hàng của bạn</h4>
-                          <p className="text-sm text-apple-secondary">Đang có {cartItemCount} sản phẩm</p>
+                      <div className="absolute right-[-20%] top-[70%] bg-white border border-[#d2d2d7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-5 w-[320px] z-50 animate-in fade-in slide-in-from-top-2">
+                        <div className="mb-4 flex flex-row items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-apple-dark">Giỏ hàng của bạn</h4>
+                            <p className="text-sm text-apple-secondary">Đang có {cartItemCount} sản phẩm</p>
+                          </div>
+                          {cartItemCount > 0 && (
+                            <button 
+                              className="text-xs text-red-500 font-medium hover:bg-red-50 px-2 py-1 rounded-md transition-colors"
+                              onClick={() => {
+                                clearCart();
+                                setIsCartOpen(false);
+                              }}
+                            >
+                              Xóa tất cả
+                            </button>
+                          )}
                         </div>
                         
-                        <div className="flex flex-col gap-3 mb-6 min-h-[120px] items-center justify-center border border-dashed border-[#d2d2d7] rounded-xl py-4 bg-apple-gray/30">
-                           <ShoppingCart size={24} className="text-[#d2d2d7] mb-2" />
-                           <span className="text-sm text-apple-secondary font-medium">
-                             Dữ liệu giỏ hàng trống
-                           </span>
-                        </div>
+                        {cartItemCount === 0 ? (
+                          <div className="flex flex-col gap-3 mb-6 min-h-[120px] items-center justify-center border border-dashed border-[#d2d2d7] rounded-xl py-4 bg-apple-gray/30">
+                            <ShoppingCart size={24} className="text-[#d2d2d7] mb-2" />
+                            <span className="text-sm text-apple-secondary font-medium">
+                              Dữ liệu giỏ hàng trống
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-4 mb-5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                            {cartItems.map(item => (
+                              <div key={item.id} className="flex gap-3">
+                                <img 
+                                  src={item.image || '/placeholder.png'} 
+                                  alt={item.name} 
+                                  className="w-12 h-12 object-cover rounded-md border border-border" 
+                                />
+                                <div className="flex-1 flex flex-col justify-between">
+                                  <Link 
+                                    to={`/products/${item.productId}`} 
+                                    className="text-xs font-semibold text-apple-dark line-clamp-2 hover:text-apple-blue transition-colors"
+                                    onClick={() => setIsCartOpen(false)}
+                                  >
+                                    {item.name}
+                                  </Link>
+                                  <div className="flex justify-between items-center mt-2 group/cart-controls">
+                                    <div className="flex items-center bg-[#f5f5f7] rounded-md overflow-hidden border border-[#d2d2d7]">
+                                      <button 
+                                        className="w-5 h-5 flex items-center justify-center hover:bg-[#e8e8ed] text-apple-dark transition-colors"
+                                        onClick={() => item.quantity > 1 ? updateQuantity({ productId: item.productId, quantity: item.quantity - 1 }) : removeItem(item.productId)}
+                                      >
+                                        -
+                                      </button>
+                                      <span className="w-5 flex items-center justify-center text-[10px] font-medium border-x border-[#d2d2d7]">
+                                        {item.quantity}
+                                      </span>
+                                      <button 
+                                        className="w-5 h-5 flex items-center justify-center hover:bg-[#e8e8ed] text-apple-dark transition-colors disabled:opacity-50"
+                                        onClick={() => updateQuantity({ productId: item.productId, quantity: item.quantity + 1 })}
+                                        disabled={item.quantity >= item.stock}
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[13px] font-bold text-primary">{formatCurrency(item.price)}</span>
+                                      <button 
+                                        className="w-5 h-5 flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover/cart-controls:opacity-100 sm:opacity-100"
+                                        onClick={() => removeItem(item.productId)}
+                                        title="Xóa sản phẩm"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
-                        <button 
-                          onClick={() => {
-                            setIsCartOpen(false);
-                            navigate('/checkout');
-                          }}
-                          className="w-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center"
-                        >
-                          Thanh toán ngay
-                        </button>
+                        {cartItemCount > 0 && (
+                          <div className="flex justify-between items-center mb-4 pt-4 border-t border-[#f5f5f7]">
+                            <span className="text-sm text-apple-secondary font-medium">Tổng cộng:</span>
+                            <span className="text-lg font-bold text-apple-dark">{formatCurrency(totalPrice)}</span>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-2">
+                          {cartItemCount > 0 && (
+                            <button 
+                              onClick={() => {
+                                setIsCartOpen(false);
+                                navigate('/checkout');
+                              }}
+                              className="w-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center text-sm"
+                            >
+                              Thanh toán ngay
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => {
+                              setIsCartOpen(false);
+                              navigate('/cart');
+                            }}
+                            className={`w-full font-semibold py-2.5 px-4 rounded-xl transition-all text-sm ${
+                              cartItemCount > 0 
+                                ? 'bg-apple-gray hover:bg-[#e8e8ed] text-apple-dark' 
+                                : 'bg-apple-blue hover:bg-apple-blue/90 text-white shadow-sm'
+                            }`}
+                          >
+                            Xem giỏ hàng
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

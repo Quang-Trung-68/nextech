@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import axiosInstance from '../../../lib/axios';
 
 const LIMIT = 20;
@@ -38,21 +38,5 @@ export function useProduct(id) {
       return data;
     },
     enabled: !!id, // Chỉ gọi API khi id tồn tại
-  });
-}
-
-// Thêm sản phẩm vào giỏ
-export function useAddToCart() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ productId, quantity }) => {
-      const { data } = await axiosInstance.post('/cart', { productId, quantity });
-      return data;
-    },
-    onSuccess: () => {
-      // Gọi lại các API query để gán / làm tươi lại badge cart giỏ hàng
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
-    },
   });
 }

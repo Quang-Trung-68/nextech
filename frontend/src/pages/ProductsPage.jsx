@@ -3,12 +3,16 @@ import usePageTitle from '../hooks/usePageTitle';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axiosInstance from '../lib/axios';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Heart, Grid, List, SlidersHorizontal, ChevronRight, Loader2 } from 'lucide-react';
+import { Heart, Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star, ShoppingCart } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Checkbox } from '../components/ui/checkbox';
 import { Badge } from '../components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { useAddToCart } from '../features/cart/hooks/useCartMutations';
+import useAuthStore from '../stores/useAuthStore';
+import { toast } from 'sonner';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const CATEGORIES = [
   { id: 'smartphone', label: 'Điện thoại' },
@@ -41,6 +45,34 @@ const ProductsPage = () => {
   const [sort, setSort] = useState('Mới nhất'); // Nổi bật, Mới nhất, Giá tăng dần, Giá giảm dần
   const [viewMode, setViewMode] = useState('grid');
   const limit = 12;
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
+  
+  // Custom Add To Cart handler
+  const handleAddToCart = (e, productId, stock) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+      return navigate('/login', { state: { from: location.pathname + location.search } });
+    }
+
+    addToCart(
+      { productId, quantity: 1 },
+      {
+        onSuccess: () => {
+          toast.success('Đã thêm sản phẩm vào giỏ hàng!');
+        },
+        onError: (err) => {
+          toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+        }
+      }
+    );
+  };
 
   // Build Query Params
   const getQueryParams = (pageParam) => {
@@ -330,18 +362,40 @@ const ProductsPage = () => {
                     <div className="mt-auto flex flex-col gap-3">
                       <div className="flex items-end gap-2">
                         <span className="font-bold text-base text-apple-dark">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.salePrice || product.price)}
                         </span>
                         {product.salePrice && (
                           <span className="text-[13px] text-apple-secondary line-through mb-[2px]">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.originalPrice)}
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
                           </span>
                         )}
                       </div>
                       
-                      <Button className="w-full rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-none transition-all">
-                        Thêm vào giỏ
+                      <Button 
+                        className="w-full rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-none transition-all active:scale-[0.98]"
+                        onClick={(e) => handleAddToCart(e, product.id, product.stock)}
+                        disabled={product.stock === 0 || isAddingToCart}
+                      >
+                        {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
                       </Button>
+                      
+                      {/* Rating and Wishlist under the button */}
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-apple-dark">
+                           <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                           <span>{(product.rating || 0) > 0 ? (product.rating).toFixed(1) : "Chưa có"}</span>
+                        </div>
+                        <button 
+                          className="flex items-center gap-1.5 text-sm font-medium text-apple-blue hover:text-[#005bb5] transition-colors"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toast.success("Đã thêm vào mục Yêu thích!");
+                          }}
+                        >
+                          <Heart className="w-4 h-4 text-apple-blue" /> Yêu thích
+                        </button>
+                      </div>
                     </div>
                   </div>
 
