@@ -89,7 +89,7 @@ model Product {
   id          String   @id @default(cuid())
   name        String
   description String
-  price       Decimal  @db.Decimal(10, 2)
+  price       Decimal  @db.Decimal(15, 2)
   images      ProductImage[]
   stock       Int
   category    String
@@ -123,7 +123,7 @@ model Order {
   status                OrderStatus   @default(PENDING)
   paymentStatus         PaymentStatus @default(UNPAID)
   paymentMethod         String
-  totalAmount           Decimal       @db.Decimal(10, 2)
+  totalAmount           Decimal       @db.Decimal(15, 2)
   shippingAddress       Json
   stripePaymentIntentId String?       @unique
   stripeClientSecret    String?
@@ -142,7 +142,7 @@ model OrderItem {
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  price     Decimal @db.Decimal(15, 2)
 
   @@map("order_item")
 }

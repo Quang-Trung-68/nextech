@@ -16,7 +16,7 @@ import { formatCurrency } from '../../../utils/formatCurrency';
 import { Link } from 'react-router-dom';
 
 export function CartItem({ item, onUpdateQuantity, onRemove }) {
-  const { id, productId, name, price, image, stock, quantity, subtotal } = item;
+  const { productId, name, price, image, stock, quantity, subtotal } = item;
   const itemImage = image || '/placeholder.png'; // Fallback image
 
   const handleInputChange = (e) => {
@@ -61,9 +61,9 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
             
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10 px-2 mt-auto">
+                <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 text-destructive hover:text-destructive hover:bg-destructive/10 px-2 mt-auto">
                   <Trash2 className="w-4 h-4 mr-1.5" /> <span className="hidden sm:inline">Xóa</span>
-                </Button>
+                </button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -88,9 +88,9 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
             {quantity <= 1 ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-full w-8 text-muted-foreground hover:text-destructive shrink-0 rounded-md">
+                  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-full w-8 text-muted-foreground hover:text-destructive shrink-0 rounded-md">
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>

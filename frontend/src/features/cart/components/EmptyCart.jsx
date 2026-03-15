@@ -12,12 +12,10 @@ export function EmptyCart() {
       <p className="text-muted-foreground w-full max-w-sm mb-8">
         Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng. Hãy khám phá các sản phẩm của chúng tôi nhé.
       </p>
-      <Button asChild size="lg" className="rounded-full px-8 h-12 shadow-sm font-semibold">
-        <Link to="/" className="flex items-center justify-center gap-2">
+        <Link to="/" className="inline-flex h-12 items-center justify-center gap-2 px-8 rounded-full font-semibold shadow-sm text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">
           <ArrowLeft className="w-4 h-4" /> 
           <span>Tiếp tục mua sắm</span>
         </Link>
-      </Button>
     </div>
   );
 }

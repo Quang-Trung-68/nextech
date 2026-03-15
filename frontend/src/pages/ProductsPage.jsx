@@ -3,7 +3,7 @@ import usePageTitle from '../hooks/usePageTitle';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axiosInstance from '../lib/axios';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Heart, Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star, ShoppingCart } from 'lucide-react';
+import { Heart, Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Checkbox } from '../components/ui/checkbox';
 import { Badge } from '../components/ui/badge';
@@ -52,7 +52,7 @@ const ProductsPage = () => {
   const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
   
   // Custom Add To Cart handler
-  const handleAddToCart = (e, productId, stock) => {
+  const handleAddToCart = (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -373,7 +373,7 @@ const ProductsPage = () => {
                       
                       <Button 
                         className="w-full rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-none transition-all active:scale-[0.98]"
-                        onClick={(e) => handleAddToCart(e, product.id, product.stock)}
+                        onClick={(e) => handleAddToCart(e, product.id)}
                         disabled={product.stock === 0 || isAddingToCart}
                       >
                         {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
