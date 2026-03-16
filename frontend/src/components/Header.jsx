@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Heart, User, ShoppingCart, Menu, X } from 'lucide-react';
+import { Search, Heart, User, ShoppingCart, Menu, X, LogOut, Package, Settings, ShieldCheck } from 'lucide-react';
 import useAuthStore from '../stores/useAuthStore';
 import { useCart } from '../features/cart/hooks/useCart';
 import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '../features/cart/hooks/useCartMutations';
@@ -222,16 +222,66 @@ const Header = () => {
                   
                   {/* User */}
                   <div className="relative group/user hidden sm:block">
-                    <Link to="/profile" className="hover:text-apple-blue transition-colors">
-                      <User size={18} strokeWidth={1.5} />
+                    <Link to="/profile" className="hover:text-apple-blue transition-colors flex items-center">
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover border border-[#d2d2d7]" />
+                      ) : (
+                        <User size={18} strokeWidth={1.5} />
+                      )}
                     </Link>
-                    <div className="absolute right-0 top-[95%] pt-2 hidden group-hover/user:block">
-                       <div className="bg-white border border-[#d2d2d7] rounded-xl shadow-lg p-2 w-40 flex flex-col gap-1">
-                          {user?.role === 'ADMIN' && (
-                            <Link to="/admin" className="px-3 py-2 text-sm text-apple-dark hover:bg-apple-gray rounded-lg transition-colors">Admin</Link>
-                          )}
-                          <Link to="/profile" className="px-3 py-2 text-sm text-apple-dark hover:bg-apple-gray rounded-lg transition-colors">Cá nhân</Link>
-                          <button onClick={clearAuth} className="px-3 py-2 text-sm text-left text-red-500 hover:bg-apple-gray rounded-lg transition-colors">Đăng xuất</button>
+                    
+                    {/* Hover Dropdown */}
+                    <div className="absolute right-0 top-[60%] pt-3 hidden group-hover/user:block z-50">
+                       <div className="bg-white border border-[#d2d2d7] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-[260px] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2">
+                          
+                          {/* User Info Header */}
+                          <div className="p-4 border-b border-[#f5f5f7] flex items-center gap-3 bg-[#fafafa]">
+                            {user?.avatar ? (
+                              <img src={user.avatar} alt={user?.name} className="w-10 h-10 rounded-full object-cover border border-[#d2d2d7]" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] flex items-center justify-center text-apple-dark">
+                                <User size={20} />
+                              </div>
+                            )}
+                            <div className="flex flex-col min-w-0 pr-2">
+                               <span className="text-[15px] font-semibold text-apple-dark truncate">{user?.name || 'Người dùng'}</span>
+                               <span className="text-[13px] text-apple-secondary truncate">{user?.email || 'Thành viên mới'}</span>
+                            </div>
+                          </div>
+
+                          {/* Links */}
+                          <div className="p-2 flex flex-col gap-0.5">
+                            {user?.role === 'ADMIN' && (
+                              <Link to="/admin" className="px-3 py-2 text-[14px] text-apple-dark hover:bg-apple-gray rounded-xl transition-colors flex items-center gap-3 font-medium">
+                                <ShieldCheck size={18} className="text-apple-blue" />
+                                Theo dõi quản trị
+                              </Link>
+                            )}
+                            
+                            <Link to="/profile" className="px-3 py-2 text-[14px] text-apple-dark hover:bg-apple-gray rounded-xl transition-colors flex items-center gap-3 font-medium">
+                              <User size={18} className="text-[#86868b]" />
+                              Tài khoản của tôi
+                            </Link>
+                            
+                            <Link to="/profile/orders" className="px-3 py-2 text-[14px] text-apple-dark hover:bg-apple-gray rounded-xl transition-colors flex items-center gap-3 font-medium">
+                              <Package size={18} className="text-[#86868b]" />
+                              Quản lý đơn hàng
+                            </Link>
+
+                            <Link to="/favorites" className="px-3 py-2 text-[14px] text-apple-dark hover:bg-apple-gray rounded-xl transition-colors flex items-center gap-3 font-medium">
+                              <Heart size={18} className="text-[#86868b]" />
+                              Sản phẩm yêu thích
+                            </Link>
+                          </div>
+
+                          {/* Logout */}
+                          <div className="p-2 border-t border-[#f5f5f7]">
+                            <button onClick={clearAuth} className="w-full px-3 py-2 text-[14px] text-left text-red-500 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3 font-medium">
+                              <LogOut size={18} />
+                              Đăng xuất tài khoản
+                            </button>
+                          </div>
+
                        </div>
                     </div>
                   </div>

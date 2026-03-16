@@ -31,6 +31,8 @@ model User {
   name                   String
   email                  String    @unique
   password               String
+  phone                  String?
+  avatar                 String?
   role                   Role      @default(USER)
   isActive               Boolean   @default(true)
   isEmailVerified        Boolean   @default(false)
@@ -45,8 +47,24 @@ model User {
   revokedTokens      RevokedToken[]
   cart               Cart?
   passwordResetTokens PasswordResetToken[]
+  addresses          Address[]
 
   @@map("users")
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName  String
+  phone     String
+  address   String
+  city      String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("addresses")
 }
 
 model RefreshToken {

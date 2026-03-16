@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const serverConfig = require('./src/configs/server.config');
 const errorHandler = require('./src/middleware/errorHandler');
+const paymentController = require('./src/controllers/payment.controller');
 
 const app = express();
 
@@ -14,8 +15,12 @@ app.use(cors({
 
 // ⚠️ QUAN TRỌNG: Webhook mount TRƯỚC express.json()
 // express.raw() giúp giữ body dưới dạng Buffer — Stripe cần raw body để verify signature
-// Chỉ apply cho /webhook, các route khác (/intent, /status) dùng JSON bình thường
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }), require('./src/routes/payment.routes'));
+// Mount trực tiếp controller (KHÔNG qua router) để tránh double-mount conflict
+app.post(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  paymentController.handleWebhook
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,6 +28,7 @@ app.use(cookieParser());  // Parse cookies — required for refresh token flow
 
 // Mount routes
 app.use('/api/auth', require('./src/routes/auth.routes'));
+app.use('/api/users', require('./src/routes/user.routes'));
 app.use('/api/products', require('./src/routes/product.routes'));
 app.use('/api/cart', require('./src/routes/cart.routes'));
 app.use('/api/orders', require('./src/routes/order.routes'));

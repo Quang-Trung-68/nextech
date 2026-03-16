@@ -37,7 +37,7 @@ const Footer = () => {
             <h3 className="font-semibold text-apple-dark mb-3">Tài khoản</h3>
             <ul className="space-y-2.5">
               <li><Link to="/account" className="hover:underline">Quản lý ID</Link></li>
-              <li><Link to="/orders" className="hover:underline">Đơn hàng</Link></li>
+              <li><Link to="/profile/orders" className="hover:underline">Đơn hàng</Link></li>
               <li><Link to="#" className="hover:underline">iCloud.com</Link></li>
             </ul>
           </div>

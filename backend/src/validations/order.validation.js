@@ -12,7 +12,6 @@ const shippingAddressSchema = z.object({
 
   addressLine: z.string().min(5).max(200).trim(),
   ward: z.string().min(1).trim(),
-  district: z.string().min(1).trim(),
   city: z.string().min(1).trim(),
 });
 

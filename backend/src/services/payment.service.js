@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma');
 const stripe = require('../utils/stripe');
+const mailer = require('../utils/mailer');
 
 const handleWebhookEvent = async (rawBody, signature) => {
   let event;
@@ -34,21 +35,39 @@ const handleWebhookEvent = async (rawBody, signature) => {
         break;
       }
 
-      await prisma.$transaction(async (tx) => {
-        await tx.order.update({
+      const updatedOrder = await prisma.$transaction(async (tx) => {
+        const o = await tx.order.update({
           where: { id: order.id },
           data: {
             paymentStatus: 'PAID',
             status: 'PROCESSING',
+          },
+          include: {
+            orderItems: {
+              include: {
+                product: {
+                  select: { id: true, name: true, price: true, images: true },
+                },
+              },
+            },
+            user: {
+              select: { id: true, name: true, email: true },
+            },
           },
         });
 
         await tx.cartItem.deleteMany({
           where: { cart: { userId: order.userId } },
         });
+
+        return o;
       });
 
       console.log(`[Webhook] Payment succeeded for order ${order.id}`);
+      
+      // Send order confirmation email asynchronously
+      await mailer.sendOrderConfirmationEmail(updatedOrder);
+      
       break;
     }
 
@@ -64,13 +83,14 @@ const handleWebhookEvent = async (rawBody, signature) => {
         break;
       }
 
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          paymentStatus: 'UNPAID',
-          status: 'PENDING',
-        },
-      });
+      // Không update DB (giữ nguyên đơn hàng chờ thanh toán)
+      // await prisma.order.update({
+      //   where: { id: order.id },
+      //   data: {
+      //     paymentStatus: 'UNPAID',
+      //     status: 'PENDING',
+      //   },
+      // });
 
       console.log(`[Webhook] Payment failed for order ${order.id}. Reason: ${paymentIntent.last_payment_error?.message}`);
       break;

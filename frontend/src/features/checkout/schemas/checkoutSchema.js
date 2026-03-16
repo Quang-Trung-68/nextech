@@ -13,19 +13,15 @@ export const checkoutSchema = z.object({
     addressLine: z
       .string()
       .trim()
-      .min(5, { message: 'Địa chỉ quá ngắn, vui lòng nhập rõ số nhà/đường' }),
+      .min(5, { message: 'Yêu cầu nhập Tên đường/phố' }),
     ward: z
       .string()
       .trim()
-      .min(1, { message: 'Yêu cầu nhập Phường/Xã' }),
-    district: z
-      .string()
-      .trim()
-      .min(1, { message: 'Yêu cầu nhập Quận/Huyện' }),
+      .min(1, { message: 'Yêu cầu nhập Tên xã/phường' }),
     city: z
       .string()
       .trim()
-      .min(1, { message: 'Yêu cầu nhập tên Tỉnh/Thành phố' }),
+      .min(1, { message: 'Yêu cầu nhập Tên tỉnh/thành phố' }),
   }),
   paymentMethod: z.enum(['COD', 'STRIPE']),
 });

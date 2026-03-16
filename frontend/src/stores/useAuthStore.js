@@ -13,6 +13,9 @@ const useAuthStore = create(
           isAuthenticated: true,
         }),
 
+      setUser: (user) =>
+        set({ user }),
+
       clearAuth: () =>
         set({
           user: null,

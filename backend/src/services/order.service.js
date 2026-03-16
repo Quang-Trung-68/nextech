@@ -1,6 +1,7 @@
 const prisma = require('../utils/prisma');
 const cartService = require('./cart.service');
 const paymentService = require('./payment.service');
+const mailer = require('../utils/mailer');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -51,8 +52,8 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   // COD → PROCESSING ngay, STRIPE → PENDING chờ webhook
   const initialStatus = paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING';
 
-  // $transaction: tạo Order + cắt stock + xoá Cart
-  const [order] = await prisma.$transaction([
+  // $transaction: tạo Order + cắt stock + xoá Cart (nếu không phải STRIPE)
+  const transactionItems = [
     prisma.order.create({
       data: {
         userId,
@@ -75,24 +76,49 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
         where: { id: item.productId },
         data: { stock: { decrement: item.quantity } },
       })
-    ),
-    prisma.cartItem.deleteMany({ where: { cart: { userId } } }),
-  ]);
+    )
+  ];
+
+  if (paymentMethod === 'COD') {
+    transactionItems.push(prisma.cartItem.deleteMany({ where: { cart: { userId } } }));
+  }
+
+  const [order] = await prisma.$transaction(transactionItems);
+
+  // Bổ sung lookup thông tin User để Email context lấy được tên truy cập và Email
+  if (!order.user) {
+    const userForMail = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true },
+    });
+    order.user = userForMail;
+  }
 
   // COD: trả về luôn
   if (paymentMethod === 'COD') {
+    // Chờ gửi email (để đảm bảo không bị Node ngắt khi response return quá tốc độ)
+    await mailer.sendOrderConfirmationEmail(order);
     return { order };
   }
 
-  // STRIPE: tạo PaymentIntent sau transaction
-  let finalAmount = Math.round(Number(totalAmount));
-  if ((process.env.STRIPE_CURRENCY || 'vnd').toLowerCase() !== 'vnd') {
-    finalAmount = Math.round(Number(totalAmount) * 100);
+  // STRIPE currency: giá lưu trong DB là VND.
+  // Stripe giới hạn VND tối đa ₫99,999,999, nên chuyển sang USD cents.
+  // Tỉ giá tạm thời: 1 USD = 25,000 VND (chỉ dùng cho test/dev)
+  const VND_TO_USD_RATE = 25000;
+  const currency = (process.env.STRIPE_CURRENCY || 'usd').toLowerCase();
+
+  let finalAmount;
+  if (currency === 'vnd') {
+    // VND là zero-decimal, truyền nguyên — nhưng giới hạn tối đa ₫99,999,999
+    finalAmount = Math.round(Number(totalAmount));
+  } else {
+    // USD và các currency khác: chia VND cho tỉ giá → ra USD → nhân 100 → ra cents
+    finalAmount = Math.round((Number(totalAmount) / VND_TO_USD_RATE) * 100);
   }
 
   const paymentIntent = await paymentService.createPaymentIntent(
     finalAmount,
-    process.env.STRIPE_CURRENCY || 'vnd',
+    currency,
     { orderId: order.id, userId }
   );
 

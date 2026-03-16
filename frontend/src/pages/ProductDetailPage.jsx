@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import usePageTitle from '../hooks/usePageTitle';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft, ChevronRight } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { useProduct } from '../features/product/hooks/useProduct';
 import { useAddToCart } from '../features/cart/hooks/useCartMutations';
 import { ProductGallery } from '../features/product/components/ProductGallery';
@@ -30,6 +30,7 @@ const ProductDetailPage = () => {
   const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
 
   const [quantity, setQuantity] = useState(1);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
 
   const productName = response?.product?.name;
   usePageTitle(productName || ''); // → "iPhone 15 Pro | NexTech" | "→ NexTech" khi đang load
@@ -105,6 +106,7 @@ const ProductDetailPage = () => {
       return navigate('/login', { state: { from: location } });
     }
 
+    setIsBuyingNow(false);
     addToCart(
       { productId: id, quantity },
       {
@@ -113,6 +115,27 @@ const ProductDetailPage = () => {
         },
         onError: (err) => {
           toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+        }
+      }
+    );
+  };
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để mua hàng');
+      return navigate('/login', { state: { from: location } });
+    }
+
+    setIsBuyingNow(true);
+    addToCart(
+      { productId: id, quantity },
+      {
+        onSuccess: () => {
+          navigate('/checkout');
+        },
+        onError: (err) => {
+          toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi mua hàng');
+          setIsBuyingNow(false);
         }
       }
     );
@@ -230,19 +253,37 @@ const ProductDetailPage = () => {
                  </Button>
               </div>
 
-              {/* Botton Add To Cart */}
+              {/* Button Add To Cart */}
               <Button 
+                variant="outline"
                 size="lg" 
-                className="flex-1 min-w-[200px] h-12 text-base font-semibold shadow-md active:scale-[0.98] transition-all"
+                className="flex-1 min-w-[160px] h-12 text-base font-semibold shadow-sm active:scale-[0.98] transition-all"
                 disabled={isOutOfStock || isAddingToCart}
                 onClick={handleAddToCart}
               >
-                {isAddingToCart ? (
+                {isAddingToCart && !isBuyingNow ? (
                     'Đang thêm...'
                 ) : (
                   <>
                      <ShoppingCart className="w-5 h-5 mr-2" />
-                     {isOutOfStock ? 'Sản phẩm tạm hết' : 'Thêm vào giỏ'}
+                     {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
+                  </>
+                )}
+              </Button>
+
+              {/* Button Buy Now */}
+              <Button 
+                size="lg" 
+                className="flex-1 min-w-[160px] h-12 text-base font-semibold shadow-md active:scale-[0.98] transition-all"
+                disabled={isOutOfStock || isAddingToCart}
+                onClick={handleBuyNow}
+              >
+                {isAddingToCart && isBuyingNow ? (
+                    'Đang xử lý...'
+                ) : (
+                  <>
+                     <CreditCard className="w-5 h-5 mr-2" />
+                     {isOutOfStock ? 'Hết hàng' : 'Mua ngay'}
                   </>
                 )}
               </Button>

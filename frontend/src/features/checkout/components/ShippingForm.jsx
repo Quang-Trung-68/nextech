@@ -34,23 +34,22 @@ export function ShippingForm({ register, errors }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Address */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Số nhà, Tên đường <span className="text-destructive">*</span></label>
-          <Input 
-            {...register('shippingAddress.addressLine')} 
-            placeholder="Ví dụ: 123 Lê Lợi"
-            className={errors.shippingAddress?.addressLine ? "border-destructive focus-visible:ring-destructive" : ""}
-          />
-          {errors.shippingAddress?.addressLine && (
-            <p className="text-xs text-destructive mt-1">{errors.shippingAddress.addressLine.message}</p>
-          )}
-        </div>
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-muted-foreground">Tên đường/phố <span className="text-destructive">*</span></label>
+        <Input 
+          {...register('shippingAddress.addressLine')} 
+          placeholder="Ví dụ: 123 Lê Lợi"
+          className={errors.shippingAddress?.addressLine ? "border-destructive focus-visible:ring-destructive" : ""}
+        />
+        {errors.shippingAddress?.addressLine && (
+          <p className="text-xs text-destructive mt-1">{errors.shippingAddress.addressLine.message}</p>
+        )}
+      </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Ward */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Phường / Xã <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium text-muted-foreground">Tên xã/phường <span className="text-destructive">*</span></label>
           <Input 
             {...register('shippingAddress.ward')} 
             placeholder="Ví dụ: Phường 4"
@@ -60,25 +59,10 @@ export function ShippingForm({ register, errors }) {
             <p className="text-xs text-destructive mt-1">{errors.shippingAddress.ward.message}</p>
           )}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* District */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Quận / Huyện <span className="text-destructive">*</span></label>
-          <Input 
-            {...register('shippingAddress.district')} 
-            placeholder="Ví dụ: Quận 1"
-            className={errors.shippingAddress?.district ? "border-destructive focus-visible:ring-destructive" : ""}
-          />
-          {errors.shippingAddress?.district && (
-            <p className="text-xs text-destructive mt-1">{errors.shippingAddress.district.message}</p>
-          )}
-        </div>
 
         {/* City */}
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Tỉnh / Thành phố <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium text-muted-foreground">Tên tỉnh/thành phố <span className="text-destructive">*</span></label>
           <Input 
             {...register('shippingAddress.city')} 
             placeholder="Ví dụ: TP. Hồ Chí Minh"

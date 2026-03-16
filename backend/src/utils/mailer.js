@@ -84,8 +84,32 @@ const sendPasswordResetEmail = async (to, name, resetUrl) => {
   }
 };
 
+/**
+ * Send an order confirmation email after an order is successfully created.
+ * @param {object} order  — Prisma Order object with `user` and `orderItems.product` included
+ */
+const sendOrderConfirmationEmail = async (order) => {
+  try {
+    const html = await _renderTemplate('orderConfirmation', {
+      order,
+      appUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+    });
+    const info = await transporter.sendMail({
+      from: `"${process.env.APP_NAME || 'MyShop'}" <${process.env.GMAIL_USER}>`,
+      to: order.user.email,
+      subject: `[${process.env.APP_NAME || 'MyShop'}] Xác nhận đơn hàng #${order.id}`,
+      html,
+    });
+    console.log(`[Mailer] Order confirmation sent to ${order.user.email} for order ${order.id}. Message ID: ${info.messageId}`);
+  } catch (err) {
+    // Không throw để tránh block luồng tạo đơn hàng
+    console.error('[Mailer] sendOrderConfirmationEmail failed:', err.message);
+  }
+};
+
 module.exports = {
   sendVerificationEmail,
   sendPasswordChangedEmail,
   sendPasswordResetEmail,
+  sendOrderConfirmationEmail,
 };

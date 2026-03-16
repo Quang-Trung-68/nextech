@@ -38,6 +38,8 @@ const CheckoutPageForm = () => {
   const [serverError, setServerError] = useState(null);
   const [stripeError, setStripeError] = useState(null);
 
+  const [pendingOrder, setPendingOrder] = useState(null);
+
   // Form config
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     resolver: zodResolver(checkoutSchema),
@@ -47,7 +49,6 @@ const CheckoutPageForm = () => {
         phone: user?.phone || '',
         addressLine: '',
         ward: '',
-        district: '',
         city: '',
       },
       paymentMethod: 'COD',
@@ -55,6 +56,11 @@ const CheckoutPageForm = () => {
   });
 
   const selectedMethod = watch('paymentMethod');
+
+  // Reset pending order if payment method changes
+  useEffect(() => {
+    setPendingOrder(null);
+  }, [selectedMethod]);
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -69,7 +75,6 @@ const CheckoutPageForm = () => {
           phone: data.shippingAddress.phone,
           addressLine: data.shippingAddress.addressLine,
           ward: data.shippingAddress.ward,
-          district: data.shippingAddress.district,
           city: data.shippingAddress.city
         }
       };
@@ -80,14 +85,19 @@ const CheckoutPageForm = () => {
         }
         const cardElement = elements.getElement(CardElement);
 
-        // 1. Tạo đơn chờ xử lý
-        const response = await createOrder(orderData);
-        if (!response.success || !response.clientSecret) {
-          throw new Error(response.message || 'Lỗi thiết lập thanh toán.');
-        }
+        let clientSecret = pendingOrder?.clientSecret;
+        let orderId = pendingOrder?.orderId;
 
-        const { clientSecret, order } = response;
-        const orderId = order.id;
+        if (!clientSecret || !orderId) {
+          // 1. Tạo đơn chờ xử lý
+          const response = await createOrder(orderData);
+          if (!response.success || !response.clientSecret) {
+            throw new Error(response.message || 'Lỗi thiết lập thanh toán.');
+          }
+          clientSecret = response.clientSecret;
+          orderId = response.order.id;
+          setPendingOrder({ clientSecret, orderId });
+        }
 
         // 2. Stripe Confirm
         const { error: stripeConfirmErr, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
@@ -107,7 +117,7 @@ const CheckoutPageForm = () => {
         }
 
         if (paymentIntent && paymentIntent.status === 'succeeded') {
-           navigate(`/orders/${orderId}?success=true`, { replace: true });
+           navigate(`/profile/orders/${orderId}?success=true`, { replace: true });
         }
       } else {
         // COD
@@ -115,7 +125,7 @@ const CheckoutPageForm = () => {
         if (!response.success) {
            throw new Error(response.message || 'Đặt hàng thất bại.');
         }
-        navigate(`/orders/${response.order.id}?success=true`, { replace: true });
+        navigate(`/profile/orders/${response.order.id}?success=true`, { replace: true });
       }
     } catch (error) {
        console.error(error);

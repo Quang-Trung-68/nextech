@@ -28,9 +28,15 @@ const CartPage             = lazy(() => import('./pages/CartPage'));
 const CheckoutPage         = lazy(() => import('./pages/CheckoutPage'));
 const CheckoutSuccessPage  = lazy(() => import('./pages/CheckoutSuccessPage'));
 const CheckoutFailedPage   = lazy(() => import('./pages/CheckoutFailedPage'));
-const OrderListPage        = lazy(() => import('./pages/OrderListPage'));
+
 const OrderDetailPage      = lazy(() => import('./pages/OrderDetailPage'));
 const ChangePasswordPage   = lazy(() => import('./pages/ChangePasswordPage'));
+
+// ─── Profile — Lazy ──────────────────────────────────────────────────────────
+const ProfileLayout        = lazy(() => import('./pages/ProfileLayout'));
+const ProfileInfoPage      = lazy(() => import('./features/profile/pages/ProfileInfoPage'));
+const ProfileOrdersPage    = lazy(() => import('./features/profile/pages/ProfileOrdersPage'));
+const ProfileAddressesPage = lazy(() => import('./features/profile/pages/ProfileAddressesPage'));
 
 // ─── Admin (role = ADMIN) — Lazy ─────────────────────────────────────────────
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
@@ -87,12 +93,19 @@ function App() {
               <Route path="/checkout/success"   element={<CheckoutSuccessPage />} />
               <Route path="/checkout/failed"    element={<CheckoutFailedPage />} />
 
-              {/* Đơn hàng */}
-              <Route path="/orders"             element={<OrderListPage />} />
+              {/* Đơn hàng standalone */}
               <Route path="/orders/:id"         element={<OrderDetailPage />} />
 
-              {/* Profile — change-password cũng bị backend block bởi requireEmailVerified */}
+              {/* Đổi mật khẩu — standalone page (không có ProfileLayout sidebar) */}
               <Route path="/profile/change-password" element={<ChangePasswordPage />} />
+
+              {/* ── Profile với sidebar layout ────────────────────────── */}
+              <Route path="/profile" element={<ProfileLayout />}>
+                <Route index element={<ProfileInfoPage />} />
+                <Route path="orders" element={<ProfileOrdersPage />} />
+                <Route path="orders/:id" element={<OrderDetailPage />} />
+                <Route path="addresses" element={<ProfileAddressesPage />} />
+              </Route>
             </Route>
 
           </Route>

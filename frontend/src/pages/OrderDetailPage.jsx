@@ -81,7 +81,7 @@ const OrderDetailPage = () => {
         <p className="text-muted-foreground w-full max-w-sm mb-8">
           Đơn hàng này có thể không tồn tại hoặc bạn không có quyền truy cập.
         </p>
-        <Button onClick={() => navigate('/orders')} variant="outline" className="rounded-full px-8">
+        <Button onClick={() => navigate('/profile/orders')} variant="outline" className="rounded-full px-8">
           <ArrowLeft className="w-4 h-4 mr-2" /> Về danh sách đơn hàng
         </Button>
       </div>
@@ -109,7 +109,7 @@ const OrderDetailPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
              <Button asChild size="lg" className="rounded-full font-semibold shadow-sm px-8 h-12 bg-apple-blue hover:bg-apple-blue/90">
-               <Link to="/orders">Xem đơn hàng của tôi</Link>
+               <Link to="/profile/orders">Xem đơn hàng của tôi</Link>
              </Button>
              <Button asChild variant="outline" size="lg" className="rounded-full font-semibold px-8 h-12">
                <Link to="/">Tiếp tục mua sắm</Link>
@@ -225,8 +225,8 @@ const OrderDetailPage = () => {
               <p className="flex items-start gap-3 text-apple-secondary">
                 <MapPin className="w-4 h-4 mt-0.5 opacity-0" />
                 <span className="leading-relaxed">
-                  {shippingAddress.address}<br />
-                  {shippingAddress.city}
+                  {shippingAddress.addressLine}<br />
+                  {shippingAddress.ward}, {shippingAddress.city}
                 </span>
               </p>
             </div>
