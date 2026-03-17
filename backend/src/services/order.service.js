@@ -237,11 +237,18 @@ const cancelOrder = async (orderId, userId, reason) => {
 
 // ─── Admin: Danh sách tất cả đơn hàng ────────────────────────────────────────
 
-const getAllOrders = async ({ status, paymentStatus, userId, sortBy, sortOrder, page, limit }) => {
+const getAllOrders = async ({ status, paymentStatus, userId, sortBy, sortOrder, page, limit, search }) => {
   const where = {};
   if (status) where.status = status;
   if (paymentStatus) where.paymentStatus = paymentStatus;
   if (userId) where.userId = userId;
+  if (search) {
+    where.OR = [
+      { id: { contains: search, mode: 'insensitive' } },
+      { user: { name: { contains: search, mode: 'insensitive' } } },
+      { user: { email: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
 
   const skip = (page - 1) * limit;
 

@@ -1,18 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import usePageTitle from '../../hooks/usePageTitle';
+import { useDebounce } from '../../hooks/useDebounce';
 import { useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../features/admin/hooks/useAdmin';
 import { DataTable } from '../../features/admin/components/DataTable';
 import { ProductModal } from '../../features/admin/components/ProductModal';
 import { ConfirmDialog } from '../../features/admin/components/ConfirmDialog';
-import { CustomPagination } from '../../features/admin/components/CustomPagination';
 import { Button } from '../../components/ui/button';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from '../../lib/toast';
+import { formatCurrency } from '../../utils/formatCurrency';
+import { CustomPagination } from '@/features/admin/components/CustomPagination';
 
 const AdminProductPage = () => {
   usePageTitle('Quản lý Sản phẩm | Quản trị');
   
-  const [params, setParams] = useState({ page: 1, limit: 10, search: '' });
+  const [params, setParams] = useState({ page: 1, limit: 10, search: '', category: '' });
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  useEffect(() => {
+    setParams(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
+  }, [debouncedSearch]);
   
   const { data, isLoading } = useAdminProducts(params);
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
@@ -42,12 +50,24 @@ const AdminProductPage = () => {
     },
     {
       accessorKey: 'category',
-      header: 'Category',
+      header: () => (
+        <select
+          className="bg-transparent font-medium cursor-pointer focus:outline-none -ml-1"
+          value={params.category}
+          onChange={(e) => setParams(prev => ({ ...prev, category: e.target.value, page: 1 }))}
+        >
+          <option value="">Category (All)</option>
+          <option value="laptop">Laptop</option>
+          <option value="smartphone">Smartphone</option>
+          <option value="tablet">Tablet</option>
+          <option value="accessory">Accessory</option>
+        </select>
+      ),
     },
     {
       accessorKey: 'price',
       header: 'Price',
-      cell: ({ row }) => `$${row.original.price}`,
+      cell: ({ row }) => formatCurrency(row.original.price),
     },
     {
       accessorKey: 'stock',
@@ -138,8 +158,8 @@ const AdminProductPage = () => {
           type="text"
           placeholder="Search products..."
           className="border rounded-md px-3 py-2 w-full max-w-sm"
-          value={params.search}
-          onChange={(e) => setParams({ ...params, search: e.target.value, page: 1 })}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
         />
       </div>
 
@@ -149,11 +169,11 @@ const AdminProductPage = () => {
         <DataTable columns={columns} data={data?.products || []} />
       )}
 
-      {data?.totalPages > 1 && (
+      {data?.pagination?.totalPages > 1 && (
         <div className="mt-4 flex justify-end">
           <CustomPagination
             currentPage={params.page}
-            totalPages={data.totalPages}
+            totalPages={data.pagination.totalPages}
             onPageChange={(page) => setParams({ ...params, page })}
           />
         </div>

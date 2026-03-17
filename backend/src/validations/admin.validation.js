@@ -41,6 +41,7 @@ const adminProductParamsSchema = z.object({
 // ─── Admin Users ──────────────────────────────────────────────────────────────
 
 const adminUserQuerySchema = z.object({
+  search: z.string().trim().optional(),
   role: z.enum(['USER', 'ADMIN']).optional(),
   isActive: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
   sortBy: z.enum(['createdAt', 'name', 'email']).optional().default('createdAt'),

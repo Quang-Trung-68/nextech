@@ -59,6 +59,7 @@ const listMyOrdersQuerySchema = z.object({
     .enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
       errorMap: () => ({ message: 'Giá trị status không hợp lệ' }),
     })
+    .or(z.literal(''))
     .optional(),
   search: z.string().optional(),
   page: z.coerce.number().int().min(1).optional().default(1),
@@ -71,8 +72,10 @@ const listMyOrdersQuerySchema = z.object({
 const adminListOrdersQuerySchema = z.object({
   status: z
     .enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'])
+    .or(z.literal(''))
     .optional(),
-  paymentStatus: z.enum(['UNPAID', 'PAID', 'REFUNDED']).optional(),
+  paymentStatus: z.enum(['UNPAID', 'PAID', 'REFUNDED']).or(z.literal('')).optional(),
+  search: z.string().trim().optional(),
   userId: z.string().cuid('userId không hợp lệ').optional(),
   sortBy: z.enum(['createdAt', 'updatedAt', 'totalAmount']).optional().default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),

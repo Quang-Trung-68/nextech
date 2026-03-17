@@ -19,10 +19,16 @@ const USER_SELECT = {
 /**
  * Admin: Danh sách users với phân trang + filter
  */
-const getUsers = async ({ role, isActive, sortBy, sortOrder, page, limit }) => {
+const getUsers = async ({ role, isActive, sortBy, sortOrder, page, limit, search }) => {
   const where = {};
   if (role !== undefined) where.role = role;
   if (isActive !== undefined) where.isActive = isActive;
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+    ];
+  }
 
   const skip = (page - 1) * limit;
 
