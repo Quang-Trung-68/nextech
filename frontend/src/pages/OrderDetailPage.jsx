@@ -38,7 +38,7 @@ const OrderDetailPage = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   
-  usePageTitle(isSuccessPage ? 'Đặt hàng thành công' : `Chi tiết đơn hàng #${id.slice(-6).toUpperCase()}`);
+  usePageTitle(isSuccessPage ? 'Đặt hàng thành công' : `Chi tiết đơn hàng #${id.toUpperCase()}`);
 
   const { data: order, isLoading, isError } = useOrder(id);
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
@@ -104,7 +104,7 @@ const OrderDetailPage = () => {
             Cảm ơn bạn đã đặt hàng!
           </h1>
           <p className="text-apple-secondary text-base lg:text-lg w-full max-w-xl mb-8 leading-relaxed">
-            Đơn hàng <span className="font-bold text-apple-dark">#{id.slice(-8).toUpperCase()}</span> của bạn đã được tiếp nhận và xử lý. 
+            Đơn hàng <span className="font-bold text-apple-dark font-mono tracking-tight">#{id.toUpperCase()}</span> của bạn đã được tiếp nhận và xử lý. 
             Chúng tôi sẽ cập nhật trạng thái đơn hàng qua email cho bạn.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -126,8 +126,8 @@ const OrderDetailPage = () => {
               <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full -ml-2 text-muted-foreground w-8 h-8">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-apple-dark tracking-tight shrink-0">
-                Đơn hàng #{id.slice(-6).toUpperCase()}
+              <h1 className="text-2xl md:text-3xl font-extrabold text-apple-dark tracking-tight shrink-0 font-mono">
+                Đơn hàng #{id.toUpperCase()}
               </h1>
             </div>
             <div className="flex items-center text-sm text-apple-secondary ml-10 gap-4">
@@ -185,7 +185,7 @@ const OrderDetailPage = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-xl font-bold text-apple-dark">Xác nhận huỷ đơn</AlertDialogTitle>
                     <AlertDialogDescription className="text-base text-apple-secondary mt-2">
-                      Bạn có chắc chắn muốn huỷ đơn hàng <b>#{id.slice(-6).toUpperCase()}</b> này không? 
+                      Bạn có chắc chắn muốn huỷ đơn hàng <b className="font-mono tracking-tight">#{id.toUpperCase()}</b> này không? 
                       Sẽ không thể hoàn tác sau khi xác nhận.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -223,7 +223,7 @@ const OrderDetailPage = () => {
                 <span>{shippingAddress.phone}</span>
               </p>
               <p className="flex items-start gap-3 text-apple-secondary">
-                <MapPin className="w-4 h-4 mt-0.5 opacity-0" />
+                <MapPin className="w-4 h-4 mt-0.5" />
                 <span className="leading-relaxed">
                   {shippingAddress.addressLine}<br />
                   {shippingAddress.ward}, {shippingAddress.city}

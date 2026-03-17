@@ -97,7 +97,10 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   // COD: trả về luôn
   if (paymentMethod === 'COD') {
     // Chờ gửi email (để đảm bảo không bị Node ngắt khi response return quá tốc độ)
-    await mailer.sendOrderConfirmationEmail(order);
+    // Fire-and-forget: gửi email xác nhận không block luồng trả response
+    mailer.sendOrderConfirmationEmail(order).catch((err) =>
+      console.error('[Mailer] COD confirmation email failed:', err.message)
+    );
     return { order };
   }
 
@@ -139,9 +142,10 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
 
 // ─── User: Lịch sử đơn hàng (phân trang + filter) ───────────────────────────
 
-const getMyOrders = async (userId, { status, page, limit }) => {
+const getMyOrders = async (userId, { status, search, page, limit }) => {
   const where = { userId };
   if (status) where.status = status;
+  if (search) where.id = { contains: search };
 
   const skip = (page - 1) * limit;
 

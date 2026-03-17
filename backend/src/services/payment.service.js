@@ -65,8 +65,10 @@ const handleWebhookEvent = async (rawBody, signature) => {
 
       console.log(`[Webhook] Payment succeeded for order ${order.id}`);
       
-      // Send order confirmation email asynchronously
-      await mailer.sendOrderConfirmationEmail(updatedOrder);
+      // Fire-and-forget: không block Stripe webhook response
+      mailer.sendOrderConfirmationEmail(updatedOrder).catch((err) =>
+        console.error('[Mailer] Stripe confirmation email failed:', err.message)
+      );
       
       break;
     }

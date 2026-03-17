@@ -23,6 +23,9 @@ const createAddressSchema = z.object({
   address: z
     .string({ required_error: 'Địa chỉ là bắt buộc.' })
     .min(5, 'Địa chỉ phải có ít nhất 5 ký tự.'),
+  ward: z
+    .string({ required_error: 'Xã, phường là bắt buộc.' })
+    .min(2, 'Xã/Phường phải có ít nhất 2 ký tự.'),
   city: z
     .string({ required_error: 'Thành phố là bắt buộc.' })
     .min(2, 'Thành phố phải có ít nhất 2 ký tự.'),

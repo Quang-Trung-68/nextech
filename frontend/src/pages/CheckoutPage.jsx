@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import usePageTitle from '../hooks/usePageTitle';
 import useAuthStore from '../stores/useAuthStore';
@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { checkoutSchema } from '../features/checkout/schemas/checkoutSchema';
 import { ShippingForm } from '../features/checkout/components/ShippingForm';
+import { AddressPicker } from '../features/checkout/components/AddressPicker';
 import { PaymentMethodSelector } from '../features/checkout/components/PaymentMethodSelector';
 import { StripeCardInput } from '../features/checkout/components/StripeCardInput';
 import { CheckoutSummary } from '../features/checkout/components/CheckoutSummary';
@@ -41,7 +42,7 @@ const CheckoutPageForm = () => {
   const [pendingOrder, setPendingOrder] = useState(null);
 
   // Form config
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       shippingAddress: {
@@ -54,6 +55,15 @@ const CheckoutPageForm = () => {
       paymentMethod: 'COD',
     },
   });
+
+  // Fill shipping form when an address is selected from picker
+  const handleAddressSelect = useCallback((addr) => {
+    setValue('shippingAddress.fullName', addr.fullName);
+    setValue('shippingAddress.phone', addr.phone);
+    setValue('shippingAddress.addressLine', addr.addressLine);
+    setValue('shippingAddress.ward', addr.ward);
+    setValue('shippingAddress.city', addr.city);
+  }, [setValue]);
 
   const selectedMethod = watch('paymentMethod');
 
@@ -125,7 +135,7 @@ const CheckoutPageForm = () => {
         if (!response.success) {
            throw new Error(response.message || 'Đặt hàng thất bại.');
         }
-        navigate(`/profile/orders/${response.order.id}?success=true`, { replace: true });
+        navigate(`/orders/${response.order.id}?success=true`, { replace: true });
       }
     } catch (error) {
        console.error(error);
@@ -161,6 +171,12 @@ const CheckoutPageForm = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-[7fr_5fr] gap-8 lg:gap-12 items-start">
         <div className="flex flex-col gap-6">
+          {/* Address Picker — select saved or add new */}
+          <div className="bg-white p-6 rounded-2xl border border-border">
+            <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Địa chỉ giao hàng</h2>
+            <AddressPicker onSelect={handleAddressSelect} currentUser={user} />
+          </div>
+
           <ShippingForm register={register} errors={errors} />
           <PaymentMethodSelector register={register} selectedMethod={selectedMethod} />
 

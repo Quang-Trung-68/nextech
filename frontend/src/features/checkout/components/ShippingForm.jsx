@@ -3,7 +3,7 @@ import { Input } from '../../../components/ui/input';
 export function ShippingForm({ register, errors }) {
   return (
     <div className="bg-white p-6 rounded-2xl border border-border space-y-4">
-      <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Thông tin giao hàng</h2>
+      <h2 className="text-base font-semibold tracking-tight text-foreground mb-4 text-apple-secondary">Xác nhận hoặc chỉnh sửa thông tin</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Full Name */}

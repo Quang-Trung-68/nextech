@@ -59,6 +59,7 @@ model Address {
   fullName  String
   phone     String
   address   String
+  ward      String   @default("")
   city      String
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())

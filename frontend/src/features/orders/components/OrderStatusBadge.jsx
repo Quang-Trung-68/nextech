@@ -4,8 +4,8 @@ import { Clock, Loader2, Truck, CheckCircle, XCircle } from 'lucide-react';
 export function OrderStatusBadge({ status }) {
   const statusConfig = {
     PENDING: {
-      label: 'Chờ xác nhận',
-      className: 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-none px-3 py-1',
+      label: 'Chờ xử lý',
+      className: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-none px-3 py-1',
       icon: Clock,
     },
     PROCESSING: {
@@ -14,18 +14,18 @@ export function OrderStatusBadge({ status }) {
       icon: Loader2,
     },
     SHIPPED: {
-      label: 'Đang giao hàng',
-      className: 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-none px-3 py-1',
+      label: 'Đang giao',
+      className: 'bg-orange-100 text-orange-700 hover:bg-orange-200 border-none px-3 py-1',
       icon: Truck,
     },
     DELIVERED: {
-      label: 'Đã giao thành công',
+      label: 'Đã giao',
       className: 'bg-green-100 text-green-700 hover:bg-green-200 border-none px-3 py-1',
       icon: CheckCircle,
     },
     CANCELLED: {
       label: 'Đã huỷ',
-      className: 'bg-red-100 text-red-700 hover:bg-red-200 border-none px-3 py-1 line-through',
+      className: 'bg-red-100 text-red-700 hover:bg-red-200 border-none px-3 py-1',
       icon: XCircle,
     },
   };

@@ -99,7 +99,7 @@ const getAddresses = async (req, res, next) => {
  */
 const createAddress = async (req, res, next) => {
   try {
-    const { fullName, phone, address, city, isDefault = false } = req.body;
+    const { fullName, phone, address, ward, city, isDefault = false } = req.body;
 
     // Giới hạn 5 địa chỉ
     const count = await prisma.address.count({ where: { userId: req.user.id } });
@@ -126,6 +126,7 @@ const createAddress = async (req, res, next) => {
         fullName,
         phone,
         address,
+        ward: ward || '',
         city,
         isDefault: shouldBeDefault,
       },
@@ -143,7 +144,7 @@ const createAddress = async (req, res, next) => {
 const updateAddress = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { fullName, phone, address, city, isDefault } = req.body;
+    const { fullName, phone, address, ward, city, isDefault } = req.body;
 
     const existing = await prisma.address.findFirst({
       where: { id, userId: req.user.id },
@@ -163,7 +164,7 @@ const updateAddress = async (req, res, next) => {
 
     const updated = await prisma.address.update({
       where: { id },
-      data: { fullName, phone, address, city, isDefault: isDefault ?? existing.isDefault },
+      data: { fullName, phone, address, ward: ward ?? existing.ward, city, isDefault: isDefault ?? existing.isDefault },
     });
 
     res.status(200).json({ success: true, address: updated });

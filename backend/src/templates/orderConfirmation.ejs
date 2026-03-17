@@ -56,7 +56,7 @@
                         </td>
                       </tr>
                       <tr>
-                        <td width="50%" style="vertical-align:top;">
+                        <td width="50%" style="padding-bottom:12px;vertical-align:top;">
                           <p style="margin:0 0 4px 0;color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Phương thức thanh toán</p>
                           <p style="margin:0;color:#1e293b;font-size:14px;font-weight:600;">
                             <%
@@ -69,11 +69,25 @@
                             <%= methodLabel[order.paymentMethod] || order.paymentMethod %>
                           </p>
                         </td>
-                        <td width="50%" style="vertical-align:top;">
+                        <td width="50%" style="padding-bottom:12px;vertical-align:top;">
+                          <p style="margin:0 0 4px 0;color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Trạng thái thanh toán</p>
+                          <p style="margin:0;color:#1e293b;font-size:14px;font-weight:600;">
+                            <% if (order.paymentStatus === 'PAID') { %>
+                              <span style="color:#16a34a;">✅ Đã thanh toán</span>
+                            <% } else if (order.paymentStatus === 'REFUNDED') { %>
+                              <span style="color:#dc2626;">Đã hoàn tiền</span>
+                            <% } else { %>
+                              <span style="color:#d97706;">⏳ Chưa thanh toán</span>
+                            <% } %>
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="vertical-align:top;">
                           <p style="margin:0 0 4px 0;color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Trạng thái đơn hàng</p>
                           <%
                             const statusMap = {
-                              PENDING:    { label: 'Chờ thanh toán',  color: '#d97706', bg: '#fef3c7' },
+                              PENDING:    { label: 'Chờ xử lý / Chờ thanh toán',  color: '#d97706', bg: '#fef3c7' },
                               PROCESSING: { label: 'Đang xử lý',      color: '#2563eb', bg: '#dbeafe' },
                               SHIPPED:    { label: 'Đang giao hàng',  color: '#7c3aed', bg: '#ede9fe' },
                               DELIVERED:  { label: 'Đã giao',         color: '#16a34a', bg: '#dcfce7' },
@@ -155,7 +169,7 @@
                   📍 <% if (typeof order.shippingAddress === 'string') { %>
                     <%= order.shippingAddress %>
                   <% } else { %>
-                    <%= order.shippingAddress.addressLine %>, <%= order.shippingAddress.ward %>, <%= order.shippingAddress.city %>
+                    <%= [order.shippingAddress.addressLine || order.shippingAddress.address, order.shippingAddress.ward, order.shippingAddress.city].filter(Boolean).join(', ') %>
                   <% } %>
                 </p>
               </div>
@@ -187,7 +201,7 @@
 
           <!-- CTA Button -->
           <tr>
-            <td style="padding:28px 40px 0 40px;text-align:center;">
+            <td style="padding:28px 40px 20px 40px;text-align:center;">
               <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
                 <tr>
                   <td style="background-color:#2563eb;border-radius:7px;">

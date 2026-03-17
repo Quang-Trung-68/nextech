@@ -16,7 +16,7 @@ import { useDeleteAddress, useSetDefaultAddress } from '../hooks/useAddressMutat
 import { toast } from 'sonner';
 
 const AddressCard = ({ address, totalCount, onEdit }) => {
-  const { id, fullName, phone, address: street, city, isDefault } = address;
+  const { id, fullName, phone, address: street, ward, city, isDefault } = address;
 
   const { mutate: deleteAddress, isPending: isDeleting } = useDeleteAddress();
   const { mutate: setDefault, isPending: isSettingDefault } = useSetDefaultAddress();
@@ -64,7 +64,7 @@ const AddressCard = ({ address, totalCount, onEdit }) => {
         <div className="flex items-start gap-2">
           <MapPin className="w-3.5 h-3.5 text-apple-secondary shrink-0 mt-0.5" />
           <span className="text-sm text-apple-secondary leading-relaxed">
-            {street}, {city}
+            {street}{ward ? `, ${ward}` : ''}, {city}
           </span>
         </div>
       </div>

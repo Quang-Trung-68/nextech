@@ -30,6 +30,7 @@ const addressSchema = z.object({
   fullName: z.string().min(2, 'Họ tên phải có ít nhất 2 ký tự.'),
   phone: z.string().regex(vnPhoneRegex, 'Số điện thoại không hợp lệ (10 số, bắt đầu 0).'),
   address: z.string().min(5, 'Địa chỉ phải có ít nhất 5 ký tự.'),
+  ward: z.string().min(2, 'Xã/Phường phải có ít nhất 2 ký tự.'),
   city: z.string().min(2, 'Thành phố phải có ít nhất 2 ký tự.'),
   isDefault: z.boolean().default(false),
 });
@@ -49,6 +50,7 @@ const AddressFormDialog = ({ open, onClose, editingAddress = null }) => {
       fullName: '',
       phone: '',
       address: '',
+      ward: '',
       city: '',
       isDefault: false,
     },
@@ -61,6 +63,7 @@ const AddressFormDialog = ({ open, onClose, editingAddress = null }) => {
         fullName: editingAddress.fullName || '',
         phone: editingAddress.phone || '',
         address: editingAddress.address || '',
+        ward: editingAddress.ward || '',
         city: editingAddress.city || '',
         isDefault: editingAddress.isDefault || false,
       });
@@ -69,6 +72,7 @@ const AddressFormDialog = ({ open, onClose, editingAddress = null }) => {
         fullName: '',
         phone: '',
         address: '',
+        ward: '',
         city: '',
         isDefault: false,
       });
@@ -95,6 +99,14 @@ const AddressFormDialog = ({ open, onClose, editingAddress = null }) => {
       createAddress(values, {
         onSuccess: () => {
           toast.success('Đã thêm địa chỉ mới.');
+          form.reset({
+            fullName: '',
+            phone: '',
+            address: '',
+            ward: '',
+            city: '',
+            isDefault: false,
+          });
           onClose();
         },
         onError: (err) => toast.error(err.response?.data?.message || 'Không thể thêm địa chỉ.'),
@@ -149,6 +161,20 @@ const AddressFormDialog = ({ open, onClose, editingAddress = null }) => {
                   <FormLabel>Địa chỉ (số nhà, tên đường)</FormLabel>
                   <FormControl>
                     <Input placeholder="123 Đường Lê Lợi" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="ward"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Xã / Phường</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Phường Bến Nghé" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
