@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import usePageTitle from '../hooks/usePageTitle';
+import usePageTitle from '../../hooks/usePageTitle';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ShieldCheck, Clock, Award } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Button } from '../../components/ui/button';
 
 const HomePage = () => {
   usePageTitle(); // → "NexTech"

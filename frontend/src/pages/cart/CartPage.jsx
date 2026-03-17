@@ -1,12 +1,12 @@
-import usePageTitle from '../hooks/usePageTitle';
-import { useCart } from '../features/cart/hooks/useCart';
-import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '../features/cart/hooks/useCartMutations';
-import { CartItem } from '../features/cart/components/CartItem';
-import { CartSummary } from '../features/cart/components/CartSummary';
-import { CartSkeleton } from '../features/cart/components/CartSkeleton';
-import { EmptyCart } from '../features/cart/components/EmptyCart';
+import usePageTitle from '../../hooks/usePageTitle';
+import { useCart } from '../../features/cart/hooks/useCart';
+import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '../../features/cart/hooks/useCartMutations';
+import { CartItem } from '../../features/cart/components/CartItem';
+import { CartSummary } from '../../features/cart/components/CartSummary';
+import { CartSkeleton } from '../../features/cart/components/CartSkeleton';
+import { EmptyCart } from '../../features/cart/components/EmptyCart';
 import { Package, RefreshCcw } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Button } from '../../components/ui/button';
 
 const CartPage = () => {
   usePageTitle('Giỏ hàng'); // → "Giỏ hàng | NexTech"

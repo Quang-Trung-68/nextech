@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerifiedRoute from './components/VerifiedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -9,40 +9,40 @@ import LoadingSkeleton from './components/LoadingSkeleton';
 import ScrollToTop from './components/ScrollToTop';
 
 // ─── Nhóm 1 Public — Loaded normally (small, critical pages) ─────────────────
-import HomePage from './pages/HomePage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ProductsPage from './pages/ProductsPage';
+import HomePage from './pages/home/HomePage';
+import ProductDetailPage from './pages/product/ProductDetailPage';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import ProductsPage from './pages/product/ProductsPage';
 
 // ─── Nhóm 1 Public — Auth extra (lazy) ───────────────────────────────────────
-const ForgotPasswordPage  = lazy(() => import('./pages/ForgotPasswordPage'));
-const ResetPasswordPage   = lazy(() => import('./pages/ResetPasswordPage'));
-const VerifyEmailPage     = lazy(() => import('./pages/VerifyEmailPage'));
+const ForgotPasswordPage  = lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage   = lazy(() => import('./pages/auth/ResetPasswordPage'));
+const VerifyEmailPage     = lazy(() => import('./pages/auth/VerifyEmailPage'));
 
 // ─── Nhóm 2 Login, chưa verify được ─────────────────────────────────────────
-const VerifyEmailNoticePage = lazy(() => import('./pages/VerifyEmailNoticePage'));
+const VerifyEmailNoticePage = lazy(() => import('./pages/auth/VerifyEmailNoticePage'));
 
 // ─── Nhóm 3 Login + Email Verified ───────────────────────────────────────────
-const CartPage             = lazy(() => import('./pages/CartPage'));
-const CheckoutPage         = lazy(() => import('./pages/CheckoutPage'));
-const CheckoutSuccessPage  = lazy(() => import('./pages/CheckoutSuccessPage'));
-const CheckoutFailedPage   = lazy(() => import('./pages/CheckoutFailedPage'));
+const CartPage             = lazy(() => import('./pages/cart/CartPage'));
+const CheckoutPage         = lazy(() => import('./pages/checkout/CheckoutPage'));
+const CheckoutSuccessPage  = lazy(() => import('./pages/checkout/CheckoutSuccessPage'));
+const CheckoutFailedPage   = lazy(() => import('./pages/checkout/CheckoutFailedPage'));
 
-const OrderDetailPage      = lazy(() => import('./pages/OrderDetailPage'));
-const ChangePasswordPage   = lazy(() => import('./pages/ChangePasswordPage'));
+const OrderDetailPage      = lazy(() => import('./pages/order/OrderDetailPage'));
+const ChangePasswordPage   = lazy(() => import('./pages/profile/ChangePasswordPage'));
 
 // ─── Profile — Lazy ──────────────────────────────────────────────────────────
-const ProfileLayout        = lazy(() => import('./pages/ProfileLayout'));
+const ProfileLayout        = lazy(() => import('./pages/profile/ProfileLayout'));
 const ProfileInfoPage      = lazy(() => import('./features/profile/pages/ProfileInfoPage'));
 const ProfileOrdersPage    = lazy(() => import('./features/profile/pages/ProfileOrdersPage'));
 const ProfileAddressesPage = lazy(() => import('./features/profile/pages/ProfileAddressesPage'));
 
 // ─── Admin (role = ADMIN) — Lazy ─────────────────────────────────────────────
-const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
-const AdminProductPage   = lazy(() => import('./pages/AdminProductPage'));
-const AdminOrderPage     = lazy(() => import('./pages/AdminOrderPage'));
-const AdminUserPage      = lazy(() => import('./pages/AdminUserPage'));
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminProductPage   = lazy(() => import('./pages/admin/AdminProductPage'));
+const AdminOrderPage     = lazy(() => import('./pages/admin/AdminOrderPage'));
+const AdminUserPage      = lazy(() => import('./pages/admin/AdminUserPage'));
 
 function App() {
   return (
@@ -117,7 +117,8 @@ function App() {
           ================================================================ */}
           <Route path="/admin" element={<AdminRoute />}>
             <Route element={<AdminLayout />}>
-              <Route index             element={<AdminDashboardPage />} />
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview"   element={<AdminDashboardPage />} />
               <Route path="products"   element={<AdminProductPage />} />
               <Route path="orders"     element={<AdminOrderPage />} />
               <Route path="users"      element={<AdminUserPage />} />

@@ -49,8 +49,8 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
     totalAmount += Number(item.price) * item.quantity;
   }
 
-  // COD → PROCESSING ngay, STRIPE → PENDING chờ webhook
-  const initialStatus = paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING';
+  // COD,STRIPE → PENDING chờ xử lý
+  const initialStatus = 'PENDING';
 
   // $transaction: tạo Order + cắt stock + xoá Cart (nếu không phải STRIPE)
   const transactionItems = [

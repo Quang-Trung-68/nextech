@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
-import usePageTitle from '../hooks/usePageTitle';
+import usePageTitle from '../../hooks/usePageTitle';
 import { useQueryClient } from '@tanstack/react-query';
-import { useOrder, useCancelOrder } from '../features/orders/hooks/useOrder';
-import { OrderStatusBadge } from '../features/orders/components/OrderStatusBadge';
-import { formatCurrency } from '../utils/formatCurrency';
-import { Button } from '../components/ui/button';
-import { Skeleton } from '../components/ui/skeleton';
+import { useOrder, useCancelOrder } from '../../features/orders/hooks/useOrder';
+import { OrderStatusBadge } from '../../features/orders/components/OrderStatusBadge';
+import { formatCurrency } from '../../utils/formatCurrency';
+import { Button } from '../../components/ui/button';
+import { Skeleton } from '../../components/ui/skeleton';
 import { 
   CheckCircle2, 
   MapPin, 
@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../components/ui/alert-dialog";
+} from '../../components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 const OrderDetailPage = () => {

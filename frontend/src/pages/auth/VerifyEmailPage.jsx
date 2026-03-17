@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import usePageTitle from '../hooks/usePageTitle';
+import usePageTitle from '../../hooks/usePageTitle';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, XCircle, Loader2, RefreshCw, Clock, Home } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { useSendVerificationEmail } from '../features/auth/hooks/useAuth';
-import useAuthStore from '../stores/useAuthStore';
-import axiosInstance from '../lib/axios';
+import { Button } from '../../components/ui/button';
+import { useSendVerificationEmail } from '../../features/auth/hooks/useAuth';
+import useAuthStore from '../../stores/useAuthStore';
+import axiosInstance from '../../lib/axios';
 
 const COOLDOWN_SECONDS = 60;
 

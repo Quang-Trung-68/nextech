@@ -1,22 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import usePageTitle from '../hooks/usePageTitle';
-import useAuthStore from '../stores/useAuthStore';
-import { useCart } from '../features/cart/hooks/useCart';
-import { useCreateOrder } from '../features/checkout/hooks/useCreateOrder';
+import usePageTitle from '../../hooks/usePageTitle';
+import useAuthStore from '../../stores/useAuthStore';
+import { useCart } from '../../features/cart/hooks/useCart';
+import { useCreateOrder } from '../../features/checkout/hooks/useCreateOrder';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { stripePromise } from '../lib/stripe';
+import { stripePromise } from '../../lib/stripe';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { checkoutSchema } from '../features/checkout/schemas/checkoutSchema';
-import { ShippingForm } from '../features/checkout/components/ShippingForm';
-import { AddressPicker } from '../features/checkout/components/AddressPicker';
-import { PaymentMethodSelector } from '../features/checkout/components/PaymentMethodSelector';
-import { StripeCardInput } from '../features/checkout/components/StripeCardInput';
-import { CheckoutSummary } from '../features/checkout/components/CheckoutSummary';
-import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { checkoutSchema } from '../../features/checkout/schemas/checkoutSchema';
+import { ShippingForm } from '../../features/checkout/components/ShippingForm';
+import { AddressPicker } from '../../features/checkout/components/AddressPicker';
+import { PaymentMethodSelector } from '../../features/checkout/components/PaymentMethodSelector';
+import { StripeCardInput } from '../../features/checkout/components/StripeCardInput';
+import { CheckoutSummary } from '../../features/checkout/components/CheckoutSummary';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { AlertCircle, Lock } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Button } from '../../components/ui/button';
 
 const CheckoutPageForm = () => {
   const navigate = useNavigate();

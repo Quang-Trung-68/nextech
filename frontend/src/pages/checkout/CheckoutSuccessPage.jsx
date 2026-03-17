@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import usePageTitle from '../hooks/usePageTitle';
+import usePageTitle from '../../hooks/usePageTitle';
 
 const CheckoutSuccessPage = () => {
   usePageTitle('Đặt hàng thành công');

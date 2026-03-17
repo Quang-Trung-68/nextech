@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import usePageTitle from '../hooks/usePageTitle';
+import usePageTitle from '../../hooks/usePageTitle';
 import { Link } from 'react-router-dom';
 import { MailCheck, Clock, ShoppingBag, RefreshCw } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { useSendVerificationEmail } from '../features/auth/hooks/useAuth';
-import useAuthStore from '../stores/useAuthStore';
+import { Button } from '../../components/ui/button';
+import { useSendVerificationEmail } from '../../features/auth/hooks/useAuth';
+import useAuthStore from '../../stores/useAuthStore';
 
 const COOLDOWN_SECONDS = 60;
 

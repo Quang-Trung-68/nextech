@@ -1,18 +1,18 @@
 import { Navigate } from 'react-router-dom';
-import usePageTitle from '../hooks/usePageTitle';
+import usePageTitle from '../../hooks/usePageTitle';
 import { ShoppingBag } from 'lucide-react';
-import useAuthStore from '../stores/useAuthStore';
+import useAuthStore from '../../stores/useAuthStore';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../components/ui/card';
-import RegisterForm from '../features/auth/components/RegisterForm';
+} from '../../components/ui/card';
+import LoginForm from '../../features/auth/components/LoginForm';
 
-const RegisterPage = () => {
-  usePageTitle('Đăng ký');
+const LoginPage = () => {
+  usePageTitle('Đăng nhập');
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   // Nếu đã đăng nhập → redirect về trang chủ ngay
@@ -32,20 +32,20 @@ const RegisterPage = () => {
             ShopNow
           </h1>
           <p className="text-sm text-muted-foreground">
-            Tạo tài khoản để bắt đầu mua sắm
+            Đăng nhập để tiếp tục mua sắm
           </p>
         </div>
 
         {/* ── Card wrapping the form ───────────────────────────────────── */}
         <Card className="shadow-lg">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Đăng ký</CardTitle>
+            <CardTitle className="text-lg">Đăng nhập</CardTitle>
             <CardDescription>
-              Điền thông tin bên dưới để tạo tài khoản mới
+              Nhập email và mật khẩu của bạn
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RegisterForm />
+            <LoginForm />
           </CardContent>
         </Card>
       </div>
@@ -53,4 +53,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default LoginPage;

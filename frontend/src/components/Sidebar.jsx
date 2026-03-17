@@ -3,7 +3,7 @@ import { cn } from '../lib/utils';
 
 const Sidebar = () => {
   const links = [
-    { name: 'Dashboard', to: '/admin' },
+    { name: 'Dashboard', to: '/admin/overview' },
     { name: 'Products', to: '/admin/products' },
     { name: 'Orders', to: '/admin/orders' },
     { name: 'Users', to: '/admin/users' },
@@ -19,7 +19,7 @@ const Sidebar = () => {
             to={link.to}
             // "end" prop: ngăn /admin match active khi đang ở /admin/products, /admin/orders,...
             // Chỉ cần đặt end=true cho route cha /admin (index route)
-            end={link.to === '/admin'}
+            end={link.to === '/admin/overview'}
             className={({ isActive }) =>
               cn(
                 'p-2 rounded-md text-sm font-medium transition-colors',

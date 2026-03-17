@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import usePageTitle from '../hooks/usePageTitle';
+import usePageTitle from '../../hooks/usePageTitle';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft, ChevronRight, CreditCard } from 'lucide-react';
-import { useProduct } from '../features/product/hooks/useProduct';
-import { useAddToCart } from '../features/cart/hooks/useCartMutations';
-import { ProductGallery } from '../features/product/components/ProductGallery';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
-import { Skeleton } from '../components/ui/skeleton';
-import { formatCurrency } from '../utils/formatCurrency';
-import useAuthStore from '../stores/useAuthStore';
+import { useProduct } from '../../features/product/hooks/useProduct';
+import { useAddToCart } from '../../features/cart/hooks/useCartMutations';
+import { ProductGallery } from '../../features/product/components/ProductGallery';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Badge } from '../../components/ui/badge';
+import { Skeleton } from '../../components/ui/skeleton';
+import { formatCurrency } from '../../utils/formatCurrency';
+import useAuthStore from '../../stores/useAuthStore';
 import { toast } from 'sonner';
 
 const CATEGORY_MAP = {
