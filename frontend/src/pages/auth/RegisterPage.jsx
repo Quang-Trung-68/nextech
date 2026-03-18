@@ -1,15 +1,15 @@
 import { Navigate } from 'react-router-dom';
-import usePageTitle from '../../hooks/usePageTitle';
+import usePageTitle from '@/hooks/usePageTitle';
 import { ShoppingBag } from 'lucide-react';
-import useAuthStore from '../../stores/useAuthStore';
+import useAuthStore from '@/stores/useAuthStore';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../../components/ui/card';
-import RegisterForm from '../../features/auth/components/RegisterForm';
+} from '@/components/ui/card';
+import RegisterForm from '@/features/auth/components/RegisterForm';
 
 const RegisterPage = () => {
   usePageTitle('Đăng ký');

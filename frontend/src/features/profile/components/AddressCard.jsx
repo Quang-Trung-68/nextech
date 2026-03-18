@@ -1,6 +1,6 @@
 import { MapPin, Phone, User, Star, Pencil, Trash2, Check } from 'lucide-react';
-import { Badge } from '../../../components/ui/badge';
-import { Button } from '../../../components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,8 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '../../../components/ui/alert-dialog';
-import { useDeleteAddress, useSetDefaultAddress } from '../hooks/useAddressMutations';
+} from '@/components/ui/alert-dialog';
+import { useDeleteAddress, useSetDefaultAddress } from '@/features/profile/hooks/useAddressMutations';
 import { toast } from 'sonner';
 
 const AddressCard = ({ address, totalCount, onEdit }) => {

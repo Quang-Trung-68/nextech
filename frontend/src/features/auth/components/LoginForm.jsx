@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
-import { loginSchema } from '../../../schemas/auth.schema';
-import { useLogin } from '../hooks/useAuth';
+import { loginSchema } from '@/schemas/auth.schema';
+import { useLogin } from '@/features/auth/hooks/useAuth';
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);

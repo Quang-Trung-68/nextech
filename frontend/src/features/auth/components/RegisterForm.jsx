@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus, AlertCircle } from 'lucide-react';
-import { registerSchema } from '../../../schemas/auth.schema';
-import { useRegister } from '../hooks/useAuth';
+import { registerSchema } from '@/schemas/auth.schema';
+import { useRegister } from '@/features/auth/hooks/useAuth';
 
 // ─── Password Strength Helpers ────────────────────────────────────────────────
 /**

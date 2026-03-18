@@ -1,8 +1,8 @@
 import { Fragment } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { ProductCard } from './ProductCard';
-import { ProductCardSkeleton } from './ProductCardSkeleton';
+import { Button } from '@/components/ui/button';
+import { ProductCard } from '@/features/product/components/ProductCard';
+import { ProductCardSkeleton } from '@/features/product/components/ProductCardSkeleton';
 
 export function ProductGrid({ data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage }) {
   console.log(data);

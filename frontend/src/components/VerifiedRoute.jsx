@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import useAuthStore from '../stores/useAuthStore';
+import useAuthStore from '@/stores/useAuthStore';
 
 /**
  * Nhóm 3 guard — Yêu cầu đã đăng nhập VÀ đã xác thực email.

@@ -30,7 +30,7 @@ model User {
   id                     String    @id @default(cuid())
   name                   String
   email                  String    @unique
-  password               String
+  password               String?
   phone                  String?
   avatar                 String?
   role                   Role      @default(USER)
@@ -41,13 +41,14 @@ model User {
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
-  orders             Order[]
-  reviews            Review[]
-  refreshTokens      RefreshToken[]
-  revokedTokens      RevokedToken[]
-  cart               Cart?
+  orders              Order[]
+  reviews             Review[]
+  refreshTokens       RefreshToken[]
+  revokedTokens       RevokedToken[]
+  cart                Cart?
   passwordResetTokens PasswordResetToken[]
-  addresses          Address[]
+  addresses           Address[]
+  oauthAccounts       OAuthAccount[]
 
   @@map("users")
 }
@@ -102,6 +103,20 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String   // 'google' | 'github' | 'facebook'
+  providerAccountId String   // ID do provider cấp (ví dụ: Google sub)
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("oauth_accounts")
 }
 
 model Product {
@@ -204,4 +219,19 @@ model CartItem {
 
   @@unique([cartId, productId])
   @@map("cart_items")
+}
+
+model FailedEmail {
+  id          Int       @id @default(autoincrement())
+  type        String
+  // Possible values: "VERIFY_EMAIL" | "RESET_PASSWORD" | "ORDER_CONFIRMATION" | "PASSWORD_CHANGED" | "ORDER_SHIPPED" | "ORDER_DELIVERED"
+  to          String
+  data        Json
+  attempts    Int       @default(0)
+  lastError   String?
+  status      String    @default("FAILED")
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  @@map("failed_emails")
 }

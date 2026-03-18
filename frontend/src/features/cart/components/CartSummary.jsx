@@ -1,5 +1,5 @@
-import { Button } from '../../../components/ui/button';
-import { formatCurrency } from '../../../utils/formatCurrency';
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { Link } from 'react-router-dom';
 import {
   AlertDialog,
@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../../../components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 
 export function CartSummary({ totalItems, totalPrice, onClearCart }) {
   return (

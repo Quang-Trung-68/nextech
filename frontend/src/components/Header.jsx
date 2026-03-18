@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Heart, User, ShoppingCart, Menu, X, LogOut, Package, Settings, ShieldCheck } from 'lucide-react';
-import useAuthStore from '../stores/useAuthStore';
-import { useCart } from '../features/cart/hooks/useCart';
-import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '../features/cart/hooks/useCartMutations';
-import { formatCurrency } from '../utils/formatCurrency';
+import useAuthStore from '@/stores/useAuthStore';
+import { useCart } from '@/features/cart/hooks/useCart';
+import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '@/features/cart/hooks/useCartMutations';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);

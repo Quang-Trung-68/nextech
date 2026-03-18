@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Package, ChevronRight, ChevronDown, Copy } from 'lucide-react';
-import { OrderStatusBadge } from '../../../features/orders/components/OrderStatusBadge';
-import { formatCurrency } from '../../../utils/formatCurrency';
-import { Button } from '../../../components/ui/button';
+import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
+import { formatCurrency } from '@/utils/formatCurrency';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,8 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '../../../components/ui/alert-dialog';
-import { useCancelOrder } from '../hooks/useCancelOrder';
+} from '@/components/ui/alert-dialog';
+import { useCancelOrder } from '@/features/profile/hooks/useCancelOrder';
 import { toast } from 'sonner';
 
 const OrderCard = ({ order, isExpanded, onToggle }) => {

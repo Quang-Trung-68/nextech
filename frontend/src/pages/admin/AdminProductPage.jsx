@@ -1,18 +1,25 @@
 import { useState, useEffect } from 'react';
-import usePageTitle from '../../hooks/usePageTitle';
-import { useDebounce } from '../../hooks/useDebounce';
-import { useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../features/admin/hooks/useAdmin';
-import { DataTable } from '../../features/admin/components/DataTable';
-import { ProductModal } from '../../features/admin/components/ProductModal';
-import { ConfirmDialog } from '../../features/admin/components/ConfirmDialog';
-import { Button } from '../../components/ui/button';
+import usePageTitle from '@/hooks/usePageTitle';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/features/admin/hooks/useAdmin';
+import { DataTable } from '@/features/admin/components/DataTable';
+import { ProductModal } from '@/features/admin/components/ProductModal';
+import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
+import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { toast } from '../../lib/toast';
-import { formatCurrency } from '../../utils/formatCurrency';
+import { toast } from '@/lib/toast';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { CustomPagination } from '@/features/admin/components/CustomPagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const AdminProductPage = () => {
-  usePageTitle('Quản lý Sản phẩm | Quản trị');
+  usePageTitle('Manage Products | Admin');
   
   const [params, setParams] = useState({ page: 1, limit: 10, search: '', category: '' });
   const [searchInput, setSearchInput] = useState('');
@@ -51,17 +58,24 @@ const AdminProductPage = () => {
     {
       accessorKey: 'category',
       header: () => (
-        <select
-          className="bg-transparent font-medium cursor-pointer focus:outline-none -ml-1"
-          value={params.category}
-          onChange={(e) => setParams(prev => ({ ...prev, category: e.target.value, page: 1 }))}
+        <Select
+          value={params.category || 'all'}
+          onValueChange={(value) => setParams((prev) => ({ ...prev, category: value !== 'all' ? value : '', page: 1 }))}
         >
-          <option value="">Category (All)</option>
-          <option value="laptop">Laptop</option>
-          <option value="smartphone">Smartphone</option>
-          <option value="tablet">Tablet</option>
-          <option value="accessory">Accessory</option>
-        </select>
+          <SelectTrigger className="w-[140px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
+            <SelectValue placeholder="Category (all)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Category (all)</SelectItem>
+            <SelectItem value="laptop">Laptop</SelectItem>
+            <SelectItem value="smartphone">Smartphone</SelectItem>
+            <SelectItem value="tablet">Tablet</SelectItem>
+            <SelectItem value="accessory">Accessory</SelectItem>
+          </SelectContent>
+        </Select>
+      ),
+      cell: ({ getValue }) => (
+        <span className="capitalize">{getValue()?.toLowerCase()}</span>
       ),
     },
     {

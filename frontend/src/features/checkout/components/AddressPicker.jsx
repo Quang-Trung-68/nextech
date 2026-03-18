@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, Plus, ChevronDown, Check, Loader2 } from 'lucide-react';
-import { useAddresses } from '../../profile/hooks/useAddresses';
-import { useCreateAddress } from '../../profile/hooks/useAddressMutations';
-import { Input } from '../../../components/ui/input';
-import { Button } from '../../../components/ui/button';
+import { useAddresses } from '@/features/profile/hooks/useAddresses';
+import { useCreateAddress } from '@/features/profile/hooks/useAddressMutations';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đơn hàng đang giao! 🚚</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background-color:#2563eb;padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">
+                <%= appName || 'NexTech' %>
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 40px 32px 40px;">
+              <h2 style="margin:0 0 16px 0;color:#1e293b;font-size:20px;font-weight:600;">
+                Đơn hàng của bạn đang trên đường vận chuyển! 🚚
+              </h2>
+              <p style="margin:0 0 12px 0;color:#475569;font-size:15px;line-height:1.6;">
+                Xin chào <strong style="color:#1e293b;"><%= user.name %></strong>,
+              </p>
+              <p style="margin:0 0 24px 0;color:#475569;font-size:15px;line-height:1.6;">
+                Đơn hàng của bạn đã được bàn giao cho đơn vị vận chuyển. Bạn có thể theo dõi hành trình đơn hàng bằng liên kết phía dưới.
+              </p>
+
+              <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:20px;margin-bottom:24px;">
+                <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
+                  Mã đơn hàng: <strong style="color:#1e293b;">#<%= String(order.id).slice(-8).toUpperCase() %></strong>
+                </p>
+                <p style="margin:0;font-size:14px;color:#64748b;">
+                  Trạng thái: 
+                  <span style="display:inline-block;background-color:#3b82f6;color:#ffffff;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">
+                    SHIPPED
+                  </span>
+                </p>
+              </div>
+
+              <h3 style="margin:0 0 12px 0;font-size:16px;color:#1e293b;">Chi tiết sản phẩm</h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-collapse:collapse;">
+                <% order.items.forEach(function(item) { %>
+                <tr>
+                  <td style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#475569;">
+                    <%= item.name %> <strong style="color:#1e293b;">x<%= item.quantity %></strong>
+                  </td>
+                  <td align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:bold;">
+                    <%= Number(item.price).toLocaleString('vi-VN') %> ₫
+                  </td>
+                </tr>
+                <% }); %>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="font-size:16px;color:#475569;font-weight:bold;">Tổng cộng:</td>
+                  <td align="right" style="font-size:18px;color:#2563eb;font-weight:bold;">
+                    <%= Number(order.totalAmount).toLocaleString('vi-VN') %> ₫
+                  </td>
+                </tr>
+              </table>
+
+              <h3 style="margin:0 0 8px 0;font-size:16px;color:#1e293b;">Địa chỉ giao hàng</h3>
+              <p style="margin:0 0 24px 0;font-size:14px;color:#475569;line-height:1.6;">
+                <%= order.shippingAddress.fullName %><br/>
+                <%= order.shippingAddress.phone %><br/>
+                <%= order.shippingAddress.addressLine || order.shippingAddress.address %>, <%= order.shippingAddress.ward %>, <%= order.shippingAddress.city %>
+              </p>
+
+              <div style="text-align:center;margin-top:32px;">
+                <% if (order.trackingUrl) { %>
+                  <a href="<%= order.trackingUrl %>" style="display:inline-block;background-color:#2563eb;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:bold;font-size:14px;">
+                    Theo dõi đơn hàng
+                  </a>
+                <% } else { %>
+                  <p style="color:#64748b;font-size:14px;font-style:italic;background:#f1f5f9;padding:12px;border-radius:6px;">
+                    Thông tin vận chuyển sẽ sớm được cập nhật
+                  </p>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px;border-top:1px solid #e2e8f0;text-align:center;">
+              <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.5;">
+                © <%= new Date().getFullYear() %> <%= appName || 'NexTech' %>. Mọi bản quyền được bảo lưu.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

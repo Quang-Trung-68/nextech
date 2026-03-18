@@ -1,7 +1,7 @@
 const prisma = require('../utils/prisma');
 const cartService = require('./cart.service');
 const paymentService = require('./payment.service');
-const mailer = require('../utils/mailer');
+const emailJob = require('../jobs/emailJob');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -98,9 +98,7 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   if (paymentMethod === 'COD') {
     // Chờ gửi email (để đảm bảo không bị Node ngắt khi response return quá tốc độ)
     // Fire-and-forget: gửi email xác nhận không block luồng trả response
-    mailer.sendOrderConfirmationEmail(order).catch((err) =>
-      console.error('[Mailer] COD confirmation email failed:', err.message)
-    );
+    emailJob.dispatchOrderConfirmationEmail(order.user.email, { name: order.user.name, order });
     return { order };
   }
 
@@ -312,11 +310,37 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
     );
   }
 
-  return prisma.order.update({
+  const updatedOrder = await prisma.order.update({
     where: { id: orderId },
     data: { status: newStatus },
     include: ORDER_DETAIL_INCLUDE,
   });
+
+  if (newStatus === 'SHIPPED') {
+    emailJob.dispatchOrderShippedEmail(updatedOrder.user.email, {
+      user: { name: updatedOrder.user.name },
+      order: {
+        id: updatedOrder.id,
+        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price })),
+        totalAmount: updatedOrder.totalAmount,
+        shippingAddress: updatedOrder.shippingAddress,
+        trackingUrl: updatedOrder.trackingUrl ?? null
+      }
+    });
+  } else if (newStatus === 'DELIVERED') {
+    emailJob.dispatchOrderDeliveredEmail(updatedOrder.user.email, {
+      user: { name: updatedOrder.user.name },
+      order: {
+        id: updatedOrder.id,
+        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price })),
+        totalAmount: updatedOrder.totalAmount,
+        shippingAddress: updatedOrder.shippingAddress,
+        trackingUrl: updatedOrder.trackingUrl ?? null
+      }
+    });
+  }
+
+  return updatedOrder;
 };
 
 // ─── Admin: Chi tiết đơn (bất kỳ) ────────────────────────────────────────────

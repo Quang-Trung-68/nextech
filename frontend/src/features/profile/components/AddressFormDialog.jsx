@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '../../../components/ui/dialog';
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -17,11 +17,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '../../../components/ui/form';
-import { Input } from '../../../components/ui/input';
-import { Button } from '../../../components/ui/button';
-import { Checkbox } from '../../../components/ui/checkbox';
-import { useCreateAddress, useUpdateAddress } from '../hooks/useAddressMutations';
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useCreateAddress, useUpdateAddress } from '@/features/profile/hooks/useAddressMutations';
 import { toast } from 'sonner';
 
 const vnPhoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;

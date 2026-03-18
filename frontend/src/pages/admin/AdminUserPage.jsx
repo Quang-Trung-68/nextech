@@ -1,17 +1,17 @@
 import { useState,useEffect } from 'react';
-import usePageTitle from '../../hooks/usePageTitle';
-import { useAdminUsers, useToggleUserStatus } from '../../features/admin/hooks/useAdmin';
-import { DataTable } from '../../features/admin/components/DataTable';
-import { CustomPagination } from '../../features/admin/components/CustomPagination';
-import { StatusBadge } from '../../features/admin/components/StatusBadge';
-import { ConfirmDialog } from '../../features/admin/components/ConfirmDialog';
-import { Button } from '../../components/ui/button';
-import { toast } from '../../lib/toast';
-import { useDebounce } from '../../hooks/useDebounce';
-import useAuthStore from '../../stores/useAuthStore';
+import usePageTitle from '@/hooks/usePageTitle';
+import { useAdminUsers, useToggleUserStatus } from '@/features/admin/hooks/useAdmin';
+import { DataTable } from '@/features/admin/components/DataTable';
+import { CustomPagination } from '@/features/admin/components/CustomPagination';
+import { StatusBadge } from '@/features/admin/components/StatusBadge';
+import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/lib/toast';
+import { useDebounce } from '@/hooks/useDebounce';
+import useAuthStore from '@/stores/useAuthStore';
 
 const AdminUserPage = () => {
-  usePageTitle('Quản lý Người dùng | Quản trị');
+  usePageTitle('Manage Users | Admin');
 
   const currentUser = useAuthStore((s) => s.user);
   const [params, setParams] = useState({ page: 1, limit: 10, search: '' });

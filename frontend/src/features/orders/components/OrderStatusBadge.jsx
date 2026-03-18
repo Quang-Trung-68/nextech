@@ -1,4 +1,4 @@
-import { Badge } from '../../../components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Clock, Loader2, Truck, CheckCircle, XCircle } from 'lucide-react';
 
 export function OrderStatusBadge({ status }) {

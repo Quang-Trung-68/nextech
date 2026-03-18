@@ -1,5 +1,5 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
-import { toast } from './toast';
+import { toast } from '@/lib/toast';
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({

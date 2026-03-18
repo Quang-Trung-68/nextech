@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import axiosInstance from '../../../lib/axios';
-import useAuthStore from '../../../stores/useAuthStore';
+import axiosInstance from '@/lib/axios';
+import useAuthStore from '@/stores/useAuthStore';
 
 export const useUploadAvatar = () => {
   const setUser = useAuthStore((s) => s.setUser);

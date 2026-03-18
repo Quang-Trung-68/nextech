@@ -19,6 +19,10 @@ const getPeriodStart = (period) => {
 
 const getOverviewStats = async (period = 'month') => {
   const periodStart = getPeriodStart(period);
+  
+  const currentYear = new Date().getFullYear();
+  const startOfYear = new Date(currentYear, 0, 1);
+  const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999);
 
   const [
     // 1. Tổng doanh thu trong period (chỉ PAID)
@@ -36,6 +40,18 @@ const getOverviewStats = async (period = 'month') => {
     // 7. Tổng đơn trong period (để tính tỉ lệ huỷ)
     totalOrdersInPeriod,
     cancelledOrdersInPeriod,
+    
+    // NEW: All-time metrics for Dashboard Cards
+    totalProducts,
+    totalUsersAllTime,
+    totalOrdersAllTime,
+    totalRevenueAllTimeResult,
+
+    // NEW: Latest 5 orders for Dashboard Table
+    latestOrders,
+
+    // NEW: Yearly paid orders for Monthly Revenue Chart
+    yearlyPaidOrders,
   ] = await Promise.all([
     // 1. Revenue trong period
     prisma.order.aggregate({
@@ -82,6 +98,43 @@ const getOverviewStats = async (period = 'month') => {
 
     // 8. Đơn bị huỷ trong period
     prisma.order.count({ where: { status: 'CANCELLED', createdAt: { gte: periodStart } } }),
+
+    // 9. Total Products
+    prisma.product.count(),
+
+    // 10. Total Users
+    prisma.user.count(),
+
+    // 11. Total Orders
+    prisma.order.count(),
+
+    // 12. Total Revenue (PAID)
+    prisma.order.aggregate({
+      where: { paymentStatus: 'PAID' },
+      _sum: { totalAmount: true },
+    }),
+
+    // 13. Latest 5 Orders
+    prisma.order.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    }),
+
+    // 14. Yearly Paid Orders
+    prisma.order.findMany({
+      where: {
+        paymentStatus: 'PAID',
+        createdAt: {
+          gte: startOfYear,
+          lte: endOfYear,
+        },
+      },
+      select: {
+        totalAmount: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   // Gắn thêm thông tin product cho top 5
@@ -105,6 +158,19 @@ const getOverviewStats = async (period = 'month') => {
     totalOrdersInPeriod > 0
       ? ((cancelledOrdersInPeriod / totalOrdersInPeriod) * 100).toFixed(2)
       : '0.00';
+
+  // Process monthly revenue
+  const monthlyRevenue = Array.from({ length: 12 }, (_, i) => ({
+    month: `T${i + 1}`,
+    revenue: 0,
+  }));
+
+  yearlyPaidOrders.forEach((order) => {
+    const monthIndex = new Date(order.createdAt).getMonth(); // 0-based
+    if (order.totalAmount) {
+      monthlyRevenue[monthIndex].revenue += Number(order.totalAmount);
+    }
+  });
 
   return {
     period,
@@ -133,7 +199,74 @@ const getOverviewStats = async (period = 'month') => {
       total: r._sum.totalAmount || 0,
       orderCount: r._count.id,
     })),
+    // NEW METRICS
+    totalProducts,
+    totalUsersAllTime,
+    totalOrdersAllTime,
+    totalRevenueAllTime: totalRevenueAllTimeResult._sum.totalAmount || 0,
+    latestOrders,
+    monthlyRevenue,
   };
 };
 
-module.exports = { getOverviewStats };
+const getRevenueStats = async (year, monthStr) => {
+  const targetYear = parseInt(year);
+  
+  if (monthStr === 'all' || monthStr === 'All' || monthStr === 'Tất cả') {
+    // Trả về 12 tháng
+    const startOfYear = new Date(targetYear, 0, 1);
+    const endOfYear = new Date(targetYear, 11, 31, 23, 59, 59, 999);
+    
+    const yearlyPaidOrders = await prisma.order.findMany({
+      where: {
+        paymentStatus: 'PAID',
+        createdAt: { gte: startOfYear, lte: endOfYear },
+      },
+      select: { totalAmount: true, createdAt: true },
+    });
+    
+    const monthlyRevenue = Array.from({ length: 12 }, (_, i) => ({
+      month: `T${i + 1}`,
+      revenue: 0,
+    }));
+
+    yearlyPaidOrders.forEach((order) => {
+      const monthIndex = new Date(order.createdAt).getMonth();
+      if (order.totalAmount) {
+        monthlyRevenue[monthIndex].revenue += Number(order.totalAmount);
+      }
+    });
+    
+    return monthlyRevenue;
+  } else {
+    // Trả về theo ngày trong tháng
+    const targetMonth = parseInt(monthStr); // 1 - 12
+    const startOfMonth = new Date(targetYear, targetMonth - 1, 1);
+    const endOfMonth = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
+    const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+    
+    const monthlyPaidOrders = await prisma.order.findMany({
+      where: {
+        paymentStatus: 'PAID',
+        createdAt: { gte: startOfMonth, lte: endOfMonth },
+      },
+      select: { totalAmount: true, createdAt: true },
+    });
+    
+    const dailyRevenue = Array.from({ length: daysInMonth }, (_, i) => ({
+      month: `N${i + 1}`,
+      revenue: 0,
+    }));
+    
+    monthlyPaidOrders.forEach((order) => {
+      const dayIndex = new Date(order.createdAt).getDate() - 1;
+      if (order.totalAmount) {
+        dailyRevenue[dayIndex].revenue += Number(order.totalAmount);
+      }
+    });
+    
+    return dailyRevenue;
+  }
+};
+
+module.exports = { getOverviewStats, getRevenueStats };

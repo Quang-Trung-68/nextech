@@ -13,6 +13,17 @@ const getOverviewStats = async (req, res, next) => {
   }
 };
 
+const getRevenueStats = async (req, res, next) => {
+  try {
+    const { year, month } = req.query;
+    const data = await statsService.getRevenueStats(year, month);
+    res.status(200).json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // ─── Admin Products ───────────────────────────────────────────────────────────
 
 const getProducts = async (req, res, next) => {
@@ -96,6 +107,7 @@ const toggleUserStatus = async (req, res, next) => {
 
 module.exports = {
   getOverviewStats,
+  getRevenueStats,
   getProducts,
   getProductById,
   createProduct,

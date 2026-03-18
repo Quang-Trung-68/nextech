@@ -67,6 +67,15 @@ const login = async (email, password, meta) => {
 
   if (!user) throw authError;
 
+  // Guard: OAuth-only accounts have no password set
+  if (!user.password) {
+    const oauthError = new Error(
+      'Tài khoản này sử dụng đăng nhập qua mạng xã hội. Vui lòng dùng nút Đăng nhập với Google.'
+    );
+    oauthError.statusCode = 400;
+    throw oauthError;
+  }
+
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) throw authError;
 
@@ -181,7 +190,7 @@ const getMe = async (userId) => {
 // ─── Email Verification ───────────────────────────────────────────────────────
 
 const { generateToken, hashToken } = require('../utils/token');
-const { sendVerificationEmail, sendPasswordChangedEmail, sendPasswordResetEmail } = require('../utils/mailer');
+const emailJob = require('../jobs/emailJob');
 
 /**
  * Generate and persist a new email verification token, then email it to the user.
@@ -202,7 +211,7 @@ const sendEmailVerification = async (user) => {
   });
 
   const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${rawToken}`;
-  await sendVerificationEmail(user.email, user.name, verifyUrl);
+  emailJob.dispatchVerificationEmail(user.email, { name: user.name, verifyUrl });
 };
 
 /**
@@ -247,7 +256,26 @@ const verifyEmail = async (rawToken) => {
  * @param {object} user         — from req.user
  * @param {string} newPassword  — plain text (validated by Zod before reaching here)
  */
-const changePassword = async (user, newPassword) => {
+const changePassword = async (user, currentPassword, newPassword) => {
+  // Guard: OAuth-only accounts have no password — use "set password" flow instead
+  if (!user.password) {
+    const error = new Error(
+      'Tài khoản OAuth chưa có mật khẩu. Hãy dùng chức năng Đặt mật khẩu.'
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Verify current password before allowing change
+  if (currentPassword) {
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      const error = new Error('Mật khẩu hiện tại không đúng.');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   await prisma.$transaction([
@@ -261,7 +289,7 @@ const changePassword = async (user, newPassword) => {
   ]);
 
   // Fire-and-forget notification
-  await sendPasswordChangedEmail(user.email, user.name);
+  emailJob.dispatchPasswordChangedEmail(user.email, { name: user.name });
 };
 
 // ─── Forgot / Reset Password ──────────────────────────────────────────────────
@@ -294,7 +322,7 @@ const forgotPassword = async (email) => {
   ]);
 
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
-  await sendPasswordResetEmail(user.email, user.name, resetUrl);
+  emailJob.dispatchResetPasswordEmail(user.email, { name: user.name, resetUrl });
 };
 
 /**
@@ -345,7 +373,87 @@ const resetPassword = async (rawToken, newPassword) => {
   ]);
 
   // Fire-and-forget notification
-  await sendPasswordChangedEmail(tokenRecord.user.email, tokenRecord.user.name);
+  emailJob.dispatchPasswordChangedEmail(tokenRecord.user.email, { name: tokenRecord.user.name });
+};
+
+// ─── OAuth ────────────────────────────────────────────────────────────────────
+
+/**
+ * Find or create a user from an OAuth provider callback.
+ * Generic: works for any provider (google, github, facebook…).
+ *
+ * Logic:
+ *  STEP 1 — Lookup OAuthAccount by (provider + providerAccountId)
+ *           → Found: return the linked user immediately (happy path)
+ *  STEP 2 — Lookup User by email
+ *           → Found: link a new OAuthAccount to existing user
+ *           → Not found: create User (password=null) + OAuthAccount atomically
+ *
+ * @param {{ provider: string, providerAccountId: string, email: string, name: string }} params
+ * @returns {Promise<object>} Prisma User object
+ */
+const findOrCreateOAuthUser = async ({ provider, providerAccountId, email, name }) => {
+  // ── STEP 1: Find existing OAuthAccount ──────────────────────────────────────
+  const existingOAuth = await prisma.oAuthAccount.findUnique({
+    where: {
+      provider_providerAccountId: { provider, providerAccountId },
+    },
+    include: { user: true },
+  });
+
+  if (existingOAuth) {
+    return existingOAuth.user; // Happy path — user already linked
+  }
+
+  // ── STEP 2: No OAuthAccount yet — check by email ────────────────────────────
+  const existingUser = await prisma.user.findUnique({ where: { email } });
+
+  if (existingUser) {
+    // Auto-link: user registered manually before; Google has verified the email
+    await prisma.oAuthAccount.create({
+      data: {
+        userId: existingUser.id,
+        provider,
+        providerAccountId,
+      },
+    });
+
+    return existingUser;
+  }
+
+  // ── STEP 2b: Brand-new user — create User + OAuthAccount atomically ──────────
+  const [newUser] = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        name,
+        email,
+        password: null,       // OAuth users have no password
+        isEmailVerified: true, // Provider has already verified the email
+      },
+    });
+
+    await tx.oAuthAccount.create({
+      data: {
+        userId: user.id,
+        provider,
+        providerAccountId,
+      },
+    });
+
+    return [user];
+  });
+
+  return newUser;
+};
+
+/**
+ * Issue a fresh access + refresh token pair for an already-authenticated user.
+ * Reused by both login() and OAuth callback controllers.
+ * @param {object} user   Prisma User object
+ * @param {object} meta   { ipAddress, userAgent }
+ */
+const issueTokens = async (user, meta) => {
+  return _createTokenPair(user, meta);
 };
 
 module.exports = {
@@ -359,4 +467,6 @@ module.exports = {
   changePassword,
   forgotPassword,
   resetPassword,
+  findOrCreateOAuthUser,
+  issueTokens,
 };

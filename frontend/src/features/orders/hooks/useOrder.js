@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axiosInstance from '../../../lib/axios';
+import axiosInstance from '@/lib/axios';
 
 export const useOrder = (id) => {
   return useQuery({
@@ -17,11 +17,11 @@ export const useCancelOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id) => {
-      const { data } = await axiosInstance.delete(`/orders/${id}/cancel`);
+    mutationFn: async ({ id, reason }) => {
+      const { data } = await axiosInstance.patch(`/orders/${id}/cancel`, { reason });
       return data;
     },
-    onSuccess: (data, id) => {
+    onSuccess: (data, { id }) => {
       queryClient.invalidateQueries(['order', id]);
       queryClient.invalidateQueries(['orders']); // Nếu có trang List.
     },

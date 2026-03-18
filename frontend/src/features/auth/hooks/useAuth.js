@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axiosInstance from '../../../lib/axios';
-import useAuthStore from '../../../stores/useAuthStore';
-import { toast } from '../../../lib/toast';
+import axiosInstance from '@/lib/axios';
+import useAuthStore from '@/stores/useAuthStore';
+import { toast } from '@/lib/toast';
 
 // ─── useLogin ────────────────────────────────────────────────────────────────
 export function useLogin() {

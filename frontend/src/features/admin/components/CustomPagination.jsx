@@ -6,7 +6,7 @@ import {
   PaginationNext,
   PaginationPrevious,
   PaginationEllipsis,
-} from "../../../components/ui/pagination";
+} from "@/components/ui/pagination";
 
 export function CustomPagination({
   currentPage,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, X, ImageIcon } from 'lucide-react';
-import { Dialog, DialogContent } from '../../../components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 export function ProductGallery({ images = [], productName = 'Hình ảnh sản phẩm' }) {
   const [selectedIndex, setSelectedIndex] = useState(0);

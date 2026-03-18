@@ -1,5 +1,5 @@
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 export function EmptyCart() {

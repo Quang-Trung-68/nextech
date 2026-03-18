@@ -20,13 +20,14 @@ import {
   useQueryClient,
   keepPreviousData,
 } from '@tanstack/react-query';
-import axiosInstance from '../../../lib/axios';
+import axiosInstance from '@/lib/axios';
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
 export const adminKeys = {
   all: ['admin'],
   stats: () => [...adminKeys.all, 'stats'],
+  revenue: (year, month) => [...adminKeys.all, 'revenue', year, month],
   products: (params) => [...adminKeys.all, 'products', params],
   orders: (params) => [...adminKeys.all, 'orders', params],
   users: (params) => [...adminKeys.all, 'users', params],
@@ -43,6 +44,22 @@ export function useAdminStats(period = 'month') {
     queryFn: async () => {
       const { data } = await axiosInstance.get('/admin/stats/overview', {
         params: { period },
+      });
+      return data.data || data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 phút
+  });
+}
+
+/**
+ * GET /api/admin/stats/revenue?year={year}&month={month}
+ */
+export function useAdminRevenue(year, month) {
+  return useQuery({
+    queryKey: adminKeys.revenue(year, month),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get('/admin/stats/revenue', {
+        params: { year, month },
       });
       return data.data || data;
     },

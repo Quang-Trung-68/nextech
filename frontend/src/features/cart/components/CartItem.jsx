@@ -1,6 +1,6 @@
 import { Minus, Plus, Trash2 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,8 +11,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../../../components/ui/alert-dialog";
-import { formatCurrency } from '../../../utils/formatCurrency';
+} from "@/components/ui/alert-dialog";
+import { formatCurrency } from '@/utils/formatCurrency';
 import { Link } from 'react-router-dom';
 
 export function CartItem({ item, onUpdateQuantity, onRemove }) {

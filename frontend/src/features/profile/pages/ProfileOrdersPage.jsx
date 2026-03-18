@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import usePageTitle from '../../../hooks/usePageTitle';
-import { useProfileOrders } from '../hooks/useProfileOrders';
-import OrderCard from '../components/OrderCard';
-import OrderFilterTabs from '../components/OrderFilterTabs';
-import { Skeleton } from '../../../components/ui/skeleton';
-import { Button } from '../../../components/ui/button';
+import usePageTitle from '@/hooks/usePageTitle';
+import { useProfileOrders } from '@/features/profile/hooks/useProfileOrders';
+import OrderCard from '@/features/profile/components/OrderCard';
+import OrderFilterTabs from '@/features/profile/components/OrderFilterTabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 const STATUS_LABELS = {
   '': 'Bạn chưa có đơn hàng nào.',

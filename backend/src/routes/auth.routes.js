@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const passport = require('passport');
 const authController = require('../controllers/auth.controller');
 const { protect, requireEmailVerified } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
@@ -37,6 +38,23 @@ router.patch(
   requireEmailVerified,
   validate(changePasswordSchema),
   authController.changePassword
+);
+
+// ─── Google OAuth routes (NO protect middleware) ──────────────────────────────
+// Initiates the Google consent screen flow
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+// Google redirects back here after user consents
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=oauth_failed`,
+  }),
+  authController.googleCallback
 );
 
 module.exports = router;

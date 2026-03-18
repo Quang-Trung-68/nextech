@@ -1,9 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const passport = require('passport');
 const serverConfig = require('./src/configs/server.config');
 const errorHandler = require('./src/middleware/errorHandler');
 const paymentController = require('./src/controllers/payment.controller');
+require('./src/configs/passport.config'); // Register OAuth strategies (side-effect import)
+require('./src/jobs/scheduledEmailJob');
 
 const app = express();
 
@@ -25,6 +28,7 @@ app.post(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());  // Parse cookies — required for refresh token flow
+app.use(passport.initialize()); // Stateless Passport — NO passport.session()
 
 // Mount routes
 app.use('/api/auth', require('./src/routes/auth.routes'));
@@ -55,3 +59,4 @@ const PORT = serverConfig.port;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+

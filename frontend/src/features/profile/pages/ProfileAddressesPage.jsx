@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { MapPin, Plus, AlertCircle } from 'lucide-react';
-import usePageTitle from '../../../hooks/usePageTitle';
-import { useAddresses } from '../hooks/useAddresses';
-import AddressCard from '../components/AddressCard';
-import AddressFormDialog from '../components/AddressFormDialog';
-import { Button } from '../../../components/ui/button';
-import { Skeleton } from '../../../components/ui/skeleton';
+import usePageTitle from '@/hooks/usePageTitle';
+import { useAddresses } from '@/features/profile/hooks/useAddresses';
+import AddressCard from '@/features/profile/components/AddressCard';
+import AddressFormDialog from '@/features/profile/components/AddressFormDialog';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const MAX_ADDRESSES = 5;
 

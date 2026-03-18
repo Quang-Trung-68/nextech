@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import ProfileSidebar from '../../features/profile/components/ProfileSidebar';
+import ProfileSidebar from '@/features/profile/components/ProfileSidebar';
 
 const ProfileLayout = () => {
   return (

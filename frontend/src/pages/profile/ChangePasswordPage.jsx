@@ -1,20 +1,20 @@
 import { useState } from 'react';
-import usePageTitle from '../../hooks/usePageTitle';
+import usePageTitle from '@/hooks/usePageTitle';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ShoppingBag, Eye, EyeOff, Lock, Loader2 } from 'lucide-react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from '../../components/ui/card';
+} from '@/components/ui/card';
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
-} from '../../components/ui/form';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { changePasswordSchema } from '../../schemas/auth.schema';
-import { useChangePassword } from '../../features/auth/hooks/useAuth';
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { changePasswordSchema } from '@/schemas/auth.schema';
+import { useChangePassword } from '@/features/auth/hooks/useAuth';
 
 // ─── Password strength indicator ─────────────────────────────────────────────
 const getStrength = (password) => {

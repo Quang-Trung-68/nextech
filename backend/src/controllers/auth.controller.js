@@ -160,8 +160,8 @@ const verifyEmail = async (req, res, next) => {
  */
 const changePassword = async (req, res, next) => {
   try {
-    const { newPassword } = req.body;
-    await authService.changePassword(req.user, newPassword);
+    const { currentPassword, newPassword } = req.body;
+    await authService.changePassword(req.user, currentPassword, newPassword);
     res.status(200).json({
       success: true,
       message: 'Mật khẩu đã được thay đổi thành công. Vui lòng đăng nhập lại.',
@@ -208,6 +208,36 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+// ─── OAuth Callbacks ───────────────────────────────────────────────────
+
+/**
+ * GET /auth/google/callback (after Passport redirect)
+ * req.user is populated by passport.authenticate() before reaching here.
+ * Reuses the same cookie helpers as regular login — identical security config.
+ */
+const googleCallback = async (req, res) => {
+  try {
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+    if (!req.user) {
+      return res.redirect(`${clientUrl}/login?error=oauth_failed`);
+    }
+
+    const meta = _getMeta(req);
+    const { accessTokenData, refreshTokenData } = await authService.issueTokens(req.user, meta);
+
+    // Set cookies with IDENTICAL config to regular login
+    setAccessTokenCookie(res, accessTokenData.token, accessTokenData.expiresAt);
+    setRefreshTokenCookie(res, refreshTokenData.token, refreshTokenData.expiresAt);
+
+    // Redirect to the silent-hydration page on the frontend
+    return res.redirect(`${clientUrl}/oauth/callback?status=success`);
+  } catch (err) {
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    return res.redirect(`${clientUrl}/login?error=oauth_failed`);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -219,4 +249,5 @@ module.exports = {
   changePassword,
   forgotPassword,
   resetPassword,
+  googleCallback,
 };

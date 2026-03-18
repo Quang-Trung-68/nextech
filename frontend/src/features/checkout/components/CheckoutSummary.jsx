@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../../utils/formatCurrency';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 export function CheckoutSummary({ cartItems, totalItems, totalPrice }) {
   return (

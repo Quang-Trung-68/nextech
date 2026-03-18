@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useEffect } from 'react';
-import useAuthStore from '../stores/useAuthStore';
-import { toast } from '../lib/toast';
+import useAuthStore from '@/stores/useAuthStore';
+import { toast } from '@/lib/toast';
 
 const AdminRoute = () => {
     const { user, isAuthenticated } = useAuthStore();

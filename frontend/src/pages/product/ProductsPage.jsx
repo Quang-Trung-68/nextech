@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import usePageTitle from '../../hooks/usePageTitle';
+import usePageTitle from '@/hooks/usePageTitle';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import axiosInstance from '../../lib/axios';
+import axiosInstance from '@/lib/axios';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Heart, Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Badge } from '../../components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { useAddToCart } from '../../features/cart/hooks/useCartMutations';
-import useAuthStore from '../../stores/useAuthStore';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
+import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 

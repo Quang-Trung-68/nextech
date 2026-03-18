@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useProductFilters } from '../hooks/useProductFilters';
-import { useDebounce } from '../../../hooks/useDebounce';
-import { Label } from '../../../components/ui/label';
-import { Input } from '../../../components/ui/input';
+import { useProductFilters } from '@/features/product/hooks/useProductFilters';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../components/ui/select';
-import { Button } from '../../../components/ui/button';
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 
 export function FilterSidebar() {
   const { category, sort, search, setCategory, setSort, setSearch, resetFilters } =

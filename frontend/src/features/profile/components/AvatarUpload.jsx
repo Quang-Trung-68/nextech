@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Camera, Upload, X, Loader2 } from 'lucide-react';
-import { useUploadAvatar } from '../hooks/useUploadAvatar';
+import { useUploadAvatar } from '@/features/profile/hooks/useUploadAvatar';
 import { toast } from 'sonner';
 
 function getAvatarColor(userId = '') {

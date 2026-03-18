@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, User, Phone, Mail, CalendarDays, Shield } from 'lucide-react';
-import useAuthStore from '../../../stores/useAuthStore';
-import usePageTitle from '../../../hooks/usePageTitle';
-import AvatarUpload from '../components/AvatarUpload';
-import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import useAuthStore from '@/stores/useAuthStore';
+import usePageTitle from '@/hooks/usePageTitle';
+import AvatarUpload from '@/features/profile/components/AvatarUpload';
+import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
 import {
   Form,
   FormControl,
@@ -14,10 +14,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '../../../components/ui/form';
-import { Input } from '../../../components/ui/input';
-import { Button } from '../../../components/ui/button';
-import { Alert, AlertDescription } from '../../../components/ui/alert';
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
 const vnPhoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;

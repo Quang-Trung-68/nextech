@@ -1,11 +1,11 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Star, Image as ImageIcon, Heart, ShoppingCart } from 'lucide-react';
-import { Card, CardContent } from '../../../components/ui/card';
-import { Badge } from '../../../components/ui/badge';
-import { Button } from '../../../components/ui/button';
-import { formatCurrency } from '../../../utils/formatCurrency';
-import { useAddToCart } from '../../cart/hooks/useCartMutations';
-import useAuthStore from '../../../stores/useAuthStore';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/utils/formatCurrency';
+import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
+import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 
 export function ProductCard({ product }) {

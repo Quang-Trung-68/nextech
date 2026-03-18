@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import axiosInstance from '../../../lib/axios';
-import useAuthStore from '../../../stores/useAuthStore';
+import axiosInstance from '@/lib/axios';
+import useAuthStore from '@/stores/useAuthStore';
 
 export function useCart() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

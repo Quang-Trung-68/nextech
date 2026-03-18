@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { User, Package, MapPin, Lock, LogOut, ChevronRight } from 'lucide-react';
-import useAuthStore from '../../../stores/useAuthStore';
+import useAuthStore from '@/stores/useAuthStore';
 
 /** Generate a stable hue from userId for the avatar fallback background */
 function getAvatarColor(userId = '') {

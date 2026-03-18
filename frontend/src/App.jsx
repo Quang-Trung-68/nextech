@@ -1,48 +1,49 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
-import VerifiedRoute from './components/VerifiedRoute';
-import AdminRoute from './components/AdminRoute';
-import MainLayout from './components/MainLayout';
-import AdminLayout from './components/AdminLayout';
-import LoadingSkeleton from './components/LoadingSkeleton';
-import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import VerifiedRoute from '@/components/VerifiedRoute';
+import AdminRoute from '@/components/AdminRoute';
+import MainLayout from '@/components/MainLayout';
+import AdminLayout from '@/components/AdminLayout';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import ScrollToTop from '@/components/ScrollToTop';
 
 // ─── Nhóm 1 Public — Loaded normally (small, critical pages) ─────────────────
-import HomePage from './pages/home/HomePage';
-import ProductDetailPage from './pages/product/ProductDetailPage';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
-import ProductsPage from './pages/product/ProductsPage';
+import HomePage from '@/pages/home/HomePage';
+import ProductDetailPage from '@/pages/product/ProductDetailPage';
+import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
+import ProductsPage from '@/pages/product/ProductsPage';
 
 // ─── Nhóm 1 Public — Auth extra (lazy) ───────────────────────────────────────
-const ForgotPasswordPage  = lazy(() => import('./pages/auth/ForgotPasswordPage'));
-const ResetPasswordPage   = lazy(() => import('./pages/auth/ResetPasswordPage'));
-const VerifyEmailPage     = lazy(() => import('./pages/auth/VerifyEmailPage'));
+const ForgotPasswordPage  = lazy(() => import('@/pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage   = lazy(() => import('@/pages/auth/ResetPasswordPage'));
+const VerifyEmailPage     = lazy(() => import('@/pages/auth/VerifyEmailPage'));
+const OAuthCallbackPage   = lazy(() => import('@/pages/auth/OAuthCallbackPage'));
 
 // ─── Nhóm 2 Login, chưa verify được ─────────────────────────────────────────
-const VerifyEmailNoticePage = lazy(() => import('./pages/auth/VerifyEmailNoticePage'));
+const VerifyEmailNoticePage = lazy(() => import('@/pages/auth/VerifyEmailNoticePage'));
 
 // ─── Nhóm 3 Login + Email Verified ───────────────────────────────────────────
-const CartPage             = lazy(() => import('./pages/cart/CartPage'));
-const CheckoutPage         = lazy(() => import('./pages/checkout/CheckoutPage'));
-const CheckoutSuccessPage  = lazy(() => import('./pages/checkout/CheckoutSuccessPage'));
-const CheckoutFailedPage   = lazy(() => import('./pages/checkout/CheckoutFailedPage'));
+const CartPage             = lazy(() => import('@/pages/cart/CartPage'));
+const CheckoutPage         = lazy(() => import('@/pages/checkout/CheckoutPage'));
+const CheckoutSuccessPage  = lazy(() => import('@/pages/checkout/CheckoutSuccessPage'));
+const CheckoutFailedPage   = lazy(() => import('@/pages/checkout/CheckoutFailedPage'));
 
-const OrderDetailPage      = lazy(() => import('./pages/order/OrderDetailPage'));
-const ChangePasswordPage   = lazy(() => import('./pages/profile/ChangePasswordPage'));
+const OrderDetailPage      = lazy(() => import('@/pages/order/OrderDetailPage'));
+const ChangePasswordPage   = lazy(() => import('@/pages/profile/ChangePasswordPage'));
 
 // ─── Profile — Lazy ──────────────────────────────────────────────────────────
-const ProfileLayout        = lazy(() => import('./pages/profile/ProfileLayout'));
-const ProfileInfoPage      = lazy(() => import('./features/profile/pages/ProfileInfoPage'));
-const ProfileOrdersPage    = lazy(() => import('./features/profile/pages/ProfileOrdersPage'));
-const ProfileAddressesPage = lazy(() => import('./features/profile/pages/ProfileAddressesPage'));
+const ProfileLayout        = lazy(() => import('@/pages/profile/ProfileLayout'));
+const ProfileInfoPage      = lazy(() => import('@/features/profile/pages/ProfileInfoPage'));
+const ProfileOrdersPage    = lazy(() => import('@/features/profile/pages/ProfileOrdersPage'));
+const ProfileAddressesPage = lazy(() => import('@/features/profile/pages/ProfileAddressesPage'));
 
 // ─── Admin (role = ADMIN) — Lazy ─────────────────────────────────────────────
-const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'));
-const AdminProductPage   = lazy(() => import('./pages/admin/AdminProductPage'));
-const AdminOrderPage     = lazy(() => import('./pages/admin/AdminOrderPage'));
-const AdminUserPage      = lazy(() => import('./pages/admin/AdminUserPage'));
+const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
+const AdminProductPage   = lazy(() => import('@/pages/admin/AdminProductPage'));
+const AdminOrderPage     = lazy(() => import('@/pages/admin/AdminOrderPage'));
+const AdminUserPage      = lazy(() => import('@/pages/admin/AdminUserPage'));
 
 function App() {
   return (
@@ -71,6 +72,8 @@ function App() {
             <Route path="/reset-password"   element={<ResetPasswordPage />} />
             {/* /verify-email?token=... — public: user có thể mở trên thiết bị khác */}
             <Route path="/verify-email"     element={<VerifyEmailPage />} />
+            {/* /oauth/callback — public: backend redirects here after OAuth success */}
+            <Route path="/oauth/callback"   element={<OAuthCallbackPage />} />
 
             {/* ----------------------------------------------------------
                 NHÓM 2 — Login required, KHÔNG cần email verified

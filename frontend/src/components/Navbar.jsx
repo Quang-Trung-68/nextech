@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import useAuthStore from '../stores/useAuthStore';
+import useAuthStore from '@/stores/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
-import axiosInstance from '../lib/axios';
+import axiosInstance from '@/lib/axios';
 
 const Navbar = () => {
   const { isAuthenticated, user, clearAuth } = useAuthStore();

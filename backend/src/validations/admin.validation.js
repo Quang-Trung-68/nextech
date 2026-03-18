@@ -8,6 +8,11 @@ const statsQuerySchema = z.object({
   }).optional().default('month'),
 });
 
+const revenueQuerySchema = z.object({
+  year: z.coerce.number().int().min(2000).max(2100).optional().default(() => new Date().getFullYear()),
+  month: z.string().optional().default('Tất cả'),
+});
+
 // ─── Admin Products ───────────────────────────────────────────────────────────
 
 const adminProductQuerySchema = z.object({
@@ -61,6 +66,7 @@ const adminUserOrderQuerySchema = z.object({
 
 module.exports = {
   statsQuerySchema,
+  revenueQuerySchema,
   adminProductQuerySchema,
   adminCreateProductSchema,
   adminUpdateProductSchema,

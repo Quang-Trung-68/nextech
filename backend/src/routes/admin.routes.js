@@ -5,6 +5,7 @@ const { protect, restrictTo } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
 const {
   statsQuerySchema,
+  revenueQuerySchema,
   adminProductQuerySchema,
   adminCreateProductSchema,
   adminUpdateProductSchema,
@@ -24,6 +25,13 @@ router.get(
   '/stats/overview',
   validate(statsQuerySchema, 'query'),
   adminController.getOverviewStats
+);
+
+// GET /api/admin/stats/revenue?year=YYYY&month=MM|all
+router.get(
+  '/stats/revenue',
+  validate(revenueQuerySchema, 'query'),
+  adminController.getRevenueStats
 );
 
 // ─── Products ─────────────────────────────────────────────────────────────────

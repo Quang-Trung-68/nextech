@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react';
-import usePageTitle from '../../hooks/usePageTitle';
-import { useDebounce } from '../../hooks/useDebounce';
-import { useAdminOrders, useUpdateOrderStatus } from '../../features/admin/hooks/useAdmin';
-import { DataTable } from '../../features/admin/components/DataTable';
-import { CustomPagination } from '../../features/admin/components/CustomPagination';
-import { StatusBadge } from '../../features/admin/components/StatusBadge';
-import { Button } from '../../components/ui/button';
-import { toast } from '../../lib/toast';
-import { formatCurrency } from '../../utils/formatCurrency';
+import usePageTitle from '@/hooks/usePageTitle';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useAdminOrders, useUpdateOrderStatus } from '@/features/admin/hooks/useAdmin';
+import { DataTable } from '@/features/admin/components/DataTable';
+import { CustomPagination } from '@/features/admin/components/CustomPagination';
+import { StatusBadge } from '@/features/admin/components/StatusBadge';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/lib/toast';
+import { formatCurrency } from '@/utils/formatCurrency';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const AdminOrderPage = () => {
-  usePageTitle('Quản lý Đơn hàng | Quản trị');
+  usePageTitle('Manage Orders | Admin');
 
   const [params, setParams] = useState({ page: 1, limit: 10, search: '', paymentStatus: '', status: '' });
   const [searchInput, setSearchInput] = useState('');
@@ -27,7 +34,7 @@ const AdminOrderPage = () => {
     updateOrderStatus(
       { id: orderId, status: newStatus },
       {
-        onSuccess: () => toast.success('Order status updated successfully'),
+        onSuccess: () => toast.success('Email notification sent to customer'),
         onError: (err) => toast.error(err.response?.data?.message || 'Failed to update status'),
       }
     );
@@ -37,7 +44,7 @@ const AdminOrderPage = () => {
     {
       accessorKey: 'id',
       header: 'Order ID',
-      cell: ({ row }) => <span className="text-xs font-mono">{row.original.id}</span>,
+      cell: ({ row }) => <span className="text-xs font-mono">#{row.original.id.slice(-8).toUpperCase()}</span>,
     },
     {
       accessorKey: 'user.name',
@@ -58,33 +65,41 @@ const AdminOrderPage = () => {
     {
       accessorKey: 'paymentMethod',
       header: () => (
-        <select
-          className="bg-transparent font-medium cursor-pointer focus:outline-none -ml-1"
-          value={params.paymentStatus}
-          onChange={(e) => setParams(prev => ({ ...prev, paymentStatus: e.target.value, page: 1 }))}
+        <Select
+          value={params.paymentStatus || 'all'}
+          onValueChange={(value) => setParams((prev) => ({ ...prev, paymentStatus: value !== 'all' ? value : '', page: 1 }))}
         >
-          <option value="">Payment (All)</option>
-          <option value="UNPAID">Unpaid</option>
-          <option value="PAID">Paid</option>
-          <option value="REFUNDED">Refunded</option>
-        </select>
+          <SelectTrigger className="w-[130px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
+            <SelectValue placeholder="Payment (all)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Payment (all)</SelectItem>
+            <SelectItem value="UNPAID">Unpaid</SelectItem>
+            <SelectItem value="PAID">Paid</SelectItem>
+            <SelectItem value="REFUNDED">Refunded</SelectItem>
+          </SelectContent>
+        </Select>
       ),
     },
     {
       accessorKey: 'status',
       header: () => (
-        <select
-          className="bg-transparent font-medium cursor-pointer focus:outline-none -ml-1"
-          value={params.status}
-          onChange={(e) => setParams(prev => ({ ...prev, status: e.target.value, page: 1 }))}
+        <Select
+          value={params.status || 'all'}
+          onValueChange={(value) => setParams((prev) => ({ ...prev, status: value !== 'all' ? value : '', page: 1 }))}
         >
-          <option value="">Status (All)</option>
-          <option value="PENDING">Pending</option>
-          <option value="PROCESSING">Processing</option>
-          <option value="SHIPPED">Shipped</option>
-          <option value="DELIVERED">Delivered</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
+          <SelectTrigger className="w-[120px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
+            <SelectValue placeholder="Status (all)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Status (all)</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="PROCESSING">Processing</SelectItem>
+            <SelectItem value="SHIPPED">Shipped</SelectItem>
+            <SelectItem value="DELIVERED">Delivered</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
       ),
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
