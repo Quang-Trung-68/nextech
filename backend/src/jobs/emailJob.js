@@ -1,6 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 const EmailService = require('../services/email.service');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 3000, 5000]; // ms
@@ -59,6 +58,10 @@ const dispatchOrderShippedEmail = (to, data) => {
   sendWithRetry('ORDER_SHIPPED', to, data, () => EmailService.sendOrderShippedEmail(to, data));
 };
 
+const dispatchOrderProcessingEmail = (to, data) => {
+  sendWithRetry('ORDER_PROCESSING', to, data, () => EmailService.sendOrderProcessingEmail(to, data));
+};
+
 const dispatchOrderDeliveredEmail = (to, data) => {
   sendWithRetry('ORDER_DELIVERED', to, data, () => EmailService.sendOrderDeliveredEmail(to, data));
 };
@@ -68,6 +71,7 @@ module.exports = {
   dispatchResetPasswordEmail,
   dispatchOrderConfirmationEmail,
   dispatchPasswordChangedEmail,
+  dispatchOrderProcessingEmail,
   dispatchOrderShippedEmail,
   dispatchOrderDeliveredEmail,
 };

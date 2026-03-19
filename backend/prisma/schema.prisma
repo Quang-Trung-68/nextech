@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -128,10 +127,13 @@ model Product {
   stock       Int
   category    String
   brand       String?
-  rating      Float    @default(0)
-  numReviews  Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  rating          Float    @default(0)
+  numReviews      Int      @default(0)
+  discountPercent Int      @default(0)    // % giảm giá, giá trị từ 0–100. 0 = không giảm
+  isNewArrival    Boolean  @default(true) // true khi mới tạo, logic ẩn/hiện banner xử lý ở tầng khác
+  manufactureYear Int?                    // Năm sản xuất/ra mắt, nullable, VD: 2023, 2024, 2025
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   orderItems OrderItem[]
   reviews    Review[]

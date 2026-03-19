@@ -51,9 +51,9 @@ const createProduct = async (data) => {
   const payload = { ...data };
   if (payload.images && payload.images.length > 0) {
     payload.images = {
-      create: payload.images.map((url) => ({
-        url,
-        publicId: url.split('/').pop().split('.')[0] || 'unknown',
+      create: payload.images.map((img) => ({
+        url: img.url,
+        publicId: img.publicId,
       })),
     };
   } else {
@@ -69,11 +69,12 @@ const updateProduct = async (id, data) => {
   const payload = { ...data };
   if (payload.images) {
     // Delete old images & create new ones nếu client truyền lên mảng ảnh mới (Update toàn bộ)
+    // Thực tế thì Prisma sẽ delete toàn bộ map images cũ và tạo mới, nhưng rác Cloudinary phải đc xử lý ở route/controller
     payload.images = {
       deleteMany: {},
-      create: payload.images.map((url) => ({
-        url,
-        publicId: url.split('/').pop().split('.')[0] || 'unknown',
+      create: payload.images.map((img) => ({
+        url: img.url,
+        publicId: img.publicId,
       })),
     };
   }

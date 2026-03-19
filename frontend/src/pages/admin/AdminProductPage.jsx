@@ -37,6 +37,7 @@ const AdminProductPage = () => {
   const [activeModal, setActiveModal] = useState(null); // 'create' | 'edit' | null
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [serverError, setServerError] = useState(null);
 
   const columns = [
     {
@@ -103,6 +104,7 @@ const AdminProductPage = () => {
             onClick={() => {
               setSelectedProduct(row.original);
               setActiveModal('edit');
+              setServerError(null);
             }}
           >
             <Edit className="h-4 w-4" />
@@ -123,13 +125,17 @@ const AdminProductPage = () => {
   ];
 
   const handleCreateOrUpdate = (body) => {
+    setServerError(null);
     if (activeModal === 'create') {
       createProduct(body, {
         onSuccess: () => {
           toast.success('Product created successfully');
           setActiveModal(null);
         },
-        onError: (err) => toast.error(err.response?.data?.message || 'Failed to create product'),
+        onError: (err) => {
+          toast.error('Failed to create product');
+          setServerError(err.response?.data?.message || 'Failed to create product');
+        },
       });
     } else if (activeModal === 'edit' && selectedProduct) {
       updateProduct(
@@ -139,7 +145,10 @@ const AdminProductPage = () => {
             toast.success('Product updated successfully');
             setActiveModal(null);
           },
-          onError: (err) => toast.error(err.response?.data?.message || 'Failed to update product'),
+          onError: (err) => {
+            toast.error('Failed to update product');
+            setServerError(err.response?.data?.message || 'Failed to update product');
+          },
         }
       );
     }
@@ -162,7 +171,7 @@ const AdminProductPage = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Manage Products</h1>
-        <Button onClick={() => setActiveModal('create')}>
+        <Button onClick={() => { setActiveModal('create'); setServerError(null); }}>
           <Plus className="mr-2 h-4 w-4" /> Add Product
         </Button>
       </div>
@@ -199,10 +208,12 @@ const AdminProductPage = () => {
         onClose={() => {
           setActiveModal(null);
           setSelectedProduct(null);
+          setServerError(null);
         }}
         onSubmit={handleCreateOrUpdate}
         initialData={activeModal === 'edit' ? selectedProduct : null}
         isLoading={isCreating || isUpdating}
+        serverError={serverError}
       />
 
       <ConfirmDialog

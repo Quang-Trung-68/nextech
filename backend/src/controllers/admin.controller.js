@@ -105,6 +105,37 @@ const toggleUserStatus = async (req, res, next) => {
   }
 };
 
+const cloudinary = require('../utils/cloudinary');
+
+const uploadImages = async (req, res, next) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: 'No images uploaded' });
+    }
+    const uploadedImages = req.files.map(file => ({
+      url: file.path, 
+      publicId: file.filename // Cloudinary storage middleware defines filename as public_id
+    }));
+    res.status(200).json({ success: true, images: uploadedImages });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteImage = async (req, res, next) => {
+  try {
+    // publicId might be passed in body or encoded in params
+    const publicId = req.params.publicId || req.body.publicId; 
+    if (!publicId) {
+      return res.status(400).json({ success: false, message: 'Missing publicId' });
+    }
+    await cloudinary.uploader.destroy(publicId);
+    res.status(200).json({ success: true, message: 'Image deleted from Cloudinary' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getOverviewStats,
   getRevenueStats,
@@ -116,4 +147,6 @@ module.exports = {
   getUsers,
   getUserById,
   toggleUserStatus,
+  uploadImages,
+  deleteImage,
 };

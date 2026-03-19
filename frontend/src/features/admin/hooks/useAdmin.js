@@ -132,6 +132,32 @@ export function useDeleteProduct() {
 }
 
 /**
+ * POST /api/admin/products/upload-images — Upload temporary images to Cloudinary
+ */
+export function useUploadTempImages() {
+  return useMutation({
+    mutationFn: async (formData) => {
+      const { data } = await axiosInstance.post('/admin/products/upload-images', formData);
+      return data;
+    },
+  });
+}
+
+/**
+ * DELETE /api/admin/products/images/:publicId — Delete temporary image from Cloudinary
+ */
+export function useDeleteTempImage() {
+  return useMutation({
+    mutationFn: async (publicId) => {
+      // Vì publicId có the chứa dấu sẹc "/" nên ta encode nó hoặc truyền qua data.
+      // API backend route hiện tại đang nhận qua body hoặc params. 
+      const { data } = await axiosInstance.delete(`/admin/products/images/${encodeURIComponent(publicId)}`);
+      return data;
+    },
+  });
+}
+
+/**
  * POST /api/admin/products/:id/images — Upload ảnh (multipart/form-data)
  */
 export function useUploadProductImages() {
@@ -140,8 +166,7 @@ export function useUploadProductImages() {
     mutationFn: async ({ id, formData }) => {
       const { data } = await axiosInstance.post(
         `/admin/products/${id}/images`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        formData
       );
       return data;
     },

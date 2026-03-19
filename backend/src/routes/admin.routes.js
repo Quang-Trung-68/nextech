@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controllers/admin.controller');
 const { protect, restrictTo } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
+const upload = require('../middleware/upload');
 const {
   statsQuerySchema,
   revenueQuerySchema,
@@ -35,6 +36,19 @@ router.get(
 );
 
 // ─── Products ─────────────────────────────────────────────────────────────────
+
+// POST /api/admin/products/upload-images
+router.post(
+  '/products/upload-images',
+  upload.array('images', 5),
+  adminController.uploadImages
+);
+
+// DELETE /api/admin/products/images/:publicId(*)
+router.delete(
+  '/products/images/:publicId(*)',
+  adminController.deleteImage
+);
 
 // GET /api/admin/products
 router.get(

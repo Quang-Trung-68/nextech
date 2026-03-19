@@ -1,17 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
-const prisma = new PrismaClient();
+const prisma = require('../src/utils/prisma');
 
 async function main() {
   console.log('Start seeding...');
-
-  // 0. Clean up existing data to prevent duplicates
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.user.deleteMany();
 
   // Hash Passwords
   const salt = await bcrypt.genSalt(10);

@@ -110,6 +110,11 @@ const AdminOrderPage = () => {
         const status = row.original.status;
         return (
           <div className="flex gap-2 text-xs">
+            {status === 'PENDING' && (
+              <Button size="sm" variant="outline" onClick={() => handleStatusChange(row.original.id, 'PROCESSING')} disabled={isUpdating}>
+                Mark Processing
+              </Button>
+            )}
             {status === 'PROCESSING' && (
               <Button size="sm" variant="outline" onClick={() => handleStatusChange(row.original.id, 'SHIPPED')} disabled={isUpdating}>
                 Mark Shipped

@@ -57,4 +57,21 @@ router.get(
   authController.googleCallback
 );
 
+// ─── Facebook OAuth routes (NO protect middleware) ────────────────────────────
+// Initiates the Facebook consent screen flow
+router.get(
+  '/facebook',
+  passport.authenticate('facebook', { scope: ['email'] })
+);
+
+// Facebook redirects back here after user consents
+router.get(
+  '/facebook/callback',
+  passport.authenticate('facebook', {
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=oauth_failed`,
+  }),
+  authController.facebookCallback
+);
+
 module.exports = router;

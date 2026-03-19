@@ -33,6 +33,14 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const FacebookIcon = () => (
+  <svg className="h-4 w-4 shrink-0 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+    />
+  </svg>
+);
+
 const LoginPage = () => {
   usePageTitle('Đăng nhập');
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -53,6 +61,10 @@ const LoginPage = () => {
     window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
+  const handleFacebookLogin = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/facebook`;
+  };
+
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
@@ -70,13 +82,17 @@ const LoginPage = () => {
         </div>
 
         {/* ── OAuth error alert (from query param) ─────────────────────── */}
-        {oauthError === 'oauth_failed' && (
+        {(oauthError === 'oauth_failed' || oauthError === 'facebook_no_email') && (
           <div
             role="alert"
             className="flex items-start gap-2.5 rounded-md border border-destructive/40 bg-destructive/10 px-3.5 py-3 text-sm text-destructive"
           >
             <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>Đăng nhập bằng Google thất bại. Vui lòng thử lại.</span>
+            <span>
+              {oauthError === 'oauth_failed' && 'Đăng nhập thất bại. Vui lòng thử lại.'}
+              {oauthError === 'facebook_no_email' &&
+                'Tài khoản Facebook của bạn không có email. Vui lòng đăng nhập bằng Google hoặc email/mật khẩu.'}
+            </span>
           </div>
         )}
 
@@ -98,16 +114,27 @@ const LoginPage = () => {
               <div className="h-px flex-1 bg-border" />
             </div>
 
-            {/* ── Google OAuth Button ──────────────────────────────────── */}
-            <button
-              id="btn-google-login"
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-2.5 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-150"
-            >
-              <GoogleIcon />
-              Đăng nhập với Google
-            </button>
+            {/* ── OAuth Buttons ──────────────────────────────────── */}
+            <div className="flex flex-col gap-3">
+              <button
+                id="btn-google-login"
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full flex items-center justify-center gap-2.5 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-150"
+              >
+                <GoogleIcon />
+                Đăng nhập với Google
+              </button>
+              <button
+                id="btn-facebook-login"
+                type="button"
+                onClick={handleFacebookLogin}
+                className="w-full flex items-center justify-center gap-2.5 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-150"
+              >
+                <FacebookIcon />
+                Đăng nhập với Facebook
+              </button>
+            </div>
           </CardContent>
         </Card>
       </div>

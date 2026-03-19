@@ -31,7 +31,11 @@ const adminCreateProductSchema = z.object({
   price: z.coerce.number().positive('Giá phải lớn hơn 0').max(1_000_000_000),
   stock: z.coerce.number().int('Số lượng phải là số nguyên').min(0),
   category: z.string().trim().min(1, 'Vui lòng chọn danh mục'),
-  images: z.array(z.string().url('URL ảnh không hợp lệ')).min(1, 'Cần ít nhất 1 ảnh').max(5).optional(),
+  brand: z.string().trim().optional(),
+  images: z.array(z.object({
+    url: z.string().url('URL ảnh không hợp lệ'),
+    publicId: z.string().min(1)
+  })).min(1, 'Cần ít nhất 1 ảnh').max(5),
 });
 
 const adminUpdateProductSchema = adminCreateProductSchema.partial().refine(

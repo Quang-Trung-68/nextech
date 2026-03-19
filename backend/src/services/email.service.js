@@ -81,6 +81,16 @@ const EmailService = {
     });
   },
 
+  async sendOrderProcessingEmail(to, { user, order }) {
+    const html = await _renderTemplate('orderProcessing', { user, order });
+    await transporter.sendMail({
+      from: `"${process.env.APP_NAME || 'MyShop'}" <${process.env.GMAIL_USER}>`,
+      to,
+      subject: 'Đơn hàng đang được xử lý! 📦',
+      html,
+    });
+  },
+
   async sendOrderDeliveredEmail(to, { user, order }) {
     const html = await _renderTemplate('orderDelivered', { user, order });
     await transporter.sendMail({

@@ -238,6 +238,33 @@ const googleCallback = async (req, res) => {
   }
 };
 
+/**
+ * GET /auth/facebook/callback (after Passport redirect)
+ */
+const facebookCallback = async (req, res) => {
+  try {
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+    if (!req.user) {
+      // req.user is false if no email is provided by Facebook
+      return res.redirect(`${clientUrl}/login?error=facebook_no_email`);
+    }
+
+    const meta = _getMeta(req);
+    const { accessTokenData, refreshTokenData } = await authService.issueTokens(req.user, meta);
+
+    // Set cookies with IDENTICAL config to regular login
+    setAccessTokenCookie(res, accessTokenData.token, accessTokenData.expiresAt);
+    setRefreshTokenCookie(res, refreshTokenData.token, refreshTokenData.expiresAt);
+
+    // Redirect to the silent-hydration page on the frontend
+    return res.redirect(`${clientUrl}/oauth/callback?status=success`);
+  } catch (err) {
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    return res.redirect(`${clientUrl}/login?error=oauth_failed`);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -250,4 +277,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   googleCallback,
+  facebookCallback,
 };

@@ -10,9 +10,7 @@ export const useUploadAvatar = () => {
     mutationFn: async (file) => {
       const formData = new FormData();
       formData.append('avatar', file);
-      const { data } = await axiosInstance.post('/users/me/avatar', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const { data } = await axiosInstance.post('/users/me/avatar', formData);
       return data;
     },
     onSuccess: (data) => {

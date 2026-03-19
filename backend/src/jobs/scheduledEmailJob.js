@@ -1,8 +1,7 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
 const EmailService = require('../services/email.service');
 
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 const MAX_RETRIES = 3;
 
 // Job: retryFailedEmails

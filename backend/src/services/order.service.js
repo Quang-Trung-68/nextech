@@ -18,8 +18,8 @@ const ORDER_DETAIL_INCLUDE = {
   },
 };
 
-// Status flow cứng: chỉ được đi theo chiều này
 const STATUS_FLOW = {
+  PENDING: 'PROCESSING',
   PROCESSING: 'SHIPPED',
   SHIPPED: 'DELIVERED',
 };
@@ -299,7 +299,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
   const expectedNext = STATUS_FLOW[order.status];
   if (!expectedNext) {
     throw createError(
-      `Đơn hàng đang ở trạng thái ${order.status}, không thể cập nhật theo flow Admin. Chỉ áp dụng cho đơn đang PROCESSING hoặc SHIPPED.`,
+      `Đơn hàng đang ở trạng thái ${order.status}, không thể cập nhật theo flow Admin. Chỉ áp dụng cho đơn đang PENDING, PROCESSING hoặc SHIPPED.`,
       400
     );
   }
@@ -316,7 +316,17 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
     include: ORDER_DETAIL_INCLUDE,
   });
 
-  if (newStatus === 'SHIPPED') {
+  if (newStatus === 'PROCESSING') {
+    emailJob.dispatchOrderProcessingEmail(updatedOrder.user.email, {
+      user: { name: updatedOrder.user.name },
+      order: {
+        id: updatedOrder.id,
+        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price })),
+        totalAmount: updatedOrder.totalAmount,
+        shippingAddress: updatedOrder.shippingAddress
+      }
+    });
+  } else if (newStatus === 'SHIPPED') {
     emailJob.dispatchOrderShippedEmail(updatedOrder.user.email, {
       user: { name: updatedOrder.user.name },
       order: {
