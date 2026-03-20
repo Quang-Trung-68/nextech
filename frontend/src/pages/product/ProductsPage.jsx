@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Heart, Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star } from 'lucide-react';
+import { Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatVND } from '@/utils/price';
+import { useMyFavorites, FavoriteButton } from '@/features/favorites';
 
 const CATEGORIES = [
   { id: 'smartphone', label: 'Điện thoại' },
@@ -119,6 +120,13 @@ const ProductsPage = () => {
 
   const products = data ? data.pages.flatMap(page => page.products || []) : [];
   const totalItems = data?.pages?.[0]?.totalCount || 0;
+
+  // Favorites
+  const { data: favorites = [] } = useMyFavorites();
+  const favoritedIds = useMemo(
+    () => new Set(favorites.map((p) => p.id)),
+    [favorites]
+  );
 
   // Handlers
   const handleCategoryChange = (catId) => {
@@ -322,10 +330,13 @@ const ProductsPage = () => {
               {products.map(product => (
                 <div key={product.id} className={`group relative bg-white border border-transparent hover:border-[#d2d2d7] hover:shadow-sm rounded-2xl transition-all duration-300 p-4 flex ${viewMode === 'list' ? 'flex-row gap-6 items-center' : 'flex-col'}`}>
                   
-                  {/* Like Button */}
-                  <button className="absolute top-4 right-4 z-10 p-2 rounded-full bg-apple-gray/50 hover:bg-apple-gray transition-colors group/heart">
-                    <Heart className="w-4 h-4 text-apple-secondary group-hover/heart:text-red-500 group-hover/heart:fill-red-500 transition-all" />
-                  </button>
+                  {/* FavoriteButton overlay */}
+                  <div className="absolute top-4 right-4 z-10">
+                    <FavoriteButton
+                      product={{ ...product, isFavorited: favoritedIds.has(product.id) }}
+                      size="sm"
+                    />
+                  </div>
 
                   {/* Image */}
                   <Link to={`/products/${product.id}`} className={`relative bg-apple-gray rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-40 h-40' : 'w-full aspect-square mb-6 group/img'}`}>
@@ -395,22 +406,12 @@ const ProductsPage = () => {
                         {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
                       </Button>
                       
-                      {/* Rating and Wishlist under the button */}
-                      <div className="flex items-center justify-between pt-1">
+                      {/* Rating under the button */}
+                      <div className="flex items-center pt-1">
                         <div className="flex items-center gap-1.5 text-sm font-semibold text-apple-dark">
                            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                            <span>{(product.rating || 0) > 0 ? (product.rating).toFixed(1) : "Chưa có"}</span>
                         </div>
-                        <button 
-                          className="flex items-center gap-1.5 text-sm font-medium text-apple-blue hover:text-[#005bb5] transition-colors"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toast.success("Đã thêm vào mục Yêu thích!");
-                          }}
-                        >
-                          <Heart className="w-4 h-4 text-apple-blue" /> Yêu thích
-                        </button>
                       </div>
                     </div>
                   </div>

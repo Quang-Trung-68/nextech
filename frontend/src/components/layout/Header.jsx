@@ -5,6 +5,9 @@ import useAuthStore from '@/stores/useAuthStore';
 import { useCart } from '@/features/cart/hooks/useCart';
 import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '@/features/cart/hooks/useCartMutations';
 import { formatCurrency } from '@/utils/formatCurrency';
+import SearchDialog from '../common/SearchDialog';
+import { useMyFavorites } from '@/features/favorites';
+
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -17,6 +20,9 @@ const Header = () => {
 
   const { totalItems, cartItems, totalPrice } = useCart();
   const cartItemCount = totalItems || 0;
+
+  const { data: favorites = [], isLoading: isFavoritesLoading } = useMyFavorites();
+  const favoriteCount = favorites.length;
   
   const { mutate: updateQuantity } = useUpdateCartItem();
   const { mutate: removeItem } = useRemoveCartItem();
@@ -79,9 +85,14 @@ const Header = () => {
               
               {isAuthenticated ? (
                 <>
-                  {/* Heart */}
-                  <Link to="/favorites" className="hidden sm:block hover:text-apple-blue transition-colors">
+                  {/* Heart — with favorites badge */}
+                  <Link to="/favorites" className="hidden sm:block hover:text-apple-blue transition-colors relative">
                     <Heart size={18} strokeWidth={1.5} />
+                    {!isFavoritesLoading && favoriteCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] rounded-full w-[15px] h-[15px] flex items-center justify-center font-bold shadow-sm">
+                        {favoriteCount > 99 ? '99+' : favoriteCount}
+                      </span>
+                    )}
                   </Link>
                   
                   {/* Cart */}
@@ -349,45 +360,8 @@ const Header = () => {
         )}
       </header>
       
-      {/* Full-width Search Overlay */}
-      {isSearchOpen && (
-        <div className="fixed inset-0 z-[60] bg-white/95 backdrop-blur-md animate-in fade-in flex flex-col p-6 sm:p-24 selection:bg-apple-blue/20">
-          <div className="max-w-[800px] w-full mx-auto relative mt-16 sm:mt-0">
-            <button 
-              onClick={() => setIsSearchOpen(false)}
-              className="absolute -top-16 sm:-top-20 right-0 text-apple-secondary hover:text-apple-dark transition-colors p-2"
-            >
-              <X size={36} strokeWidth={1.5} />
-            </button>
-            <div className="flex items-center border-b-[2px] border-apple-dark pb-4">
-              <Search size={32} className="text-apple-dark mr-4 shrink-0" strokeWidth={2} />
-              <input 
-                autoFocus
-                type="text" 
-                placeholder="Tìm kiếm sản phẩm, thương hiệu..." 
-                className="w-full text-2xl sm:text-4xl font-medium sm:font-semibold bg-transparent border-none outline-none placeholder:text-[#d2d2d7] text-apple-dark font-sans"
-              />
-            </div>
-            
-            <div className="mt-10">
-              <h4 className="text-xs font-semibold text-apple-secondary uppercase tracking-[0.05em] mb-4">Liên kết nhanh</h4>
-              <div className="flex flex-wrap gap-2.5">
-                {['iPhone 15 Pro Max', 'MacBook Air M2', 'iPad Pro', 'AirPods Pro 2'].map(term => (
-                  <button 
-                    key={term}
-                    className="px-4 py-2.5 rounded-full bg-apple-gray/50 hover:bg-[#e8e8ed] text-apple-dark text-[13px] font-medium transition-colors border border-transparent hover:border-[#d2d2d7]"
-                    onClick={() => {
-                        setIsSearchOpen(false);
-                    }}
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Search Overlay */}
+      <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 };

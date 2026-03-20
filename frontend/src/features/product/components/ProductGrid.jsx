@@ -1,11 +1,16 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from '@/features/product/components/ProductCard';
 import { ProductCardSkeleton } from '@/features/product/components/ProductCardSkeleton';
+import { useMyFavorites } from '@/features/favorites';
 
 export function ProductGrid({ data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage }) {
-  console.log(data);
+  const { data: favorites = [] } = useMyFavorites();
+  const favoritedIds = useMemo(
+    () => new Set(favorites.map((p) => p.id)),
+    [favorites]
+  );
   // Biến loading chính cho lần fetch trang đầu tiên
   if (isLoading) {
     return (
@@ -33,7 +38,10 @@ export function ProductGrid({ data, isLoading, isFetchingNextPage, hasNextPage, 
         {data.pages.map((page, i) => (
           <Fragment key={i}>
             {page.products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={{ ...product, isFavorited: favoritedIds.has(product.id) }}
+              />
             ))}
           </Fragment>
         ))}

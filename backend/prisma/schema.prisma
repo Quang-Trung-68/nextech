@@ -6,48 +6,29 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  UNPAID
-  PAID
-  REFUNDED
-}
-
 model User {
-  id                     String    @id @default(cuid())
+  id                     String               @id @default(cuid())
   name                   String
-  email                  String    @unique
+  email                  String               @unique
   password               String?
-  phone                  String?
-  avatar                 String?
-  role                   Role      @default(USER)
-  isActive               Boolean   @default(true)
-  isEmailVerified        Boolean   @default(false)
-  emailVerifyToken       String?   @unique
+  role                   Role                 @default(USER)
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  isActive               Boolean              @default(true)
+  emailVerifyToken       String?              @unique
   emailVerifyTokenExpiry DateTime?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-
-  orders              Order[]
-  reviews             Review[]
-  refreshTokens       RefreshToken[]
-  revokedTokens       RevokedToken[]
-  cart                Cart?
-  passwordResetTokens PasswordResetToken[]
-  addresses           Address[]
-  oauthAccounts       OAuthAccount[]
+  isEmailVerified        Boolean              @default(false)
+  avatar                 String?
+  phone                  String?
+  addresses              Address[]
+  cart                   Cart?
+  favorites              Favorite[]
+  oauthAccounts          OAuthAccount[]
+  orders                 Order[]
+  passwordResetTokens    PasswordResetToken[]
+  refreshTokens          RefreshToken[]
+  reviews                Review[]
+  revokedTokens          RevokedToken[]
 
   @@map("users")
 }
@@ -55,28 +36,28 @@ model User {
 model Address {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName  String
   phone     String
   address   String
-  ward      String   @default("")
   city      String
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  ward      String   @default("")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("addresses")
 }
 
 model RefreshToken {
-  id         String   @id @default(cuid())
-  token      String   @unique
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  ipAddress  String?
-  userAgent  String?
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
 }
@@ -85,9 +66,9 @@ model RevokedToken {
   id        String   @id @default(cuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   revokedAt DateTime @default(now())
   reason    String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("revoked_tokens")
 }
@@ -95,11 +76,11 @@ model RevokedToken {
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String   @unique
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
 }
@@ -107,11 +88,10 @@ model PasswordResetToken {
 model OAuthAccount {
   id                String   @id @default(cuid())
   userId            String
-  provider          String   // 'google' | 'github' | 'facebook'
-  providerAccountId String   // ID do provider cấp (ví dụ: Google sub)
+  provider          String
+  providerAccountId String
   createdAt         DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -119,25 +99,25 @@ model OAuthAccount {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  description String
-  price       Decimal  @db.Decimal(15, 2)
-  images      ProductImage[]
-  stock       Int
-  category    String
-  brand       String?
-  rating          Float    @default(0)
-  numReviews      Int      @default(0)
-  salePrice       Decimal? @db.Decimal(15, 2)
-  isNewArrival    Boolean  @default(true) // true khi mới tạo, logic ẩn/hiện banner xử lý ở tầng khác
-  manufactureYear Int?                    // Năm sản xuất/ra mắt, nullable, VD: 2023, 2024, 2025
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  orderItems OrderItem[]
-  reviews    Review[]
-  cartItems  CartItem[]
+  id              String         @id @default(cuid())
+  name            String
+  description     String
+  price           Decimal        @db.Decimal(15, 2)
+  stock           Int
+  category        String
+  rating          Float          @default(0)
+  numReviews      Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  brand           String?
+  isNewArrival    Boolean        @default(true)
+  manufactureYear Int?
+  salePrice       Decimal?       @db.Decimal(15, 2)
+  cartItems       CartItem[]
+  favorites       Favorite[]
+  orderItems      OrderItem[]
+  images          ProductImage[]
+  reviews         Review[]
 
   @@map("products")
 }
@@ -155,31 +135,30 @@ model ProductImage {
 model Order {
   id                    String        @id @default(cuid())
   userId                String
-  user                  User          @relation(fields: [userId], references: [id])
   status                OrderStatus   @default(PENDING)
   paymentStatus         PaymentStatus @default(UNPAID)
   paymentMethod         String
   totalAmount           Decimal       @db.Decimal(15, 2)
   shippingAddress       Json
-  stripePaymentIntentId String?       @unique
-  stripeClientSecret    String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
-
-  orderItems OrderItem[]
+  stripeClientSecret    String?
+  stripePaymentIntentId String?       @unique
+  orderItems            OrderItem[]
+  user                  User          @relation(fields: [userId], references: [id])
 
   @@map("orders")
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id])
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Decimal @db.Decimal(15, 2)
+  id            String  @id @default(cuid())
+  orderId       String
+  productId     String
+  quantity      Int
+  price         Decimal @db.Decimal(15, 2)
   originalPrice Decimal @default(0) @db.Decimal(15, 2)
+  order         Order   @relation(fields: [orderId], references: [id])
+  product       Product @relation(fields: [productId], references: [id])
 
   @@map("order_item")
 }
@@ -187,25 +166,24 @@ model OrderItem {
 model Review {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
   rating    Int
   comment   String
   createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
-
   @@map("reviews")
 }
 
 model Cart {
   id        String     @id @default(cuid())
   userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  items     CartItem[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("carts")
 }
@@ -213,28 +191,58 @@ model Cart {
 model CartItem {
   id        String   @id @default(cuid())
   cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, productId])
   @@map("cart_items")
 }
 
 model FailedEmail {
-  id          Int       @id @default(autoincrement())
-  type        String
-  // Possible values: "VERIFY_EMAIL" | "RESET_PASSWORD" | "ORDER_CONFIRMATION" | "PASSWORD_CHANGED" | "ORDER_SHIPPED" | "ORDER_DELIVERED"
-  to          String
-  data        Json
-  attempts    Int       @default(0)
-  lastError   String?
-  status      String    @default("FAILED")
-  createdAt   DateTime  @default(now())
-  resolvedAt  DateTime?
+  id         Int       @id @default(autoincrement())
+  type       String
+  to         String
+  data       Json
+  attempts   Int       @default(0)
+  lastError  String?
+  status     String    @default("FAILED")
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
 
   @@map("failed_emails")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
 }

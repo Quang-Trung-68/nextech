@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Star, Image as ImageIcon, Heart, ShoppingCart } from 'lucide-react';
+import { Star, Image as ImageIcon, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
+import { FavoriteButton } from '@/features/favorites';
 
 export function ProductCard({ product }) {
   const { id, name, price, rating, stock, images } = product;
@@ -59,11 +60,16 @@ export function ProductCard({ product }) {
             </div>
           )}
 
-          {/* Badges tĩnh (nắp góc trái, phải) */}
+          {/* FavoriteButton overlay — góc trên bên phải */}
+          <div className="absolute top-2 right-2 z-10">
+            <FavoriteButton product={product} size="sm" />
+          </div>
+
+          {/* Badge Sắp hết — đẩy sang trái để không đè FavoriteButton */}
           {stock <= 10 && stock > 0 && (
             <Badge
               variant="secondary"
-              className="absolute top-2 right-2 bg-amber-500 hover:bg-amber-600 text-white border-0 z-10"
+              className="absolute top-2 left-2 bg-amber-500 hover:bg-amber-600 text-white border-0 z-10"
             >
               Sắp hết
             </Badge>
@@ -104,22 +110,12 @@ export function ProductCard({ product }) {
             {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
         </Button>
         
-        {/* Rating and Wishlist */}
-        <div className="flex items-center justify-between pt-1">
+        {/* Rating */}
+        <div className="flex items-center pt-1">
           <div className="flex items-center gap-1.5 text-sm font-semibold">
              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
              <span>{rating > 0 ? rating.toFixed(1) : "0"}</span>
           </div>
-          <button 
-            className="flex items-center gap-1.5 text-sm font-medium text-blue-500 hover:text-blue-600 transition-colors"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              toast.success("Đã thêm vào mục Yêu thích!");
-            }}
-          >
-            <Heart className="w-4 h-4 text-blue-500" /> Yêu thích
-          </button>
         </div>
       </div>
     </Card>
