@@ -20,12 +20,12 @@ module.exports = (err, req, res, next) => {
   }
 
   // --- Multer Errors ---
-  if (err.name === 'MulterError' || err.message === 'INVALID_FILE_FORMAT') {
-    // Nếu upload nhiều file mà bị lỗi 1 phần, tiến hành rollback các file đã đưa lên Cloudinary thành công
-    if (req.files && req.files.length > 0) {
+  if (err.name === 'MulterError' || err.code === 'INVALID_FILE_FORMAT' || err.message === 'INVALID_FILE_FORMAT') {
+    // Nếu upload đã lên Cloudinary thành công nhưng xảy ra lỗi sau đó, tiến hành rollback
+    if (req.cloudinaryFiles && req.cloudinaryFiles.length > 0) {
       const cloudinary = require('../utils/cloudinary');
-      Promise.all(req.files.map(file => {
-        if (file.filename) return cloudinary.uploader.destroy(file.filename);
+      Promise.all(req.cloudinaryFiles.map(file => {
+        if (file.publicId) return cloudinary.uploader.destroy(file.publicId);
         return null;
       })).catch(console.error);
     }
@@ -59,6 +59,13 @@ module.exports = (err, req, res, next) => {
     statusCode = 400;
     message = 'Invalid data input for the database';
   }
+
+  // --- Cloudinary Errors ---
+  if (err.http_code) {
+    statusCode = err.http_code;
+    message = err.message || 'Cloudinary Error';
+  }
+
 
   // --- JWT Errors ---
   if (err.name === 'JsonWebTokenError') {

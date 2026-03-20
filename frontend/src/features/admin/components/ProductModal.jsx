@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,6 +37,8 @@ export function ProductModal({
   isLoading = false,
   serverError = null,
 }) {
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -79,6 +81,9 @@ export function ProductModal({
           images: [],
         });
       }
+    }
+    if (!isOpen) { 
+      setIsUploadingImage(false); 
     }
   }, [initialData, isOpen, reset]);
 
@@ -178,18 +183,22 @@ export function ProductModal({
               name="images"
               control={control}
               render={({ field }) => (
-                <ImageUploadGrid images={field.value} onChange={field.onChange} />
+                <ImageUploadGrid 
+                  images={field.value} 
+                  onChange={field.onChange} 
+                  onUploadingChange={setIsUploadingImage}
+                />
               )}
             />
             {errors.images && <p className="text-red-500 text-xs">{errors.images.message}</p>}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading || isUploadingImage}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Product"}
+            <Button type="submit" disabled={isLoading || isUploadingImage}>
+              {isLoading ? "Saving..." : isUploadingImage ? "Uploading..." : "Save Product"}
             </Button>
           </div>
         </form>

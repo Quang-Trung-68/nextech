@@ -13,17 +13,17 @@ exports.uploadImages = async (productId, files) => {
   if (!product) {
     // Rollback already uploaded files on Cloudinary
     await Promise.all(
-      files.map((file) => cloudinary.uploader.destroy(file.filename))
+      files.map((file) => cloudinary.uploader.destroy(file.publicId))
     );
     const error = new Error('Không tìm thấy sản phẩm');
     error.statusCode = 404;
     throw error;
   }
 
-  // Prepare objects for Prisma 'create' relation
+  // files đã là [{ url, publicId }] từ uploadToCloudinary middleware
   const newImagesData = files.map((file) => ({
-    url: file.path,           // Cloudinary URL
-    publicId: file.filename,  // Cloudinary public_id
+    url: file.url,
+    publicId: file.publicId,
   }));
 
   try {
@@ -41,7 +41,7 @@ exports.uploadImages = async (productId, files) => {
   } catch (dbError) {
     // DB Update failed -> Rollback files uploaded to Cloudinary
     await Promise.all(
-      files.map((file) => cloudinary.uploader.destroy(file.filename))
+      files.map((file) => cloudinary.uploader.destroy(file.publicId))
     ).catch(err => console.error("Cloudinary rollback failed:", err));
     
     throw dbError;

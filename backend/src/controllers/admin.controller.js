@@ -109,14 +109,13 @@ const cloudinary = require('../utils/cloudinary');
 
 const uploadImages = async (req, res, next) => {
   try {
-    if (!req.files || req.files.length === 0) {
+    // req.cloudinaryFiles được set bởi uploadToCloudinary middleware
+    const cloudinaryFiles = req.cloudinaryFiles;
+    if (!cloudinaryFiles || cloudinaryFiles.length === 0) {
       return res.status(400).json({ success: false, message: 'No images uploaded' });
     }
-    const uploadedImages = req.files.map(file => ({
-      url: file.path, 
-      publicId: file.filename // Cloudinary storage middleware defines filename as public_id
-    }));
-    res.status(200).json({ success: true, images: uploadedImages });
+    // cloudinaryFiles = [{ url, publicId }] - đã được upload lên Cloudinary
+    res.status(200).json({ success: true, images: cloudinaryFiles });
   } catch (err) {
     next(err);
   }

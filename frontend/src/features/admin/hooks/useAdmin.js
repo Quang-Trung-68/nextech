@@ -137,7 +137,10 @@ export function useDeleteProduct() {
 export function useUploadTempImages() {
   return useMutation({
     mutationFn: async (formData) => {
-      const { data } = await axiosInstance.post('/admin/products/upload-images', formData);
+      const { data } = await axiosInstance.post('/admin/products/upload-images', formData, {
+        timeout: 20000, // Tối đa 20s
+      });
+
       return data;
     },
   });

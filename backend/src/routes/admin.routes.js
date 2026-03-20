@@ -4,6 +4,7 @@ const adminController = require('../controllers/admin.controller');
 const { protect, restrictTo } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
 const upload = require('../middleware/upload');
+const { uploadToCloudinary } = require('../middleware/upload');
 const {
   statsQuerySchema,
   revenueQuerySchema,
@@ -41,6 +42,7 @@ router.get(
 router.post(
   '/products/upload-images',
   upload.array('images', 5),
+  uploadToCloudinary,
   adminController.uploadImages
 );
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const upload = require('../middleware/upload');
+const { uploadToCloudinary } = require('../middleware/upload');
 const productImageController = require('../controllers/productImage.controller');
 const { protect, restrictTo } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
@@ -19,6 +20,7 @@ router.post(
   '/',
   validate(adminProductParamsSchema, 'params'),
   upload.array('images', 10),
+  uploadToCloudinary,
   productImageController.uploadImages
 );
 

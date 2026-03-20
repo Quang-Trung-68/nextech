@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { UploadCloud, X, Loader2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 
-export function ImageUploadGrid({ images, onChange }) {
+export function ImageUploadGrid({ images, onChange, onUploadingChange }) {
   const { mutate: uploadImages } = useUploadTempImages();
   const { mutate: deleteImage } = useDeleteTempImage();
   const [isUploading, setIsUploading] = useState(false);
@@ -22,6 +22,7 @@ export function ImageUploadGrid({ images, onChange }) {
     files.forEach(file => formData.append('images', file));
 
     setIsUploading(true);
+    if (onUploadingChange) onUploadingChange(true);
     uploadImages(formData, {
       onSuccess: (data) => {
         onChange([...images, ...data.images]);
@@ -30,7 +31,10 @@ export function ImageUploadGrid({ images, onChange }) {
       onError: (err) => {
         toast.error(err.response?.data?.message || 'Upload thất bại');
       },
-      onSettled: () => setIsUploading(false)
+      onSettled: () => {
+        setIsUploading(false);
+        if (onUploadingChange) onUploadingChange(false);
+      }
     });
 
     e.target.value = ''; // Reset input
