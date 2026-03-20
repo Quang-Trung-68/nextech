@@ -4,6 +4,7 @@ import usePageTitle from '@/hooks/usePageTitle';
 import useAuthStore from '@/stores/useAuthStore';
 import { useCart } from '@/features/cart/hooks/useCart';
 import { useCreateOrder } from '@/features/checkout/hooks/useCreateOrder';
+import { useQueryClient } from '@tanstack/react-query';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { stripePromise } from '@/lib/stripe';
 import { useForm } from 'react-hook-form';
@@ -23,13 +24,15 @@ const CheckoutPageForm = () => {
   const user = useAuthStore((s) => s.user);
   const { cartItems, totalItems, totalPrice } = useCart();
   const { mutateAsync: createOrder } = useCreateOrder();
+  const queryClient = useQueryClient();
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Redirect block if cart empty
   useEffect(() => {
-    if (!cartItems || cartItems.length === 0) {
+    if (!isSuccess && (!cartItems || cartItems.length === 0)) {
       navigate('/cart', { replace: true });
     }
-  }, [cartItems, navigate]);
+  }, [cartItems, navigate, isSuccess]);
 
   // Stripe hooks
   const stripe = useStripe();
@@ -127,6 +130,10 @@ const CheckoutPageForm = () => {
         }
 
         if (paymentIntent && paymentIntent.status === 'succeeded') {
+           setIsSuccess(true);
+           queryClient.setQueryData(['cart'], { items: [], totalItems: 0, totalAmount: 0, cartTotal: 0 });
+           // Invalidate in background to let the webhook sync, delay could be safely done if needed, but not strictly required
+           queryClient.invalidateQueries({ queryKey: ['cart'] });
            navigate(`/profile/orders/${orderId}?success=true`, { replace: true });
         }
       } else {
@@ -135,7 +142,10 @@ const CheckoutPageForm = () => {
         if (!response.success) {
            throw new Error(response.message || 'Đặt hàng thất bại.');
         }
-        navigate(`/orders/${response.order.id}?success=true`, { replace: true });
+        setIsSuccess(true);
+        queryClient.setQueryData(['cart'], { items: [], totalItems: 0, totalAmount: 0, cartTotal: 0 });
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+        navigate(`/profile/orders/${response.order.id}?success=true`, { replace: true });
       }
     } catch (error) {
        console.error(error);
@@ -145,7 +155,7 @@ const CheckoutPageForm = () => {
     }
   };
 
-  if (!cartItems || cartItems.length === 0) return null;
+  if (!isSuccess && (!cartItems || cartItems.length === 0)) return null;
 
   return (
     <div className="container max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
