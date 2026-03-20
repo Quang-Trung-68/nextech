@@ -9,7 +9,7 @@ export function useCart() {
     queryKey: ['cart'],
     queryFn: async () => {
       const { data } = await axiosInstance.get('/cart');
-      return data.data || { items: [], totalItems: 0, totalAmount: 0 };
+      return data.data || { items: [], totalItems: 0, totalAmount: 0, cartTotal: 0 };
     },
     enabled: isAuthenticated,
   });
@@ -18,7 +18,8 @@ export function useCart() {
   const cartItems = cart?.items || [];
   
   const totalItems = cart?.totalItems || 0;
-  const totalPrice = cart?.totalAmount || 0;
+  // Prefer cartTotal (API computed from finalPrice), fall back to totalAmount
+  const totalPrice = cart?.cartTotal ?? cart?.totalAmount ?? 0;
 
   return {
     ...query,

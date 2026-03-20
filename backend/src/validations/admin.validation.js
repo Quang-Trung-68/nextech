@@ -36,6 +36,16 @@ const adminCreateProductSchema = z.object({
     url: z.string().url('URL ảnh không hợp lệ'),
     publicId: z.string().min(1)
   })).min(1, 'Cần ít nhất 1 ảnh').max(5),
+  // Task 6: New fields
+  salePrice: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().positive().max(999_000_000).nullable().optional()
+  ),
+  isNewArrival: z.boolean().optional(),
+  manufactureYear: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().int().min(2000).max(2100).nullable().optional()
+  ),
 });
 
 const adminUpdateProductSchema = adminCreateProductSchema.partial().refine(

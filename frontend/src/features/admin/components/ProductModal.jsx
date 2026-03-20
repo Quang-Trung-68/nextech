@@ -12,9 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ImageUploadGrid } from "./ImageUploadGrid";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Tag, Sparkles, Calendar } from "lucide-react";
+import { getFinalPrice, getDiscountPercent, formatVND } from "@/utils/price";
 
 const productSchema = z.object({
   name: z.string().min(2, "Tên sản phẩm phải có ít nhất 2 ký tự"),
@@ -27,6 +29,16 @@ const productSchema = z.object({
     url: z.string(),
     publicId: z.string(),
   })).min(1, "Phải có ít nhất 1 ảnh"),
+  // Task 6 fields
+  salePrice: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().positive().nullable().optional()
+  ),
+  isNewArrival: z.boolean().optional(),
+  manufactureYear: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().int().min(2000).max(2100).nullable().optional()
+  ),
 });
 
 export function ProductModal({
@@ -44,6 +56,7 @@ export function ProductModal({
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -55,8 +68,21 @@ export function ProductModal({
       brand: "",
       category: "",
       images: [],
+      salePrice: "",
+      isNewArrival: true,
+      manufactureYear: "",
     },
   });
+
+  // Live preview for salePrice
+  const watchedPrice = watch("price");
+  const watchedSalePrice = watch("salePrice");
+  const previewDiscountPercent = watchedPrice && watchedSalePrice
+    ? getDiscountPercent(Number(watchedPrice), Number(watchedSalePrice))
+    : 0;
+  const salePriceIsValid = watchedPrice && watchedSalePrice
+    ? Number(watchedSalePrice) > 0 && Number(watchedSalePrice) < Number(watchedPrice)
+    : true;
 
   useEffect(() => {
     if (isOpen) {
@@ -69,6 +95,9 @@ export function ProductModal({
           brand: initialData.brand || "",
           category: initialData.category || "",
           images: initialData.images || [],
+          salePrice: initialData.salePrice != null ? initialData.salePrice : "",
+          isNewArrival: initialData.isNewArrival ?? true,
+          manufactureYear: initialData.manufactureYear != null ? initialData.manufactureYear : "",
         });
       } else {
         reset({
@@ -79,6 +108,9 @@ export function ProductModal({
           brand: "",
           category: "",
           images: [],
+          salePrice: "",
+          isNewArrival: true,
+          manufactureYear: "",
         });
       }
     }
@@ -88,7 +120,13 @@ export function ProductModal({
   }, [initialData, isOpen, reset]);
 
   const onFormSubmit = (data) => {
-    onSubmit(data);
+    // Clean up empty strings to null/undefined
+    const cleaned = {
+      ...data,
+      salePrice: data.salePrice === "" ? null : data.salePrice,
+      manufactureYear: data.manufactureYear === "" ? null : data.manufactureYear,
+    };
+    onSubmit(cleaned);
   };
 
   return (
@@ -132,12 +170,12 @@ export function ProductModal({
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Price *</Label>
+              <Label htmlFor="price">Price (VND) *</Label>
               <Input
                 id="price"
                 type="number"
                 min="0"
-                step="0.01"
+                step="1000"
                 {...register("price")}
                 className={errors.price ? "border-red-500" : ""}
               />
@@ -162,6 +200,80 @@ export function ProductModal({
                 className={errors.brand ? "border-red-500" : ""}
               />
               {errors.brand && <p className="text-red-500 text-xs">{errors.brand.message}</p>}
+            </div>
+          </div>
+
+          {/* Task 6: Sale price, isNewArrival, manufactureYear */}
+          <div className="grid grid-cols-3 gap-4 p-4 bg-amber-50/60 border border-amber-100 rounded-xl">
+            <div className="space-y-2">
+              <Label htmlFor="salePrice" className="flex items-center gap-1.5 text-amber-700">
+                <Tag className="w-3.5 h-3.5" />
+                Sale Price (VND)
+              </Label>
+              <Input
+                id="salePrice"
+                type="number"
+                min="0"
+                step="1000"
+                placeholder="Để trống = không giảm"
+                {...register("salePrice")}
+                className={`${!salePriceIsValid && watchedSalePrice ? "border-red-500" : ""}`}
+              />
+              {/* Live preview */}
+              {watchedSalePrice && watchedPrice && (
+                <div className="text-xs">
+                  {salePriceIsValid ? (
+                    previewDiscountPercent > 0 ? (
+                      <span className="text-green-600 font-semibold">
+                        ✓ Giảm {previewDiscountPercent}% → {formatVND(getFinalPrice(Number(watchedPrice), Number(watchedSalePrice)))}
+                      </span>
+                    ) : null
+                  ) : (
+                    <span className="text-red-500">✗ Giá sale phải nhỏ hơn giá gốc</span>
+                  )}
+                </div>
+              )}
+              {errors.salePrice && <p className="text-red-500 text-xs">{errors.salePrice.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="manufactureYear" className="flex items-center gap-1.5 text-amber-700">
+                <Calendar className="w-3.5 h-3.5" />
+                Năm ra mắt
+              </Label>
+              <Input
+                id="manufactureYear"
+                type="number"
+                min="2000"
+                max="2100"
+                placeholder="VD: 2024"
+                {...register("manufactureYear")}
+                className={errors.manufactureYear ? "border-red-500" : ""}
+              />
+              {errors.manufactureYear && <p className="text-red-500 text-xs">{errors.manufactureYear.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-amber-700">
+                <Sparkles className="w-3.5 h-3.5" />
+                Sản phẩm mới
+              </Label>
+              <div className="flex items-center gap-3 pt-2">
+                <Controller
+                  name="isNewArrival"
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      id="isNewArrival"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  )}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {watch("isNewArrival") ? "Hiển thị badge Mới" : "Không hiển thị badge"}
+                </span>
+              </div>
             </div>
           </div>
 

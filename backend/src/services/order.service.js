@@ -2,6 +2,7 @@ const prisma = require('../utils/prisma');
 const cartService = require('./cart.service');
 const paymentService = require('./payment.service');
 const emailJob = require('../jobs/emailJob');
+const { getFinalPrice, getDiscountPercentFromSnapshot, addPriceFields } = require('../utils/price');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -9,13 +10,27 @@ const ORDER_DETAIL_INCLUDE = {
   orderItems: {
     include: {
       product: {
-        select: { id: true, name: true, price: true, images: true },
+        select: { id: true, name: true, price: true, salePrice: true, images: true },
       },
     },
   },
   user: {
     select: { id: true, name: true, email: true },
   },
+};
+
+/**
+ * Add discountPercent (computed from snapshot) to each orderItem for display.
+ */
+const _addOrderItemDiscounts = (order) => {
+  if (!order || !order.orderItems) return order;
+  return {
+    ...order,
+    orderItems: order.orderItems.map((item) => ({
+      ...item,
+      discountPercent: getDiscountPercentFromSnapshot(item.price, item.originalPrice),
+    })),
+  };
 };
 
 const STATUS_FLOW = {
@@ -46,7 +61,8 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
     if (item.stock < item.quantity) {
       throw createError(`Sản phẩm "${item.name}" không đủ hàng (còn ${item.stock})`, 400);
     }
-    totalAmount += Number(item.price) * item.quantity;
+    // Dùng finalPrice từ cart (đã được cart service tính) để đảm bảo nhất quán
+    totalAmount += Number(item.finalPrice) * item.quantity;
   }
 
   // COD,STRIPE → PENDING chờ xử lý
@@ -65,7 +81,10 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
           create: cartItems.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
-            price: item.price,
+            // price = finalPrice (giá thực khách trả, có thể là salePrice)
+            price: item.finalPrice,
+            // originalPrice = snapshot giá gốc tại thời điểm mua
+            originalPrice: parseFloat(item.price),
           })),
         },
       },
@@ -84,22 +103,22 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   }
 
   const [order] = await prisma.$transaction(transactionItems);
+  const orderWithDiscounts = _addOrderItemDiscounts(order);
 
   // Bổ sung lookup thông tin User để Email context lấy được tên truy cập và Email
-  if (!order.user) {
+  if (!orderWithDiscounts.user) {
     const userForMail = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, email: true },
     });
-    order.user = userForMail;
+    orderWithDiscounts.user = userForMail;
   }
 
   // COD: trả về luôn
   if (paymentMethod === 'COD') {
-    // Chờ gửi email (để đảm bảo không bị Node ngắt khi response return quá tốc độ)
     // Fire-and-forget: gửi email xác nhận không block luồng trả response
-    emailJob.dispatchOrderConfirmationEmail(order.user.email, { name: order.user.name, order });
-    return { order };
+    emailJob.dispatchOrderConfirmationEmail(orderWithDiscounts.user.email, { name: orderWithDiscounts.user.name, order: orderWithDiscounts });
+    return { order: orderWithDiscounts };
   }
 
   // STRIPE currency: giá lưu trong DB là VND.
@@ -108,23 +127,22 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   const VND_TO_USD_RATE = 25000;
   const currency = (process.env.STRIPE_CURRENCY || 'usd').toLowerCase();
 
+  // Task 4: Payment Intent dùng totalAmount đã giảm giá (tính từ finalPrice)
   let finalAmount;
   if (currency === 'vnd') {
-    // VND là zero-decimal, truyền nguyên — nhưng giới hạn tối đa ₫99,999,999
     finalAmount = Math.round(Number(totalAmount));
   } else {
-    // USD và các currency khác: chia VND cho tỉ giá → ra USD → nhân 100 → ra cents
     finalAmount = Math.round((Number(totalAmount) / VND_TO_USD_RATE) * 100);
   }
 
   const paymentIntent = await paymentService.createPaymentIntent(
     finalAmount,
     currency,
-    { orderId: order.id, userId }
+    { orderId: orderWithDiscounts.id, userId }
   );
 
   const updatedOrder = await prisma.order.update({
-    where: { id: order.id },
+    where: { id: orderWithDiscounts.id },
     data: {
       stripePaymentIntentId: paymentIntent.id,
       stripeClientSecret: paymentIntent.client_secret,
@@ -132,8 +150,10 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
     include: ORDER_DETAIL_INCLUDE,
   });
 
+  const updatedOrderWithDiscounts = _addOrderItemDiscounts(updatedOrder);
+
   return {
-    order: { ...updatedOrder, clientSecret: paymentIntent.client_secret },
+    order: { ...updatedOrderWithDiscounts, clientSecret: paymentIntent.client_secret },
     clientSecret: paymentIntent.client_secret,
   };
 };
@@ -156,7 +176,7 @@ const getMyOrders = async (userId, { status, search, page, limit }) => {
       include: {
         orderItems: {
           include: {
-            product: { select: { id: true, name: true, price: true, images: true } },
+            product: { select: { id: true, name: true, price: true, salePrice: true, images: true } },
           },
         },
       },
@@ -165,7 +185,7 @@ const getMyOrders = async (userId, { status, search, page, limit }) => {
   ]);
 
   return {
-    orders,
+    orders: orders.map(_addOrderItemDiscounts),
     pagination: {
       total,
       page,
@@ -189,7 +209,7 @@ const getOrderById = async (orderId, userId, role) => {
     throw createError('Bạn không có quyền xem đơn hàng này', 403);
   }
 
-  return order;
+  return _addOrderItemDiscounts(order);
 };
 
 // ─── User: Huỷ đơn ───────────────────────────────────────────────────────────
@@ -259,7 +279,7 @@ const getAllOrders = async ({ status, paymentStatus, userId, sortBy, sortOrder, 
       include: {
         orderItems: {
           include: {
-            product: { select: { id: true, name: true, price: true } },
+            product: { select: { id: true, name: true, price: true, salePrice: true } },
           },
         },
         user: { select: { id: true, name: true, email: true } },
@@ -269,7 +289,7 @@ const getAllOrders = async ({ status, paymentStatus, userId, sortBy, sortOrder, 
   ]);
 
   return {
-    orders,
+    orders: orders.map(_addOrderItemDiscounts),
     pagination: {
       total,
       page,
@@ -321,7 +341,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       user: { name: updatedOrder.user.name },
       order: {
         id: updatedOrder.id,
-        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price })),
+        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
         totalAmount: updatedOrder.totalAmount,
         shippingAddress: updatedOrder.shippingAddress
       }
@@ -331,7 +351,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       user: { name: updatedOrder.user.name },
       order: {
         id: updatedOrder.id,
-        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price })),
+        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
         totalAmount: updatedOrder.totalAmount,
         shippingAddress: updatedOrder.shippingAddress,
         trackingUrl: updatedOrder.trackingUrl ?? null
@@ -342,7 +362,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       user: { name: updatedOrder.user.name },
       order: {
         id: updatedOrder.id,
-        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price })),
+        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
         totalAmount: updatedOrder.totalAmount,
         shippingAddress: updatedOrder.shippingAddress,
         trackingUrl: updatedOrder.trackingUrl ?? null
@@ -362,7 +382,7 @@ const adminGetOrderById = async (orderId) => {
   });
 
   if (!order) throw createError('Không tìm thấy đơn hàng', 404);
-  return order;
+  return _addOrderItemDiscounts(order);
 };
 
 module.exports = {

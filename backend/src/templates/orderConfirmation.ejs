@@ -122,7 +122,21 @@
                   <td style="padding:10px 12px;color:#64748b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;border-bottom:1px solid #e2e8f0;text-align:right;">Thành tiền</td>
                 </tr>
 
-                <% order.orderItems.forEach(function(item, idx) { %>
+                <%
+                  function formatVNDEmail(amount) {
+                    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(amount));
+                  }
+                  function getDiscountPercentFromSnapshotEmail(price, originalPrice) {
+                    const p = parseFloat(price);
+                    const o = parseFloat(originalPrice);
+                    if (!o || o <= 0 || p >= o) return 0;
+                    return Math.round((1 - p / o) * 100);
+                  }
+                %>
+
+                <% order.orderItems.forEach(function(item, idx) {
+                  const discountPercent = getDiscountPercentFromSnapshotEmail(item.price, item.originalPrice);
+                %>
                 <tr style="background-color:<%= idx % 2 === 0 ? '#ffffff' : '#f8fafc' %>;">
                   <td style="padding:12px 12px;color:#1e293b;font-size:14px;border-bottom:1px solid #f1f5f9;">
                     <%= item.product ? item.product.name : 'Sản phẩm không còn tồn tại' %>
@@ -130,11 +144,23 @@
                   <td style="padding:12px 12px;color:#475569;font-size:14px;border-bottom:1px solid #f1f5f9;text-align:center;">
                     <%= item.quantity %>
                   </td>
-                  <td style="padding:12px 12px;color:#475569;font-size:14px;border-bottom:1px solid #f1f5f9;text-align:right;white-space:nowrap;">
-                    <%= Number(item.price).toLocaleString('vi-VN') %>₫
+                  <td style="padding:12px 12px;border-bottom:1px solid #f1f5f9;text-align:right;white-space:nowrap;">
+                    <% if (discountPercent > 0) { %>
+                      <span style="text-decoration:line-through;color:#999;font-size:12px;display:block;">
+                        <%= formatVNDEmail(item.originalPrice) %>
+                      </span>
+                      <span style="color:#e53e3e;font-weight:bold;font-size:14px;">
+                        <%= formatVNDEmail(item.price) %>
+                      </span>
+                      <span style="color:#e53e3e;font-size:11px;">(-<%= discountPercent %>%)</span>
+                    <% } else { %>
+                      <span style="color:#475569;font-size:14px;">
+                        <%= formatVNDEmail(item.price) %>
+                      </span>
+                    <% } %>
                   </td>
                   <td style="padding:12px 12px;color:#1e293b;font-size:14px;font-weight:600;border-bottom:1px solid #f1f5f9;text-align:right;white-space:nowrap;">
-                    <%= (Number(item.price) * item.quantity).toLocaleString('vi-VN') %>₫
+                    <%= formatVNDEmail(Number(item.price) * item.quantity) %>
                   </td>
                 </tr>
                 <% }) %>

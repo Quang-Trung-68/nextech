@@ -12,11 +12,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { formatCurrency } from '@/utils/formatCurrency';
+import { formatVND } from '@/utils/price';
 import { Link } from 'react-router-dom';
 
 export function CartItem({ item, onUpdateQuantity, onRemove }) {
-  const { productId, name, price, image, stock, quantity, subtotal } = item;
+  const { productId, name, price, salePrice, finalPrice, discountPercent, image, stock, quantity, lineTotal, subtotal } = item;
+  const displayLineTotal = lineTotal ?? subtotal;
+  const displayFinalPrice = finalPrice ?? price;
   const itemImage = image || '/placeholder.png'; // Fallback image
 
   const handleInputChange = (e) => {
@@ -49,14 +51,22 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
             <Link to={`/products/${productId}`} className="font-semibold text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
               {name}
             </Link>
-            <div className="font-bold text-lg mt-1 text-primary">
-              {formatCurrency(price)}
+            {/* Giá: gạch ngang nếu có giảm giá */}
+            <div className="mt-1">
+              {discountPercent > 0 ? (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm line-through text-gray-400">{formatVND(price)}</span>
+                  <span className="font-bold text-lg text-red-500">{formatVND(displayFinalPrice)}</span>
+                </div>
+              ) : (
+                <div className="font-bold text-lg text-primary">{formatVND(displayFinalPrice)}</div>
+              )}
             </div>
           </div>
           
           <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
             <div className="font-bold text-apple-dark">
-              {formatCurrency(subtotal)}
+              {formatVND(displayLineTotal)}
             </div>
             
             <AlertDialog>

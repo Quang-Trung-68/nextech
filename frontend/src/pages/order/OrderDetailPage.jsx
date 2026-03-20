@@ -4,7 +4,7 @@ import usePageTitle from '@/hooks/usePageTitle';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOrder, useCancelOrder } from '@/features/orders/hooks/useOrder';
 import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
-import { formatCurrency } from '@/utils/formatCurrency';
+import { formatVND } from '@/utils/price';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
@@ -150,26 +150,50 @@ const OrderDetailPage = () => {
           </h2>
           
           <div className="flex flex-col gap-6">
-            {orderItems.map((item) => (
-              <div key={item.id} className="flex gap-4 sm:gap-6 pb-6 border-b border-[#f5f5f7] last:border-0 last:pb-0">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl overflow-hidden bg-apple-gray border">
-                  <img 
-                    src={item.product?.images?.[0]?.url || '/placeholder.png'} 
-                    alt={item.product?.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 flex flex-col justify-center">
-                  <h3 className="font-semibold text-apple-dark line-clamp-2 md:text-lg leading-tight mb-2">
-                    {item.product?.name || 'Sản phẩm không rõ'}
-                  </h3>
-                  <div className="flex items-center justify-between w-full mt-auto">
-                    <p className="text-sm text-apple-secondary font-medium">SL: {item.quantity}</p>
-                    <p className="font-bold text-primary">{formatCurrency(item.price)}</p>
+            {orderItems.map((item) => {
+              // discountPercent là từ _addOrderItemDiscounts trên server (snapshot)
+              const discountPercent = item.discountPercent || 0;
+              const lineTotal = Number(item.price) * item.quantity;
+              
+              return (
+                <div key={item.id} className="flex gap-4 sm:gap-6 pb-6 border-b border-[#f5f5f7] last:border-0 last:pb-0">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl overflow-hidden bg-apple-gray border">
+                    <img 
+                      src={item.product?.images?.[0]?.url || '/placeholder.png'} 
+                      alt={item.product?.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center gap-1">
+                    <h3 className="font-semibold text-apple-dark line-clamp-2 md:text-lg leading-tight">
+                      {item.product?.name || 'Sản phẩm không rõ'}
+                    </h3>
+                    <p className="text-sm text-apple-secondary">SL: {item.quantity}</p>
+                    
+                    {/* Giá theo snapshot */}
+                    <div className="flex items-center gap-2 mt-1">
+                      {discountPercent > 0 && item.originalPrice != null ? (
+                        <>
+                          <span className="text-sm line-through text-gray-400">{formatVND(item.originalPrice)}</span>
+                          <span className="font-bold text-red-500">{formatVND(item.price)}</span>
+                          <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-semibold">
+                            -{discountPercent}%
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-bold text-primary">{formatVND(item.price)}</span>
+                      )}
+                    </div>
+                    
+                    {/* Line total */}
+                    <div className="mt-auto flex items-center justify-between pt-1">
+                      <span className="text-xs text-apple-secondary"></span>
+                      <span className="font-bold text-apple-dark">{formatVND(lineTotal)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Action Row */}
@@ -241,7 +265,7 @@ const OrderDetailPage = () => {
             <div className="space-y-3 text-[14px] text-apple-secondary mb-6">
               <div className="flex justify-between items-center">
                 <span>Tạm tính</span>
-                <span className="font-medium text-apple-dark">{formatCurrency(totalAmount)}</span>
+                <span className="font-medium text-apple-dark">{formatVND(totalAmount)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>Vận chuyển</span>
@@ -251,7 +275,7 @@ const OrderDetailPage = () => {
 
             <div className="pt-4 border-t border-[#f5f5f7] flex justify-between items-end mb-6">
               <span className="text-base font-bold text-apple-dark">Tổng tiền</span>
-              <span className="text-2xl font-black text-primary">{formatCurrency(totalAmount)}</span>
+              <span className="text-2xl font-black text-primary">{formatVND(totalAmount)}</span>
             </div>
 
             <div className={`p-4 rounded-xl flex flex-col gap-1 items-center justify-center text-center ${paymentMethod === 'STRIPE' ? 'bg-blue-50/50 text-blue-700 border border-blue-100' : 'bg-green-50/50 text-green-700 border border-green-100'}`}>

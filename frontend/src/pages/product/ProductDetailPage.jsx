@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/utils/formatCurrency';
+import { formatVND } from '@/utils/price';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 
@@ -79,7 +79,7 @@ const ProductDetailPage = () => {
     );
   }
 
-  const { name, description, price, stock, category, rating, numReviews, images } = product;
+  const { name, description, price, salePrice, finalPrice, discountPercent, isNewArrival, manufactureYear, stock, category, rating, numReviews, images } = product;
   const isOutOfStock = stock === 0;
 
   // Xử lý tăng giảm số lượng input
@@ -171,13 +171,41 @@ const ProductDetailPage = () => {
             {name}
           </h1>
 
-          {/* Giá và Rating layout */}
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-3xl font-bold text-primary tracking-tighter">
-              {formatCurrency(price)}
-            </span>
+          {/* Badges dạng pill */}
+          <div className="flex flex-wrap gap-2">
+            {isNewArrival && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
+                ✨ Mới
+              </span>
+            )}
+            {discountPercent > 0 && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-600">
+                -{discountPercent}% SALE
+              </span>
+            )}
+          </div>
 
-            <div className="h-6 w-px bg-border hidden sm:block" />
+          {/* Giá và Rating layout */}
+          <div className="flex flex-wrap items-start gap-4 flex-col">
+            {discountPercent > 0 ? (
+              <div className="flex flex-col gap-1">
+                <span className="text-lg line-through text-gray-400">
+                  {formatVND(price)}
+                </span>
+                <span className="text-3xl font-bold text-red-500 tracking-tighter">
+                  {formatVND(finalPrice)}
+                </span>
+                <span className="text-sm text-green-600 font-medium">
+                  Tiết kiệm {formatVND(Number(price) - Number(finalPrice))} ({discountPercent}%)
+                </span>
+              </div>
+            ) : (
+              <span className="text-3xl font-bold text-primary tracking-tighter">
+                {formatVND(finalPrice)}
+              </span>
+            )}
+
+            <div className="h-px w-full bg-border" />
 
             {/* Stars Review Box */}
             <div className="flex items-center gap-2">
@@ -191,20 +219,28 @@ const ProductDetailPage = () => {
             </div>
           </div>
 
-          {/* Tồn Kho Status Badges */}
-          <div>
-            {isOutOfStock ? (
-               <Badge variant="destructive" className="px-3 py-1 font-semibold tracking-wide">
-                 HẾT HÀNG
-               </Badge>
-            ) : stock <= 10 ? (
-               <Badge className="bg-amber-500 hover:bg-amber-600 px-3 py-1 font-semibold tracking-wide border-transparent text-white">
-                 CHỈ CÒN {stock} SẢN PHẨM
-               </Badge>
-            ) : (
-               <Badge variant="secondary" className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500 hover:bg-green-200 border-none font-semibold">
-                 CÒN HÀNG (Sẵn {stock})
-               </Badge>
+          {/* Tồn Kho Status Badges + Năm ra mắt */}
+          <div className="space-y-2">
+            <div>
+              {isOutOfStock ? (
+                 <Badge variant="destructive" className="px-3 py-1 font-semibold tracking-wide">
+                   HẾT HÀNG
+                 </Badge>
+              ) : stock <= 10 ? (
+                 <Badge className="bg-amber-500 hover:bg-amber-600 px-3 py-1 font-semibold tracking-wide border-transparent text-white">
+                   CHỈ CÒN {stock} SẢN PHẨM
+                 </Badge>
+              ) : (
+                 <Badge variant="secondary" className="px-3 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500 hover:bg-green-200 border-none font-semibold">
+                   CÒN HÀNG (Sẵn {stock})
+                 </Badge>
+              )}
+            </div>
+            {/* Năm ra mắt */}
+            {manufactureYear != null && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium">Năm ra mắt:</span> {manufactureYear}
+              </p>
             )}
           </div>
 

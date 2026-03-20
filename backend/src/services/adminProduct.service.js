@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma');
 const ApiFeatures = require('../utils/apiFeatures');
+const { addPriceFields } = require('../utils/price');
 
 const createError = (message, statusCode = 400) => {
   const error = new Error(message);
@@ -28,7 +29,7 @@ const getProducts = async (queryParams) => {
   ]);
 
   return {
-    products,
+    products: products.map(addPriceFields),
     pagination: {
       total,
       page: q.page,
@@ -44,7 +45,7 @@ const getProductById = async (id) => {
     include: { images: true, reviews: { include: { user: { select: { name: true } } } } },
   });
   if (!product) throw createError('Sản phẩm không tồn tại', 404);
-  return product;
+  return addPriceFields(product);
 };
 
 const createProduct = async (data) => {
@@ -66,10 +67,17 @@ const updateProduct = async (id, data) => {
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) throw createError('Sản phẩm không tồn tại', 404);
 
+  // Task 6: Validate salePrice < price
+  const priceToCheck = data.price != null ? parseFloat(data.price) : parseFloat(existing.price);
+  if (data.salePrice != null) {
+    const salePriceVal = parseFloat(data.salePrice);
+    if (salePriceVal >= priceToCheck) {
+      throw createError('Giá khuyến mãi phải nhỏ hơn giá gốc', 400);
+    }
+  }
+
   const payload = { ...data };
   if (payload.images) {
-    // Delete old images & create new ones nếu client truyền lên mảng ảnh mới (Update toàn bộ)
-    // Thực tế thì Prisma sẽ delete toàn bộ map images cũ và tạo mới, nhưng rác Cloudinary phải đc xử lý ở route/controller
     payload.images = {
       deleteMany: {},
       create: payload.images.map((img) => ({
@@ -79,7 +87,8 @@ const updateProduct = async (id, data) => {
     };
   }
 
-  return prisma.product.update({ where: { id }, data: payload, include: { images: true } });
+  const updated = await prisma.product.update({ where: { id }, data: payload, include: { images: true } });
+  return addPriceFields(updated);
 };
 
 const deleteProduct = async (id) => {

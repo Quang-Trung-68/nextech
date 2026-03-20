@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma');
 const ApiFeatures = require('../utils/apiFeatures');
+const { addPriceFields } = require('../utils/price');
 
 const getProducts = async (queryParams) => {
   const features = new ApiFeatures(queryParams)
@@ -24,7 +25,7 @@ const getProducts = async (queryParams) => {
   const totalPages = Math.ceil(totalCount / queryDetails.limit);
 
   return {
-    products,
+    products: products.map(addPriceFields),
     totalCount,
     page: queryDetails.page,
     totalPages,
@@ -52,7 +53,7 @@ const getProductById = async (id) => {
     throw error;
   }
 
-  return product;
+  return addPriceFields(product);
 };
 
 const createProduct = async (data) => {

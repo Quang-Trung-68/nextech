@@ -8,3 +8,6 @@ build/
 .DS_Store
 coverage/
 *.log
+test*
+test.*
+test_*

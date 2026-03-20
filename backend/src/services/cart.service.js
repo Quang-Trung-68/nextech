@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const { getFinalPrice, getDiscountPercent, addPriceFields } = require('../utils/price');
 
 const _getOrCreateCart = async (userId) => {
   return await prisma.cart.upsert({
@@ -20,22 +21,29 @@ const _getOrCreateCart = async (userId) => {
 
 const _formatCart = (cart) => {
   let totalItems = 0;
-  let totalAmount = 0;
+  let cartTotal = 0;
 
   const items = cart.items.map((item) => {
-    const subtotal = Number(item.product.price) * item.quantity;
+    const finalPrice = getFinalPrice(item.product.price, item.product.salePrice);
+    const discountPercent = getDiscountPercent(item.product.price, item.product.salePrice);
+    const lineTotal = finalPrice * item.quantity;
     totalItems += item.quantity;
-    totalAmount += subtotal;
+    cartTotal += lineTotal;
 
     return {
       id: item.id,
       productId: item.productId,
       name: item.product.name,
       price: item.product.price,
+      salePrice: item.product.salePrice,
+      finalPrice,
+      discountPercent,
       image: item.product.images && item.product.images.length > 0 ? item.product.images[0].url : null,
       stock: item.product.stock,
       quantity: item.quantity,
-      subtotal,
+      lineTotal,
+      // Keep legacy subtotal field for backward compat
+      subtotal: lineTotal,
     };
   });
 
@@ -43,7 +51,8 @@ const _formatCart = (cart) => {
     id: cart.id,
     items,
     totalItems,
-    totalAmount,
+    totalAmount: cartTotal,
+    cartTotal,
     updatedAt: cart.updatedAt,
   };
 };

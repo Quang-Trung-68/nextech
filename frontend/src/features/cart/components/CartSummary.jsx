@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/utils/formatCurrency';
+import { formatVND } from '@/utils/price';
 import { Link } from 'react-router-dom';
 import {
   AlertDialog,
@@ -26,7 +26,7 @@ export function CartSummary({ totalItems, totalPrice, onClearCart }) {
         <div className="h-px bg-border w-full" />
         <div className="flex justify-between items-center text-apple-dark">
           <span className="font-semibold">Tạm tính:</span>
-          <span className="text-2xl font-bold text-primary">{formatCurrency(totalPrice)}</span>
+          <span className="text-2xl font-bold text-primary">{formatVND(totalPrice)}</span>
         </div>
         <p className="text-[11px] text-muted-foreground italic text-right mt-1">
           (Phí vận chuyển tính ở bước tiếp theo)

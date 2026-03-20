@@ -13,6 +13,7 @@ import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { formatVND } from '@/utils/price';
 
 const CATEGORIES = [
   { id: 'smartphone', label: 'Điện thoại' },
@@ -328,17 +329,19 @@ const ProductsPage = () => {
 
                   {/* Image */}
                   <Link to={`/products/${product.id}`} className={`relative bg-apple-gray rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-40 h-40' : 'w-full aspect-square mb-6 group/img'}`}>
-                    {/* Badge */}
-                    {product.isNew && (
-                      <Badge className="absolute top-2 left-2 z-10 bg-blue-100 text-apple-blue hover:bg-blue-100 text-[10px] font-semibold uppercase px-2 py-0.5 shadow-none border-none">
-                        Mới
-                      </Badge>
-                    )}
-                    {product.salePrice && (
-                      <Badge className="absolute top-2 left-2 z-10 bg-red-100 text-red-600 hover:bg-red-100 text-[10px] font-semibold uppercase px-2 py-0.5 shadow-none border-none">
-                        Sale
-                      </Badge>
-                    )}
+                    {/* Badges — xếp dọc góc trên trái */}
+                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                      {product.isNewArrival && (
+                        <span className="bg-green-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
+                          Mới
+                        </span>
+                      )}
+                      {product.discountPercent > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-md shadow-sm">
+                          -{product.discountPercent}%
+                        </span>
+                      )}
+                    </div>
                     
                     <img 
                       src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=400'} 
@@ -354,19 +357,32 @@ const ProductsPage = () => {
                       <h3 className="font-semibold text-[15px] text-apple-dark tracking-tight mb-1 group-hover:text-apple-blue transition-colors line-clamp-2">
                         {product.name}
                       </h3>
-                      <p className="text-[13px] text-apple-secondary mb-4 line-clamp-1">
+                      <p className="text-[13px] text-apple-secondary mb-1 line-clamp-1">
                         {product.brand} • {CATEGORIES.find(c => c.id === product.category)?.label || product.category}
                       </p>
+                      {/* Năm ra mắt */}
+                      {product.manufactureYear != null && (
+                        <p className="text-[12px] text-apple-secondary mb-3">
+                          Năm ra mắt: {product.manufactureYear}
+                        </p>
+                      )}
                     </Link>
 
                     <div className="mt-auto flex flex-col gap-3">
+                      {/* Hiện thị giá */}
                       <div className="flex items-end gap-2">
-                        <span className="font-bold text-base text-apple-dark">
-                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.salePrice || product.price)}
-                        </span>
-                        {product.salePrice && (
-                          <span className="text-[13px] text-apple-secondary line-through mb-[2px]">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                        {product.discountPercent > 0 ? (
+                          <>
+                            <span className="text-sm line-through text-gray-400">
+                              {formatVND(product.price)}
+                            </span>
+                            <span className="font-semibold text-red-500 text-base">
+                              {formatVND(product.finalPrice)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="font-semibold text-base text-apple-dark">
+                            {formatVND(product.finalPrice)}
                           </span>
                         )}
                       </div>
