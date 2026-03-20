@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import PolicyBar from '@/components/layout/PolicyBar';
 
 const MainLayout = () => {
   return (
@@ -10,6 +11,7 @@ const MainLayout = () => {
       <main className="flex-1 w-full flex flex-col pt-12">
         <Outlet />
       </main>
+      <PolicyBar />
       <Footer />
     </div>
   );
