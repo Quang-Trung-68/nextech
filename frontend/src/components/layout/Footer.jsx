@@ -7,7 +7,7 @@ const Footer = () => {
     <footer className="w-full bg-[#f5f5f7] border-t border-black/10">
       {/* PHẦN A — Disclaimer Text */}
       <div className="py-6 border-b border-black/10">
-        <div className="max-w-[980px] mx-auto px-6 text-apple-secondary text-xs leading-relaxed">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 text-apple-secondary text-xs leading-relaxed">
           <p className="mb-2">
             1. Ưu đãi đổi mới (Thu cũ đổi mới) được cung cấp thông qua đối tác của NexTech. Thông số kỹ thuật có thể thay đổi mà không cần báo trước.
           </p>
@@ -28,7 +28,7 @@ const Footer = () => {
 
       {/* PHẦN B — Main Footer Links (5 cột) */}
       <div className="py-12">
-        <div className="max-w-[980px] mx-auto px-6 grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Cột 1 */}
           <div>
             <h3 className="text-xs font-semibold text-apple-black mb-3">Mua sắm & Tìm hiểu</h3>
@@ -92,7 +92,7 @@ const Footer = () => {
 
       {/* PHẦN C — Brand + Social + Payment */}
       <div className="py-8 border-t border-black/10">
-        <div className="max-w-[980px] mx-auto px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           
           {/* Sub-block trái — Brand Info */}
           <div>
@@ -143,7 +143,7 @@ const Footer = () => {
 
       {/* PHẦN D — Legal Bar */}
       <div className="py-4 border-t border-black/10">
-        <div className="max-w-[980px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
           
           {/* Trái */}
           <div className="flex flex-col gap-1 text-xs text-apple-secondary">

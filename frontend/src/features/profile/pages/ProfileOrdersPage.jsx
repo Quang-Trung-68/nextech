@@ -7,6 +7,17 @@ import OrderCard from '@/features/profile/components/OrderCard';
 import OrderFilterTabs from '@/features/profile/components/OrderFilterTabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
+import { formatCurrency } from '@/utils/formatCurrency';
+import { Link } from 'react-router-dom';
 
 const STATUS_LABELS = {
   '': 'Bạn chưa có đơn hàng nào.',
@@ -108,16 +119,64 @@ const ProfileOrdersPage = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {data.orders.map((order) => (
-            <OrderCard 
-              key={order.id} 
-              order={order} 
-              isExpanded={expandedOrderId === order.id}
-              onToggle={() => toggleExpand(order.id)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-4 md:hidden">
+            {data.orders.map((order) => (
+              <OrderCard 
+                key={order.id} 
+                order={order} 
+                isExpanded={expandedOrderId === order.id}
+                onToggle={() => toggleExpand(order.id)}
+              />
+            ))}
+          </div>
+
+          <div className="hidden md:block bg-white rounded-2xl border border-[#e5e5ea] overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+                  <TableHead className="w-[120px] font-semibold text-apple-dark">Mã ĐH</TableHead>
+                  <TableHead className="font-semibold text-apple-dark">Ngày đặt</TableHead>
+                  <TableHead className="font-semibold text-apple-dark">Sản phẩm</TableHead>
+                  <TableHead className="font-semibold text-apple-dark text-right">Tổng tiền</TableHead>
+                  <TableHead className="font-semibold text-apple-dark">Trạng thái</TableHead>
+                  <TableHead className="text-right font-semibold text-apple-dark">Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.orders.map((order) => {
+                  const summaryNames = order.orderItems.map(item => item.product?.name || 'Sản phẩm').join(', ');
+                  return (
+                    <TableRow key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                      <TableCell className="font-mono text-xs font-semibold text-apple-dark pb-3 pt-3">
+                        #{order.id.slice(-6).toUpperCase()}
+                      </TableCell>
+                      <TableCell className="text-sm text-apple-secondary pb-3 pt-3">
+                        {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                      </TableCell>
+                      <TableCell className="pb-3 pt-3">
+                        <span className="text-sm line-clamp-1 max-w-[200px]" title={summaryNames}>
+                          {summaryNames}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-semibold text-primary text-right pb-3 pt-3">
+                        {formatCurrency(order.totalAmount)}
+                      </TableCell>
+                      <TableCell className="pb-3 pt-3">
+                        <OrderStatusBadge status={order.status} />
+                      </TableCell>
+                      <TableCell className="text-right pb-3 pt-3">
+                        <Button asChild variant="outline" size="sm" className="rounded-full text-xs h-8 border-[#d2d2d7] hover:bg-apple-gray">
+                          <Link to={`/profile/orders/${order.id}`}>Chi tiết</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {/* Pagination */}

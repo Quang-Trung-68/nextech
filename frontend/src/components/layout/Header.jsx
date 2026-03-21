@@ -6,8 +6,8 @@ import { useCart } from '@/features/cart/hooks/useCart';
 import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '@/features/cart/hooks/useCartMutations';
 import { formatCurrency } from '@/utils/formatCurrency';
 import SearchDialog from '../common/SearchDialog';
+import MobileDrawer from './MobileDrawer';
 import { useMyFavorites } from '@/features/favorites';
-
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -47,14 +47,10 @@ const Header = () => {
   return (
     <>
       <header 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 font-sans ${
-          isScrolled 
-            ? 'bg-[rgba(255,255,255,0.85)] backdrop-blur-md border-b border-[#d2d2d7]' 
-            : 'bg-white'
-        }`}
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 font-sans backdrop-blur-md bg-white/80 border-b border-[#d2d2d7]"
       >
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-          <nav className="flex items-center justify-between h-14">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex flex-row items-center justify-between h-14">
             
             {/* Left: Logo */}
             <div className="flex-1 flex justify-start">
@@ -79,14 +75,14 @@ const Header = () => {
             {/* Right: Icons */}
             <div className="flex-1 flex justify-end items-center space-x-5 text-apple-dark">
               {/* Search */}
-              <button onClick={() => setIsSearchOpen(true)} className="hover:text-apple-blue transition-colors relative">
+              <button onClick={() => setIsSearchOpen(true)} className="hidden md:block hover:text-apple-blue transition-colors relative">
                 <Search size={18} strokeWidth={1.5} />
               </button>
               
               {isAuthenticated ? (
                 <>
                   {/* Heart — with favorites badge */}
-                  <Link to="/favorites" className="hidden sm:block hover:text-apple-blue transition-colors relative">
+                  <Link to="/favorites" className="hidden md:block hover:text-apple-blue transition-colors relative">
                     <Heart size={18} strokeWidth={1.5} />
                     {!isFavoritesLoading && favoriteCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] rounded-full w-[15px] h-[15px] flex items-center justify-center font-bold shadow-sm">
@@ -232,7 +228,7 @@ const Header = () => {
                   </div>
                   
                   {/* User */}
-                  <div className="relative group/user hidden sm:block">
+                  <div className="relative group/user hidden md:block">
                     <Link to="/profile" className="hover:text-apple-blue transition-colors flex items-center">
                       {user?.avatar ? (
                         <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover border border-[#d2d2d7]" />
@@ -298,7 +294,7 @@ const Header = () => {
                   </div>
                 </>
               ) : (
-                <div className="hidden sm:flex items-center gap-4 ml-2">
+                <div className="hidden md:flex items-center gap-4 ml-2">
                   <Link to="/login" className="text-[13px] font-medium text-apple-dark hover:text-apple-blue transition-colors">
                     Đăng nhập
                   </Link>
@@ -318,47 +314,15 @@ const Header = () => {
             </div>
           </nav>
         </div>
-
-        {/* Mobile Menu Dropdown */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-14 left-0 right-0 bg-white border-b border-[#d2d2d7] shadow-lg py-4 px-6 flex flex-col gap-3 animate-in slide-in-from-top-2">
-            {navLinks.map((link) => (
-              <Link 
-                key={link.label}
-                to={link.path} 
-                className="text-apple-dark text-base font-semibold py-3 border-b border-[#f5f5f7] last:border-none hover:text-apple-blue transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            
-            <div className={`mt-2 pt-4 border-t border-[#d2d2d7] ${isAuthenticated ? 'flex items-center gap-8' : 'flex flex-col gap-3'}`}>
-               {isAuthenticated ? (
-                 <>
-                   <Link to="/favorites" className="flex flex-col items-center gap-1.5 text-apple-secondary hover:text-apple-dark transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                     <Heart size={22} strokeWidth={1.5} />
-                     <span className="text-[11px] font-medium">Yêu thích</span>
-                   </Link>
-                   <Link to="/profile" className="flex flex-col items-center gap-1.5 text-apple-secondary hover:text-apple-dark transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                     <User size={22} strokeWidth={1.5} />
-                     <span className="text-[11px] font-medium">Tài khoản</span>
-                   </Link>
-                 </>
-               ) : (
-                 <>
-                   <Link to="/login" className="w-full py-2.5 text-center text-[13px] font-medium bg-apple-gray hover:bg-[#e8e8ed] text-apple-dark rounded-xl transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                     Đăng nhập
-                   </Link>
-                   <Link to="/register" className="w-full py-2.5 text-center text-[13px] font-medium bg-apple-dark hover:bg-black text-white rounded-xl transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                     Đăng ký
-                   </Link>
-                 </>
-               )}
-            </div>
-          </div>
-        )}
       </header>
+      
+      <MobileDrawer 
+        isOpen={isMobileMenuOpen} 
+        onClose={() => setIsMobileMenuOpen(false)} 
+        navLinks={navLinks} 
+        isAuthenticated={isAuthenticated} 
+        clearAuth={clearAuth} 
+      />
       
       {/* Search Overlay */}
       <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />

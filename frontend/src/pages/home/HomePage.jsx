@@ -389,238 +389,242 @@ const HomePage = () => {
         }
       `}</style>
 
-      {/* ─── 1. HERO ─── full-bleed image, text overlay */}
-      <section className="relative w-full min-h-[90vh] overflow-hidden">
-        {/* Background image fills entire section */}
-        <img
-          src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?auto=format&fit=crop&q=80&w=1400"
-          alt="NexPhone 15 Pro"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        {/* Gradient overlay — top dark for text, transparent toward bottom */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-transparent" />
+      {/* ─── 1. HERO ─── full-bleed image on lg+, stacked on mobile */}
+      <section className="relative w-full overflow-hidden bg-white">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 pt-12 md:pt-20 lg:pt-28 pb-0 md:pb-20 lg:pb-28">
+          <div className="flex flex-col md:flex-row items-center">
+            {/* Text side */}
+            <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left z-10 scroll-reveal opacity-0 translate-y-8 transition-all duration-700 ease-out pb-10 md:pb-0">
+              <p className="text-apple-secondary text-sm font-semibold uppercase tracking-[0.2em] mb-3">
+                Ra mắt
+              </p>
+              <h1 className="text-apple-black text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight md:-tracking-[0.04em] leading-tight mb-4">
+                iPhone 17 Pro
+              </h1>
+              <p className="text-apple-dark text-xl md:text-3xl font-medium tracking-wide mb-3">
+                Titanium. A19 Pro. Camera 48MP.
+              </p>
+              <p className="text-apple-secondary text-lg mb-10">Từ 31.599.000đ</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 w-full sm:w-auto">
+                <Link to="/products?category=smartphone" className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto rounded-full bg-apple-blue text-white hover:bg-apple-blue/90 px-8 py-4 md:py-6 text-base font-semibold">
+                    Mua ngay
+                  </Button>
+                </Link>
+                <Link
+                  to="/products?category=smartphone"
+                  className="group flex items-center text-apple-blue hover:underline text-lg font-medium transition-colors w-full sm:w-auto justify-center"
+                >
+                  Tìm hiểu thêm
+                  <ChevronRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </div>
 
-        {/* Text content — positioned at top, overlaid on image */}
-        <div className="relative z-10 flex flex-col items-center justify-start pt-28 px-4 text-center scroll-reveal opacity-0 translate-y-8 transition-all duration-700 ease-out">
-          <p className="text-white/60 text-sm font-semibold uppercase tracking-[0.2em] mb-3">
-            Ra mắt
-          </p>
-          <h1 className="text-white text-5xl md:text-[88px] font-bold tracking-tight md:-tracking-[0.04em] leading-tight mb-4">
-            iPhone 17 Pro
-          </h1>
-          <p className="text-white/90 text-xl md:text-3xl font-medium tracking-wide mb-3">
-            Titanium. A19 Pro. Camera 48MP.
-          </p>
-          <p className="text-white/60 text-lg mb-10">Từ 31.599.000đ</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/products?category=smartphone">
-              <Button className="rounded-full bg-white text-apple-black hover:bg-white/90 px-8 py-6 text-base font-semibold">
-                Mua ngay
-              </Button>
-            </Link>
-            <Link
-              to="/products?category=smartphone"
-              className="group flex items-center text-white hover:text-white/80 text-lg font-medium transition-colors"
-            >
-              Tìm hiểu thêm
-              <ChevronRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
-            </Link>
+            {/* Image side */}
+            <div className="w-full md:w-1/2 relative flex justify-center lg:absolute lg:right-0 lg:h-full lg:w-1/2">
+               <img
+                  src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?auto=format&fit=crop&q=80&w=1400"
+                  alt="NexPhone 15 Pro"
+                  className="w-full h-[50vh] md:h-[70vh] lg:h-screen object-cover object-center lg:absolute lg:inset-y-0 lg:right-0"
+               />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── PARTNERS ─── */}
-      <section className="w-full bg-white py-14 overflow-hidden">
-        {/* Label */}
-        <p className="text-center text-apple-secondary text-sm font-semibold uppercase tracking-[0.2em] mb-10">
-          Đối tác chính hãng
-        </p>
+      {/* ─── CATEGORY / FEATURE STRIP ─── */}
+      <section className="w-full py-12 md:py-20 lg:py-28 overflow-hidden bg-white">
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-10 text-apple-black">
+          Danh mục nổi bật
+        </h2>
 
-        {/* Row 1 — chạy trái */}
-        <div className="relative flex overflow-hidden mb-6">
-          <div className="pointer-events-none absolute left-0 top-0 h-full w-24 z-10 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-24 z-10 bg-gradient-to-l from-white to-transparent" />
-          <div
-            className="flex gap-12 whitespace-nowrap"
-            style={{ animation: 'marquee-left 80s linear infinite' }}
-          >
-            {[...brands, ...brands].map((b, i) => (
-              <BrandItem key={i} brand={b} />
+        <div className="relative flex flex-col gap-4 max-w-[100vw]">
+          {/* Row 1 — Chạy sang TRÁI */}
+          <div className="flex gap-4 w-max" style={{ animation: 'marquee-left 60s linear infinite' }}>
+            {[...brands, ...brands, ...brands, ...brands].map((b, i) => (
+               <div key={`row1-${i}`} className="shrink-0 min-w-[200px] border border-[#f5f5f7] rounded-xl flex items-center justify-center p-4 bg-[#f5f5f7] hover:scale-105 transition-transform duration-300">
+                  <BrandItem brand={b} />
+               </div>
             ))}
           </div>
-        </div>
-
-        {/* Row 2 — chạy phải */}
-        <div className="relative flex overflow-hidden">
-          <div className="pointer-events-none absolute left-0 top-0 h-full w-24 z-10 bg-gradient-to-r from-white to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-24 z-10 bg-gradient-to-l from-white to-transparent" />
-          <div
-            className="flex gap-12 whitespace-nowrap"
-            style={{ animation: 'marquee-right 70s linear infinite' }}
-          >
-            {[...brandsRow2, ...brandsRow2].map((b, i) => (
-              <BrandItem key={i} brand={b} />
+          
+          {/* Row 2 — Chạy sang PHẢI */}
+          <div className="flex gap-4 w-max" style={{ animation: 'marquee-right 60s linear infinite' }}>
+            {[...brandsRow2, ...brandsRow2, ...brandsRow2, ...brandsRow2].map((b, i) => (
+               <div key={`row2-${i}`} className="shrink-0 min-w-[200px] border border-[#f5f5f7] rounded-xl flex items-center justify-center p-4 bg-[#f5f5f7] hover:scale-105 transition-transform duration-300">
+                  <BrandItem brand={b} />
+               </div>
             ))}
           </div>
+          
+          {/* Fade overlays */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 md:w-32 bg-gradient-to-r from-white to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 md:w-32 bg-gradient-to-l from-white to-transparent z-10" />
         </div>
       </section>
 
-      {/* ─── 2. PRODUCT GRID 2×2 ─── */}
-      <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 bg-white">
-
-        {/* Card 1: NexPhone — dark */}
-        <div className="group relative bg-apple-black h-[420px] md:h-[600px] flex flex-col items-center pt-12 overflow-hidden scroll-reveal opacity-0 translate-y-8 transition-all duration-700">
-          <div className="z-10 text-center px-6">
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">Mới</p>
-            <h3 className="text-white text-3xl md:text-5xl font-bold tracking-tight mb-2">iPhone 17</h3>
-            <p className="text-white/80 text-base md:text-lg mb-3">120Hz. Chip A18. Pin cả ngày.</p>
-            <p className="text-white/60 text-sm md:text-base mb-5">Từ 21.999.000đ</p>
-            <div className="flex items-center justify-center gap-6">
-              <Link to="/products?category=smartphone" className="px-5 py-2 rounded-full bg-apple-blue text-white text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
-                Mua
-              </Link>
-              <Link to="/products?category=smartphone" className="text-apple-blue hover:underline text-sm font-medium flex items-center">
-                Tìm hiểu thêm <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
+      {/* ─── 2. PRODUCT SHOWCASE GRID ─── */}
+      <section className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-12 md:py-20 lg:py-28 bg-white">
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-10 text-apple-black">
+          Sản phẩm bán chạy
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+          {/* Card 1 */}
+          <div className="group relative bg-apple-black h-[420px] md:h-[500px] flex flex-col items-center pt-8 md:pt-12 px-4 md:px-6 overflow-hidden rounded-2xl scroll-reveal opacity-0 translate-y-8 transition-all duration-700">
+            <div className="z-10 text-center">
+              <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">Mới</p>
+              <h3 className="text-white text-lg md:text-xl font-bold tracking-tight mb-2">iPhone 17</h3>
+              <p className="text-white/80 text-sm md:text-base mb-3">120Hz. Chip A18.</p>
+              <p className="text-white/60 text-sm mb-5">Từ 21.999.000đ</p>
+              <div className="flex items-center justify-center gap-4">
+                <Link to="/products?category=smartphone" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                  Mua
+                </Link>
+                <Link to="/products?category=smartphone" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                  Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
+            </div>
+            <div className="mt-auto w-[60%] h-[45%]">
+              <img
+                src="https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&q=80&w=600"
+                alt="NexPhone"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+              />
             </div>
           </div>
-          <div className="mt-auto w-[60%] h-[45%]">
-            <img
-              src="https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&q=80&w=600"
-              alt="NexPhone 15"
-              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
-            />
-          </div>
-        </div>
 
-        {/* Card 2: NexBook — light */}
-        <div className="group relative bg-apple-gray h-[420px] md:h-[600px] flex flex-col items-center pt-12 overflow-hidden scroll-reveal opacity-0 translate-y-8 transition-all duration-700 delay-100">
-          <div className="z-10 text-center px-6">
-            <p className="text-apple-secondary text-xs font-semibold uppercase tracking-widest mb-2">Chip M4 thế hệ mới</p>
-            <h3 className="text-apple-black text-3xl md:text-5xl font-bold tracking-tight mb-2">MacBook Air M4</h3>
-            <p className="text-apple-dark text-base md:text-lg mb-3">Nhẹ 1.24kg. Pin 18 giờ. Xuất sắc.</p>
-            <p className="text-apple-secondary text-sm md:text-base mb-5">Từ 24.499.000đ</p>
-            <div className="flex items-center justify-center gap-6">
-              <Link to="/products?category=laptop" className="px-5 py-2 rounded-full bg-apple-blue text-white text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
-                Mua
-              </Link>
-              <Link to="/products?category=laptop" className="text-apple-blue hover:underline text-sm font-medium flex items-center">
-                Tìm hiểu thêm <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
+          {/* Card 2 */}
+          <div className="group relative bg-apple-gray h-[420px] md:h-[500px] flex flex-col items-center pt-8 md:pt-12 px-4 md:px-6 overflow-hidden rounded-2xl scroll-reveal opacity-0 translate-y-8 transition-all duration-700 delay-100">
+            <div className="z-10 text-center">
+              <p className="text-apple-secondary text-xs font-semibold uppercase tracking-widest mb-2">Chip M4 thế hệ mới</p>
+              <h3 className="text-apple-black text-lg md:text-xl font-bold tracking-tight mb-2">MacBook Air M4</h3>
+              <p className="text-apple-dark text-sm md:text-base mb-3">Nhẹ 1.24kg. Pin 18 giờ.</p>
+              <p className="text-apple-secondary text-sm mb-5">Từ 24.499.000đ</p>
+              <div className="flex items-center justify-center gap-4">
+                <Link to="/products?category=laptop" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                  Mua
+                </Link>
+                <Link to="/products?category=laptop" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                  Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
+            </div>
+            <div className="mt-auto w-[80%] h-[40%]">
+              <img
+                src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=800"
+                alt="NexBook Pro"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 rounded-t-2xl shadow-xl"
+              />
             </div>
           </div>
-          <div className="mt-auto w-[80%] h-[40%]">
-            <img
-              src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=800"
-              alt="NexBook Pro"
-              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 rounded-t-2xl shadow-xl"
-            />
-          </div>
-        </div>
 
-        {/* Card 3: NexPad — light */}
-        <div className="group relative bg-apple-gray h-[420px] md:h-[600px] flex flex-col items-center pt-12 overflow-hidden scroll-reveal opacity-0 translate-y-8 transition-all duration-700">
-          <div className="z-10 text-center px-6">
-            <p className="text-apple-secondary text-xs font-semibold uppercase tracking-widest mb-2">Chip M3</p>
-            <h3 className="text-apple-black text-3xl md:text-5xl font-bold tracking-tight mb-2">iPad Air M3</h3>
-            <p className="text-apple-dark text-base md:text-lg mb-3">Mỏng 6.1mm. Mạnh như Pro.</p>
-            <p className="text-apple-secondary text-sm md:text-base mb-5">Từ 16.990.000đ</p>
-            <div className="flex items-center justify-center gap-6">
-              <Link to="/products?category=tablet" className="px-5 py-2 rounded-full bg-apple-blue text-white text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
-                Mua
-              </Link>
-              <Link to="/products?category=tablet" className="text-apple-blue hover:underline text-sm font-medium flex items-center">
-                Tìm hiểu thêm <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
+          {/* Card 3 */}
+          <div className="group relative bg-apple-gray h-[420px] md:h-[500px] flex flex-col items-center pt-8 md:pt-12 px-4 md:px-6 overflow-hidden rounded-2xl scroll-reveal opacity-0 translate-y-8 transition-all duration-700">
+            <div className="z-10 text-center">
+              <p className="text-apple-secondary text-xs font-semibold uppercase tracking-widest mb-2">Chip M3</p>
+              <h3 className="text-apple-black text-lg md:text-xl font-bold tracking-tight mb-2">iPad Air M3</h3>
+              <p className="text-apple-dark text-sm md:text-base mb-3">Mỏng 6.1mm.</p>
+              <p className="text-apple-secondary text-sm mb-5">Từ 16.990.000đ</p>
+              <div className="flex items-center justify-center gap-4">
+                <Link to="/products?category=tablet" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                  Mua
+                </Link>
+                <Link to="/products?category=tablet" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                  Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
+            </div>
+            <div className="mt-auto w-[70%] h-[45%]">
+              <img
+                src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=800"
+                alt="NexPad"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+              />
             </div>
           </div>
-          <div className="mt-auto w-[70%] h-[45%]">
-            <img
-              src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=800"
-              alt="NexPad Air"
-              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
-            />
-          </div>
-        </div>
 
-        {/* Card 4: NexWatch — dark */}
-        <div className="group relative bg-apple-black h-[420px] md:h-[600px] flex flex-col items-center pt-12 overflow-hidden scroll-reveal opacity-0 translate-y-8 transition-all duration-700 delay-100">
-          <div className="z-10 text-center px-6">
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">Theo dõi Sức khỏe</p>
-            <h3 className="text-white text-3xl md:text-5xl font-bold tracking-tight mb-2">Apple Watch Series 11</h3>
-            <p className="text-white/80 text-base md:text-lg mb-3">Đo nhịp tim, oxy, nhiệt độ cổ tay.</p>
-            <p className="text-white/60 text-sm md:text-base mb-5">Từ 7.290.000đ</p>
-            <div className="flex items-center justify-center gap-6">
-              <Link to="/products?category=accessory" className="px-5 py-2 rounded-full bg-apple-blue text-white text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
-                Mua
-              </Link>
-              <Link to="/products?category=accessory" className="text-apple-blue hover:underline text-sm font-medium flex items-center">
-                Tìm hiểu thêm <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
+          {/* Card 4 */}
+          <div className="group relative bg-apple-black h-[420px] md:h-[500px] flex flex-col items-center pt-8 md:pt-12 px-4 md:px-6 overflow-hidden rounded-2xl scroll-reveal opacity-0 translate-y-8 transition-all duration-700 delay-100">
+            <div className="z-10 text-center">
+              <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">Sức khỏe</p>
+              <h3 className="text-white text-lg md:text-xl font-bold tracking-tight mb-2">Watch Series 11</h3>
+              <p className="text-white/80 text-sm md:text-base mb-3">Đo nhịp tim, oxy.</p>
+              <p className="text-white/60 text-sm mb-5">Từ 7.290.000đ</p>
+              <div className="flex items-center justify-center gap-4">
+                <Link to="/products?category=accessory" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                  Mua
+                </Link>
+                <Link to="/products?category=accessory" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                  Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className="mt-8 w-[50%] h-[40%]">
-            <img
-              src="https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt="Apple Watch Series 11"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
+            <div className="mt-8 w-[50%] h-[40%]">
+              <img
+                src="https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0"
+                alt="Apple Watch Series 11"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── 3. FEATURE SECTION 1 — full-bleed image với text overlay (thay vì split layout) ─── */}
-      <section className="relative w-full h-[600px] md:h-[700px] overflow-hidden scroll-reveal opacity-0 translate-y-8 transition-all duration-1000">
-        <img
-          src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=1400"
-          alt="MacBook Air M4 Performance"
-          className="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        {/* Darker overlay on left side for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-
-        <div className="relative z-10 h-full flex flex-col justify-center px-8 md:px-20 max-w-[700px]">
-          <h2 className="text-white text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
-            Chip M4. Hiệu năng không giới hạn.
-          </h2>
-          <p className="text-white/75 text-lg md:text-xl font-medium leading-relaxed mb-8">
-            MacBook Air M4 với CPU 10 nhân trên tiến trình 3nm — nhanh hơn 1.6 lần so với M1. Pin 18 giờ liên tục, trọng lượng chỉ 1.24kg. Chiếc MacBook mỏng nhẹ nhất từ trước đến nay.
-          </p>
-          <Link
-            to="#"
-            className="text-apple-blue hover:underline text-lg font-medium flex items-center group w-fit"
-          >
-            Khám phá MacBook Air M4
-            <ChevronRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
-      </section>
-
-      {/* ─── 4. FEATURE SECTION 2 — split layout (khác biệt với section 1) ─── */}
-      <section className="w-full bg-white py-24 md:py-[120px] scroll-reveal opacity-0 translate-y-8 transition-all duration-1000">
-        <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div>
-            <p className="text-apple-blue text-sm font-semibold uppercase tracking-widest mb-4">Super Retina XDR · ProMotion</p>
-            <h2 className="text-apple-black text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
-              Màn hình 6.3". Sắc nét đến từng pixel.
+      {/* ─── 3. FULL-BLEED PROMO 1 ─── */}
+      <section className="relative w-full overflow-hidden bg-black scroll-reveal opacity-0 translate-y-8 transition-all duration-1000 group">
+        <div className="flex flex-col lg:flex-row">
+          <div className="px-4 py-10 lg:w-1/2 lg:flex lg:flex-col lg:justify-center lg:px-20 lg:py-28 z-10 order-2 lg:order-1 text-center lg:text-left">
+            <h2 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-6 leading-tight">
+              Chip M4. Hiệu năng không giới hạn.
             </h2>
-            <p className="text-apple-secondary text-lg md:text-xl font-medium leading-relaxed mb-8">
-              iPhone 17 Pro sở hữu màn hình Super Retina XDR 120Hz ProMotion — cuộn lướt mượt mà không độ trễ, độ sáng tối đa 2.000 nits, hiển thị rõ ngay dưới ánh nắng gay gắt.
+            <p className="text-white/75 text-sm md:text-base font-medium leading-relaxed mb-8">
+              MacBook Air M4 với CPU 10 nhân trên tiến trình 3nm — nhanh hơn 1.6 lần so với M1. Pin 18 giờ liên tục, trọng lượng chỉ 1.24kg. Chiếc MacBook mỏng nhẹ nhất từ trước đến nay.
             </p>
             <Link
               to="#"
-              className="text-apple-blue hover:underline text-lg font-medium flex items-center group w-fit"
+              className="text-apple-blue hover:underline text-sm md:text-base font-medium flex items-center w-fit mx-auto lg:mx-0 group-hover:text-blue-400"
+            >
+              Khám phá MacBook Air M4
+              <ChevronRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+          <div className="w-full lg:w-1/2 lg:h-auto h-[40vh] order-1 lg:order-2">
+            <img
+              src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=1400"
+              alt="MacBook Air M4 Performance"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 4. FULL-BLEED PROMO 2 ─── */}
+      <section className="relative w-full overflow-hidden bg-white scroll-reveal opacity-0 translate-y-8 transition-all duration-1000 group">
+        <div className="flex flex-col lg:flex-row">
+          <div className="w-full lg:w-1/2 lg:h-auto h-[40vh]">
+            <img
+              src="https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?auto=format&fit=crop&q=80&w=800"
+              alt="Super Retina XDR Display"
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+          <div className="px-4 py-10 lg:w-1/2 lg:flex lg:flex-col lg:justify-center lg:px-20 lg:py-28 z-10 text-center lg:text-left">
+            <p className="text-apple-blue text-xs md:text-sm font-semibold uppercase tracking-widest mb-4">Super Retina XDR</p>
+            <h2 className="text-apple-black text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-6 leading-tight">
+              Màn hình 6.3". Sắc nét đến từng pixel.
+            </h2>
+            <p className="text-apple-secondary text-sm md:text-base font-medium leading-relaxed mb-8">
+              iPhone 17 Pro sở hữu màn hình Super Retina XDR 120Hz ProMotion — cuộn lướt mượt mà không độ trễ, hiển thị rõ ngay dưới ánh nắng gay gắt.
+            </p>
+            <Link
+              to="#"
+              className="text-apple-blue hover:underline text-sm md:text-base font-medium flex items-center w-fit mx-auto lg:mx-0 group-hover:text-blue-600"
             >
               Khám phá iPhone 17 Pro
               <ChevronRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-1" />
             </Link>
-          </div>
-          <div className="flex justify-center">
-            <img
-              src="https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?auto=format&fit=crop&q=80&w=800"
-              alt="Super Retina XDR Display"
-              className="w-full max-w-[420px] rounded-2xl drop-shadow-2xl"
-            />
           </div>
         </div>
       </section>
@@ -628,16 +632,16 @@ const HomePage = () => {
       {/* ─── STATS ─── */}
       <section
         ref={statsRef}
-        className="w-full bg-apple-black py-20 md:py-24 scroll-reveal opacity-0 translate-y-8 transition-all duration-1000"
+        className="w-full bg-apple-black py-12 md:py-20 lg:py-28 scroll-reveal opacity-0 translate-y-8 transition-all duration-1000"
       >
-        <div className="max-w-[1000px] mx-auto px-6">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-white/10">
             {stats.map((stat, i) => (
-              <div key={i} className="flex flex-col items-center justify-between text-center gap-2 md:px-8 py-4 md:py-0">
-                <span className="text-5xl md:text-7xl font-bold text-white tracking-tight tabular-nums">
+              <div key={i} className="flex flex-col items-center justify-between text-center gap-2 p-4 md:p-6 lg:px-8">
+                <span className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white tracking-tight tabular-nums">
                   {i === 3 ? '4.9' : counts[i].toLocaleString('vi-VN')}{stat.suffix}
                 </span>
-                <span className="text-white/60 text-sm md:text-base font-medium leading-snug max-w-[140px]">
+                <span className="text-white/60 text-xs md:text-sm font-medium leading-snug max-w-[140px]">
                   {stat.label}
                 </span>
               </div>
@@ -648,35 +652,35 @@ const HomePage = () => {
 
       {/* ─── TESTIMONIALS CAROUSEL ─── */}
       <section 
-        className="w-full bg-white py-24 md:py-16 scroll-reveal opacity-0 translate-y-8 transition-all duration-1000"
+        className="w-full bg-white py-12 md:py-20 lg:py-28 scroll-reveal opacity-0 translate-y-8 transition-all duration-1000"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        <div className="max-w-[1200px] mx-auto text-center px-4 mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-apple-black tracking-tight mb-4">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center mb-10">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-apple-black tracking-tight mb-4">
             Khách hàng nói gì về chúng tôi
           </h2>
-          <p className="text-apple-secondary text-lg mb-12">
+          <p className="text-apple-secondary text-sm md:text-base mb-12">
             Hơn 10.000 khách hàng hài lòng trên toàn quốc
           </p>
         </div>
 
-        <div className="max-w-[1200px] mx-auto relative px-4 text-left">
+        <div className="mx-auto w-full max-w-screen-xl relative px-4 text-left">
           <button 
             onClick={goPrev}
-            className="absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-black/10 flex items-center justify-center hover:bg-apple-gray transition-colors cursor-pointer left-0 md:-left-5"
+            className="absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-black/10 flex items-center justify-center hover:bg-apple-gray transition-colors cursor-pointer left-0 md:left-4 lg:-left-5"
           >
             <ChevronLeft className="w-5 h-5 text-black" />
           </button>
           
           <button 
             onClick={goNext}
-            className="absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-black/10 flex items-center justify-center hover:bg-apple-gray transition-colors cursor-pointer right-0 md:-right-5"
+            className="absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md border border-black/10 flex items-center justify-center hover:bg-apple-gray transition-colors cursor-pointer right-0 md:right-4 lg:-right-5"
           >
             <ChevronRight className="w-5 h-5 text-black" />
           </button>
 
-          <div className="overflow-hidden mx-8 md:mx-12">
+          <div className="overflow-hidden mx-8 md:mx-16 lg:mx-12">
             <div
               style={{
                 transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
@@ -688,11 +692,11 @@ const HomePage = () => {
                 <div
                   key={i}
                   style={{ minWidth: `${100 / visibleCount}%` }}
-                  className="px-3"
+                  className="px-2 lg:px-3"
                 >
-                  <div className="bg-apple-gray rounded-2xl p-6 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-300 h-full">
+                  <div className="bg-apple-gray rounded-2xl p-4 md:p-6 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-300 h-full">
                     <div className="flex items-start justify-between">
-                      <span className="text-5xl text-apple-blue font-serif leading-none">"</span>
+                      <span className="text-3xl lg:text-5xl text-apple-blue font-serif leading-none">"</span>
                       <div className="flex gap-0.5">
                         {Array.from({ length: t.rating }).map((_, i) => (
                           <span key={i} className="text-yellow-400 text-sm">★</span>
@@ -735,24 +739,24 @@ const HomePage = () => {
       </section>
 
       {/* ─── 5. WHY NEXTECH — icon rõ hơn, số liệu cụ thể ─── */}
-      <section className="w-full bg-apple-gray py-24 scroll-reveal opacity-0 translate-y-8 transition-all duration-1000">
-        <div className="max-w-[1000px] mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-apple-black tracking-tight mb-4">
+      <section className="w-full bg-apple-gray py-12 md:py-20 lg:py-28 scroll-reveal opacity-0 translate-y-8 transition-all duration-1000">
+        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-apple-black tracking-tight mb-4">
             Vì sao nên chọn NexTech?
           </h2>
-          <p className="text-apple-secondary text-lg mb-16">
+          <p className="text-apple-secondary text-sm md:text-base mb-10 md:mb-16">
             Cam kết mang đến trải nghiệm mua sắm tốt nhất.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
 
             <div className="flex flex-col items-center">
               {/* Icon container với solid background thay vì /10 */}
               <div className="w-16 h-16 rounded-2xl bg-apple-blue flex items-center justify-center mb-6 shadow-lg shadow-apple-blue/30">
                 <ShieldCheck className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-apple-black mb-3">Bảo hành chính hãng</h3>
-              <p className="text-apple-secondary text-base leading-relaxed">
+              <h3 className="text-lg md:text-xl font-bold text-apple-black mb-3">Bảo hành chính hãng</h3>
+              <p className="text-apple-secondary text-sm md:text-base leading-relaxed">
                 Bảo hành lên đến <span className="font-semibold text-apple-black">24 tháng</span>, hỗ trợ bởi hơn <span className="font-semibold text-apple-black">50 trung tâm NexCare</span> trên toàn quốc.
               </p>
             </div>
@@ -761,8 +765,8 @@ const HomePage = () => {
               <div className="w-16 h-16 rounded-2xl bg-apple-blue flex items-center justify-center mb-6 shadow-lg shadow-apple-blue/30">
                 <Clock className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-apple-black mb-3">Giao hàng siêu tốc</h3>
-              <p className="text-apple-secondary text-base leading-relaxed">
+              <h3 className="text-lg md:text-xl font-bold text-apple-black mb-3">Giao hàng siêu tốc</h3>
+              <p className="text-apple-secondary text-sm md:text-base leading-relaxed">
                 Nhận hàng trong <span className="font-semibold text-apple-black">2 giờ</span> nội thành. Miễn phí giao hàng cho đơn từ <span className="font-semibold text-apple-black">500.000đ</span>.
               </p>
             </div>
@@ -771,8 +775,8 @@ const HomePage = () => {
               <div className="w-16 h-16 rounded-2xl bg-apple-blue flex items-center justify-center mb-6 shadow-lg shadow-apple-blue/30">
                 <Award className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-apple-black mb-3">Sản phẩm độc quyền</h3>
-              <p className="text-apple-secondary text-base leading-relaxed">
+              <h3 className="text-lg md:text-xl font-bold text-apple-black mb-3">Sản phẩm độc quyền</h3>
+              <p className="text-apple-secondary text-sm md:text-base leading-relaxed">
                 <span className="font-semibold text-apple-black">100% hàng thật</span>, kiểm định chất lượng nghiêm ngặt. Trải nghiệm thiết bị mới nhất sớm nhất Việt Nam.
               </p>
             </div>

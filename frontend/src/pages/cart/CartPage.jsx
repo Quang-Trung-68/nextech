@@ -60,8 +60,8 @@ const CartPage = () => {
         </p>
       </div>
       
-      <div className="grid lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-8 space-y-4">
+      <div className="grid lg:grid-cols-12 gap-8 items-start relative">
+        <div className="lg:col-span-8 space-y-4 pb-40 lg:pb-0">
           {cartItems.map((item) => (
             <CartItem 
               key={item.id} 
@@ -73,11 +73,13 @@ const CartPage = () => {
         </div>
         
         <div className="lg:col-span-4">
-          <CartSummary 
-            totalItems={totalItems} 
-            totalPrice={totalPrice} 
-            onClearCart={handleClearCart} 
-          />
+          <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-[#d2d2d7] bg-white z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] lg:static lg:p-0 lg:border-0 lg:shadow-none lg:bg-transparent lg:z-auto">
+            <CartSummary 
+              totalItems={totalItems} 
+              totalPrice={totalPrice} 
+              onClearCart={handleClearCart} 
+            />
+          </div>
         </div>
       </div>
     </div>

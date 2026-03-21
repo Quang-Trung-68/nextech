@@ -107,7 +107,7 @@ const RegisterForm = () => {
           type="text"
           autoComplete="name"
           placeholder="Nguyễn Văn A"
-          className={`w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm outline-none transition
+          className={`w-full min-h-[44px] rounded-lg border bg-background px-4 py-2.5 text-sm shadow-sm outline-none transition
             focus:ring-2 focus:ring-primary focus:border-primary
             ${errors.name ? 'border-destructive focus:ring-destructive' : 'border-border'}`}
           {...formRegister('name')}
@@ -133,7 +133,7 @@ const RegisterForm = () => {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          className={`w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm outline-none transition
+          className={`w-full min-h-[44px] rounded-lg border bg-background px-4 py-2.5 text-sm shadow-sm outline-none transition
             focus:ring-2 focus:ring-primary focus:border-primary
             ${errors.email ? 'border-destructive focus:ring-destructive' : 'border-border'}`}
           {...formRegister('email')}
@@ -160,7 +160,7 @@ const RegisterForm = () => {
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
             placeholder="••••••••"
-            className={`w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm shadow-sm outline-none transition
+            className={`w-full min-h-[44px] rounded-lg border bg-background px-4 py-2.5 pr-12 text-sm shadow-sm outline-none transition
               focus:ring-2 focus:ring-primary focus:border-primary
               ${errors.password ? 'border-destructive focus:ring-destructive' : 'border-border'}`}
             {...formRegister('password')}
@@ -169,7 +169,7 @@ const RegisterForm = () => {
             type="button"
             aria-label={showPassword ? t('common:actions.hidePassword', 'Hide password') : t('common:actions.showPassword', 'Show password')}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+            className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition rounded-md"
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -198,7 +198,7 @@ const RegisterForm = () => {
             type={showConfirm ? 'text' : 'password'}
             autoComplete="new-password"
             placeholder="••••••••"
-            className={`w-full rounded-md border bg-background px-3 py-2 pr-10 text-sm shadow-sm outline-none transition
+            className={`w-full min-h-[44px] rounded-lg border bg-background px-4 py-2.5 pr-12 text-sm shadow-sm outline-none transition
               focus:ring-2 focus:ring-primary focus:border-primary
               ${errors.confirmPassword ? 'border-destructive focus:ring-destructive' : 'border-border'}`}
             {...formRegister('confirmPassword')}
@@ -207,7 +207,7 @@ const RegisterForm = () => {
             type="button"
             aria-label={showConfirm ? t('common:actions.hidePassword', 'Hide password') : t('common:actions.showPassword', 'Show password')}
             onClick={() => setShowConfirm((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+            className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition rounded-md"
           >
             {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -235,7 +235,7 @@ const RegisterForm = () => {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full min-h-[44px] flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {isPending ? (
           <>

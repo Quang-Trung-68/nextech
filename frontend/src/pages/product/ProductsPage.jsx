@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatVND } from '@/utils/price';
 import { useMyFavorites, FavoriteButton } from '@/features/favorites';
+import FilterDrawer from './FilterDrawer';
 
 const CATEGORIES = [
   { id: 'smartphone', label: 'Điện thoại' },
@@ -231,10 +232,10 @@ const ProductsPage = () => {
   );
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-8 font-sans bg-white selection:bg-apple-blue/20">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 font-sans bg-white selection:bg-apple-blue/20">
       
       {/* Breadcrumb & Header Mobile */}
-      <div className="flex flex-col mb-8 mt-4">
+      <div className="flex flex-col mb-4 md:mb-8 mt-4">
         <div className="flex items-center text-xs text-apple-secondary mb-4 space-x-1">
           <Link to="/" className="hover:text-apple-dark transition-colors">NexTech</Link>
           <ChevronRight className="w-3 h-3" />
@@ -247,7 +248,7 @@ const ProductsPage = () => {
       <div className="flex flex-col md:flex-row gap-8 items-start">
         
         {/* Left Sidebar (Desktop) */}
-        <aside className="hidden md:block w-[280px] shrink-0 sticky top-24">
+        <aside className="hidden md:block md:w-64 lg:w-[280px] shrink-0 sticky top-24">
           {renderSidebarContent()}
         </aside>
 
@@ -255,8 +256,8 @@ const ProductsPage = () => {
         <div className="flex-1 w-full flex flex-col min-w-0">
           
           {/* Top Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-            <div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div className="hidden md:block">
                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-2">
                  {categories.length === 1 ? CATEGORIES.find(c => c.id === categories[0])?.label : 'Sản phẩm'}
                </h1>
@@ -265,33 +266,36 @@ const ProductsPage = () => {
                </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Mobile Filter Button */}
-              <div className="md:hidden">
-                <Sheet>
-                  <SheetTrigger className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[#d2d2d7] hover:bg-apple-gray transition-colors focus:outline-none focus:ring-2 focus:ring-apple-blue">
-                    <SlidersHorizontal className="w-4 h-4 text-apple-dark" />
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[300px] sm:w-[350px] overflow-y-auto p-6">
-                    <SheetHeader className="mb-6 p-0">
-                      <SheetTitle className="text-left font-bold text-apple-dark">Lọc Sản Phẩm</SheetTitle>
-                    </SheetHeader>
-                    {renderSidebarContent()}
-                  </SheetContent>
-                </Sheet>
+            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+              
+              <div className="md:hidden w-full">
+                <FilterDrawer renderSidebarContent={renderSidebarContent} />
               </div>
 
-              {/* Sort Select */}
-              <Select value={sort} onValueChange={setSort}>
-                <SelectTrigger className="w-[160px] h-10 rounded-full border-[#d2d2d7] text-sm focus:ring-1 focus:ring-apple-blue">
-                  <SelectValue placeholder="Sắp xếp" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Mới nhất">Mới nhất</SelectItem>
-                  <SelectItem value="Giá tăng dần">Giá tăng dần</SelectItem>
-                  <SelectItem value="Giá giảm dần">Giá giảm dần</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Sort Select on Mobile, Segmented on Desktop */}
+              <div className="md:hidden w-full mt-2">
+                <Select value={sort} onValueChange={setSort}>
+                  <SelectTrigger className="w-full h-10 rounded-lg border-[#d2d2d7] text-sm focus:ring-1 focus:ring-apple-blue bg-apple-gray flex justify-between">
+                    <SelectValue placeholder="Sắp xếp" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mới nhất">Mới nhất</SelectItem>
+                    <SelectItem value="Giá tăng dần">Giá tăng dần</SelectItem>
+                    <SelectItem value="Giá giảm dần">Giá giảm dần</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="hidden md:flex items-center gap-1 bg-apple-gray p-1 rounded-lg border border-[#d2d2d7]">
+                {['Mới nhất', 'Giá tăng dần', 'Giá giảm dần'].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSort(s)}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${sort === s ? 'bg-white shadow-sm text-apple-dark' : 'text-apple-secondary hover:text-apple-dark'}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
 
               {/* View Toggle */}
               <div className="hidden sm:flex items-center bg-apple-gray p-1 rounded-full">
@@ -326,12 +330,12 @@ const ProductsPage = () => {
                <p className="text-apple-secondary">Hãy thử thay đổi điều kiện lọc của bạn.</p>
             </div>
           ) : (
-            <div className={`grid gap-6 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+            <div className={`grid gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4'}`}>
               {products.map(product => (
-                <div key={product.id} className={`group relative bg-white border border-transparent hover:border-[#d2d2d7] hover:shadow-sm rounded-2xl transition-all duration-300 p-4 flex ${viewMode === 'list' ? 'flex-row gap-6 items-center' : 'flex-col'}`}>
+                <div key={product.id} className={`group relative bg-white border border-[#f5f5f7] md:border-transparent md:hover:border-[#d2d2d7] md:hover:shadow-lg rounded-xl md:rounded-2xl transition-all duration-300 p-3 md:p-4 flex ${viewMode === 'list' ? 'flex-row gap-4 md:gap-6 items-center' : 'flex-col'}`}>
                   
                   {/* FavoriteButton overlay */}
-                  <div className="absolute top-4 right-4 z-10">
+                  <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
                     <FavoriteButton
                       product={{ ...product, isFavorited: favoritedIds.has(product.id) }}
                       size="sm"
@@ -339,9 +343,9 @@ const ProductsPage = () => {
                   </div>
 
                   {/* Image */}
-                  <Link to={`/products/${product.id}`} className={`relative bg-apple-gray rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-40 h-40' : 'w-full aspect-square mb-6 group/img'}`}>
+                  <Link to={`/products/${product.id}`} className={`relative bg-apple-gray rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-6 group/img'}`}>
                     {/* Badges — xếp dọc góc trên trái */}
-                    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                    <div className="hidden md:flex absolute top-2 left-2 z-10 flex-col gap-1">
                       {product.isNewArrival && (
                         <span className="bg-green-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
                           Mới
@@ -357,7 +361,7 @@ const ProductsPage = () => {
                     <img 
                       src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=400'} 
                       alt={product.name}
-                      className={`object-cover w-full h-full mix-blend-multiply transition-transform duration-500 ${viewMode === 'list' ? 'group-hover:scale-105' : 'group-hover/img:scale-105'}`}
+                      className={`object-cover w-full h-full mix-blend-multiply transition-transform duration-500 ${viewMode === 'list' ? 'md:group-hover:scale-105' : 'md:group-hover/img:scale-105'}`}
                       loading="lazy"
                     />
                   </Link>
@@ -365,30 +369,30 @@ const ProductsPage = () => {
                   {/* Info */}
                   <div className="flex flex-col flex-1">
                     <Link to={`/products/${product.id}`} className="block">
-                      <h3 className="font-semibold text-[15px] text-apple-dark tracking-tight mb-1 group-hover:text-apple-blue transition-colors line-clamp-2">
+                      <h3 className="font-semibold text-sm md:text-[15px] text-apple-dark tracking-tight mb-1 md:group-hover:text-apple-blue transition-colors line-clamp-2">
                         {product.name}
                       </h3>
-                      <p className="text-[13px] text-apple-secondary mb-1 line-clamp-1">
+                      <p className="hidden md:block text-[13px] text-apple-secondary mb-1 line-clamp-1">
                         {product.brand} • {CATEGORIES.find(c => c.id === product.category)?.label || product.category}
                       </p>
                       {/* Năm ra mắt */}
                       {product.manufactureYear != null && (
-                        <p className="text-[12px] text-apple-secondary mb-3">
+                        <p className="hidden md:block text-[12px] text-apple-secondary mb-3">
                           Năm ra mắt: {product.manufactureYear}
                         </p>
                       )}
                     </Link>
 
-                    <div className="mt-auto flex flex-col gap-3">
+                    <div className="mt-auto flex flex-col gap-2 md:gap-3">
                       {/* Hiện thị giá */}
-                      <div className="flex items-end gap-2">
+                      <div className="flex flex-col md:flex-row md:items-end gap-0.5 md:gap-2">
                         {product.discountPercent > 0 ? (
                           <>
-                            <span className="text-sm line-through text-gray-400">
-                              {formatVND(product.price)}
-                            </span>
                             <span className="font-semibold text-red-500 text-base">
                               {formatVND(product.finalPrice)}
+                            </span>
+                            <span className="text-xs md:text-sm line-through text-gray-400">
+                              {formatVND(product.price)}
                             </span>
                           </>
                         ) : (
@@ -399,15 +403,15 @@ const ProductsPage = () => {
                       </div>
                       
                       <Button 
-                        className="w-full rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-none transition-all active:scale-[0.98]"
+                        className="hidden md:flex w-full rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-none transition-all active:scale-[0.98]"
                         onClick={(e) => handleAddToCart(e, product.id)}
                         disabled={product.stock === 0 || isAddingToCart}
                       >
                         {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
                       </Button>
                       
-                      {/* Rating under the button */}
-                      <div className="flex items-center pt-1">
+                      {/* Rating under the button on md+ */}
+                      <div className="hidden md:flex items-center pt-1">
                         <div className="flex items-center gap-1.5 text-sm font-semibold text-apple-dark">
                            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                            <span>{(product.rating || 0) > 0 ? (product.rating).toFixed(1) : "Chưa có"}</span>

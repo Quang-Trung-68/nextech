@@ -66,7 +66,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6 md:py-12">
       <div className="w-full max-w-md space-y-6">
         {/* ── Logo / App name ─────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-2 text-center">
@@ -97,7 +97,7 @@ const LoginPage = () => {
         )}
 
         {/* ── Card wrapping the form ───────────────────────────────────── */}
-        <Card className="shadow-lg">
+        <Card className="border-0 shadow-none bg-transparent md:bg-card md:border md:shadow-sm md:rounded-2xl">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Đăng nhập</CardTitle>
             <CardDescription>
@@ -120,7 +120,7 @@ const LoginPage = () => {
                 id="btn-google-login"
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-2.5 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-150"
+                className="w-full min-h-[44px] flex items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-150"
               >
                 <GoogleIcon />
                 Đăng nhập với Google
@@ -129,7 +129,7 @@ const LoginPage = () => {
                 id="btn-facebook-login"
                 type="button"
                 onClick={handleFacebookLogin}
-                className="w-full flex items-center justify-center gap-2.5 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-150"
+                className="w-full min-h-[44px] flex items-center justify-center gap-2.5 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors duration-150"
               >
                 <FacebookIcon />
                 Đăng nhập với Facebook

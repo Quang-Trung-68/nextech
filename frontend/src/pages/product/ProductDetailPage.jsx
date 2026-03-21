@@ -142,7 +142,7 @@ const ProductDetailPage = () => {
   };
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto px-4 md:px-6">
+    <div className="container py-8 max-w-6xl mx-auto px-4 md:px-6 pb-40 md:pb-8">
       
       {/* Breadcrumb */}
       <div className="flex flex-wrap items-center text-[13px] text-apple-secondary mb-8 gap-2">
@@ -252,12 +252,12 @@ const ProductDetailPage = () => {
           </div>
 
           {/* Action Row Add To Cart */}
-          <div className="pt-6 space-y-4">
-            <p className="font-medium text-sm">Số lượng</p>
-            <div className="flex flex-wrap items-center gap-4">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-[#d2d2d7] z-50 md:static md:p-0 md:bg-transparent md:border-0 md:backdrop-blur-none md:pt-6 space-y-3 md:space-y-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] md:shadow-none">
+            <p className="font-medium text-sm hidden md:block">Số lượng</p>
+            <div className="flex flex-row flex-wrap md:flex-wrap items-center gap-3 md:gap-4">
               
               {/* Stepper Số Lượng Input */}
-              <div className="flex items-center w-36 h-12 bg-muted/50 rounded-lg p-1 border">
+              <div className="flex items-center w-32 md:w-36 h-12 bg-muted/50 rounded-xl p-1 border border-[#d2d2d7]">
                  <Button 
                    variant="ghost" 
                    size="icon" 
@@ -293,7 +293,7 @@ const ProductDetailPage = () => {
               <Button 
                 variant="outline"
                 size="lg" 
-                className="flex-1 min-w-[160px] h-12 text-base font-semibold shadow-sm active:scale-[0.98] transition-all"
+                className="flex-1 min-w-[140px] md:min-w-[160px] h-12 text-sm md:text-base font-semibold shadow-sm active:scale-[0.98] transition-all rounded-xl border-[#d2d2d7]"
                 disabled={isOutOfStock || isAddingToCart}
                 onClick={handleAddToCart}
               >
@@ -310,7 +310,7 @@ const ProductDetailPage = () => {
               {/* Button Buy Now */}
               <Button 
                 size="lg" 
-                className="flex-1 min-w-[160px] h-12 text-base font-semibold shadow-md active:scale-[0.98] transition-all"
+                className="flex-1 min-w-[140px] md:min-w-[160px] h-12 text-sm md:text-base font-semibold shadow-md active:scale-[0.98] transition-all rounded-xl bg-apple-blue hover:bg-apple-blue/90"
                 disabled={isOutOfStock || isAddingToCart}
                 onClick={handleBuyNow}
               >

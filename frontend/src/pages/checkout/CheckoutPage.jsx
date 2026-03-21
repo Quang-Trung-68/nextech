@@ -18,6 +18,8 @@ import { CheckoutSummary } from '@/features/checkout/components/CheckoutSummary'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatVND } from '@/utils/price';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 
 const CheckoutPageForm = () => {
   const navigate = useNavigate();
@@ -159,12 +161,12 @@ const CheckoutPageForm = () => {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
-      <div className="flex items-center space-x-2 text-apple-secondary mb-8 text-sm font-medium">
-        <span className="text-apple-dark">1. Giỏ hàng</span>
-        <span className="text-[#d2d2d7]">—</span>
-        <span className="text-apple-blue font-bold">2. Thanh toán</span>
-        <span className="text-[#d2d2d7]">—</span>
-        <span>3. Hoàn tất</span>
+      <div className="flex items-center space-x-2 text-apple-secondary mb-6 text-xs md:text-sm font-medium">
+        <span className="text-apple-dark shrink-0">1. Giỏ hàng</span>
+        <span className="text-[#d2d2d7] shrink-0">—</span>
+        <span className="text-apple-blue font-bold shrink-0">2. Thanh toán</span>
+        <span className="text-[#d2d2d7] shrink-0">—</span>
+        <span className="shrink-0">3. Hoàn tất</span>
       </div>
 
       <h1 className="text-3xl md:text-4xl font-extrabold text-apple-dark tracking-tight mb-8">
@@ -179,10 +181,30 @@ const CheckoutPageForm = () => {
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-[7fr_5fr] gap-8 lg:gap-12 items-start">
-        <div className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          
+          {/* Mobile Order Summary Accordion */}
+          <div className="lg:hidden w-full">
+            <Accordion type="single" collapsible className="w-full bg-apple-gray border border-[#d2d2d7] rounded-xl px-4 py-1">
+              <AccordionItem value="summary" className="border-none">
+                <AccordionTrigger className="hover:no-underline py-3 px-1">
+                  <div className="flex justify-between w-full pr-4 text-apple-dark font-semibold text-sm">
+                    <span>Hiển thị đơn hàng ({totalItems})</span>
+                    <span className="text-apple-blue">{formatVND(totalPrice)}</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-0 pb-2 border-t border-[#d2d2d7] mt-2 px-1">
+                  <div className="mt-4">
+                    <CheckoutSummary cartItems={cartItems} totalItems={totalItems} totalPrice={totalPrice} />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
           {/* Address Picker — select saved or add new */}
-          <div className="bg-white p-6 rounded-2xl border border-border">
+          <div className="bg-white p-4 md:p-6 rounded-2xl border border-border">
             <h2 className="text-xl font-bold tracking-tight text-foreground mb-4">Địa chỉ giao hàng</h2>
             <AddressPicker onSelect={handleAddressSelect} currentUser={user} />
           </div>
@@ -204,7 +226,7 @@ const CheckoutPageForm = () => {
           </Button>
         </div>
 
-        <div className="hidden lg:flex flex-col">
+        <div className="hidden lg:flex flex-col sticky top-24 lg:col-span-1">
           <CheckoutSummary cartItems={cartItems} totalItems={totalItems} totalPrice={totalPrice} />
         </div>
       </form>

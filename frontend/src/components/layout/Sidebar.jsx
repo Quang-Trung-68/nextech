@@ -33,7 +33,7 @@ const Avatar = ({ src, fallback, className }) => {
   );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ isMobile }) => {
   const user = useAuthStore((s) => s.user);
   const { mutate: logout } = useLogout();
   
@@ -55,18 +55,21 @@ const Sidebar = () => {
   return (
     <aside 
       className={cn(
-        "bg-card shadow-sm border-r min-h-screen flex flex-col p-4 transition-[width] duration-200 ease-in-out relative",
-        collapsed ? "w-[72px]" : "w-[220px]"
+        "bg-card shadow-sm flex flex-col p-4 transition-[width] duration-200 ease-in-out relative h-full",
+        !isMobile ? "border-r min-h-screen" : "w-full border-r-0",
+        !isMobile && collapsed ? "w-[72px]" : "w-[240px]"
       )}
     >
-      <button 
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-6 bg-border rounded-full p-0.5 border shadow-sm z-10 hover:bg-muted text-foreground"
-      >
-        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-      </button>
+      {!isMobile && (
+        <button 
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-6 bg-border rounded-full p-0.5 border shadow-sm z-10 hover:bg-muted text-foreground"
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
+      )}
 
-      {collapsed ? (
+      {!isMobile && collapsed ? (
         <h2 className="text-sm font-medium mb-6 text-foreground text-center truncate">UX</h2>
       ) : (
         <h2 className="text-sm font-medium mb-6 text-foreground px-2 truncate">Admin Panel</h2>
@@ -74,15 +77,15 @@ const Sidebar = () => {
 
       {/* Admin Profile */}
       <div 
-        className={cn("flex items-center gap-3 mb-6 px-2", collapsed ? "justify-center px-0" : "")}
-        title={collapsed ? `${user?.name} · ${user?.email}` : undefined}
+        className={cn("flex items-center gap-3 mb-6 px-2", !isMobile && collapsed ? "justify-center px-0" : "")}
+        title={!isMobile && collapsed ? `${user?.name} · ${user?.email}` : undefined}
       >
         <Avatar 
           src={user?.avatar} 
           fallback={user?.name?.charAt(0) || 'A'} 
           className="flex-shrink-0"
         />
-        {!collapsed && (
+        {(!collapsed || isMobile) && (
           <div className="flex flex-col min-w-0 overflow-hidden">
             <span className="font-medium text-sm truncate">{user?.name}</span>
             <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
@@ -99,11 +102,11 @@ const Sidebar = () => {
             key={link.to}
             to={link.to}
             end={link.to === '/admin/overview'}
-            title={collapsed ? link.name : undefined}
+            title={!isMobile && collapsed ? link.name : undefined}
             className={({ isActive }) =>
               cn(
                 'flex items-center rounded-md font-medium transition-colors',
-                collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
+                !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
                 isActive
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -111,7 +114,7 @@ const Sidebar = () => {
             }
           >
             <link.icon size={20} className="flex-shrink-0" />
-            {!collapsed && <span className="truncate">{link.name}</span>}
+            {(!collapsed || isMobile) && <span className="truncate">{link.name}</span>}
           </NavLink>
         ))}
 
@@ -120,27 +123,27 @@ const Sidebar = () => {
         <NavLink
           to="/"
           end
-          title={collapsed ? "Back to Shop" : undefined}
+          title={!isMobile && collapsed ? "Back to Shop" : undefined}
           className={({ isActive }) => cn(
             'flex items-center rounded-md font-medium transition-colors',
-            collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
+            !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
             'text-muted-foreground hover:bg-muted hover:text-foreground'
           )}
         >
           <ArrowLeft size={20} className="flex-shrink-0" />
-          {!collapsed && <span className="truncate">Back to Shop</span>}
+          {(!collapsed || isMobile) && <span className="truncate">Back to Shop</span>}
         </NavLink>
         
         <button
           onClick={() => logout()}
-          title={collapsed ? "Logout" : undefined}
+          title={!isMobile && collapsed ? "Logout" : undefined}
           className={cn(
             'flex items-center rounded-md font-medium transition-colors text-destructive hover:bg-destructive/10 mt-auto',
-            collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm'
+            !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm'
           )}
         >
           <LogOut size={20} className="flex-shrink-0" />
-          {!collapsed && <span className="truncate">Logout</span>}
+          {(!collapsed || isMobile) && <span className="truncate">Logout</span>}
         </button>
       </nav>
     </aside>

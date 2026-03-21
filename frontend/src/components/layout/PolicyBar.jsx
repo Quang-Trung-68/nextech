@@ -12,13 +12,13 @@ const policies = [
 
 const PolicyBar = () => {
   return (
-    <div className="w-full bg-white border-t border-b border-black/8 py-8">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+    <div className="w-full bg-white border-t border-b border-black/8 py-12 md:py-20 lg:py-28">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 md:gap-6 lg:gap-8">
           {policies.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <div key={idx} className="flex flex-col items-center text-center gap-2">
+              <div key={idx} className="flex flex-col items-center text-center gap-2 p-4 md:p-6">
                 <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center">
                   <Icon className="w-5 h-5 text-apple-blue" />
                 </div>
