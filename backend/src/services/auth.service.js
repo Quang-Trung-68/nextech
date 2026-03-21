@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const prisma = require('../utils/prisma');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
+const { AppError, AuthenticationError, ConflictError, NotFoundError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 // ─── Internal helper ──────────────────────────────────────────────────────────
 
@@ -41,9 +43,7 @@ const _createTokenPair = async (user, meta) => {
 const register = async (name, email, password, meta) => {
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    const error = new Error('Email is already registered');
-    error.statusCode = 409;
-    throw error;
+    throw new ConflictError('Email is already registered', ERROR_CODES.AUTH.ACCOUNT_ALREADY_EXISTS);
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -62,18 +62,17 @@ const login = async (email, password, meta) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   // Deliberately vague error — do not distinguish "bad email" vs "bad password"
-  const authError = new Error('Invalid email or password');
-  authError.statusCode = 401;
+  const authError = new AuthenticationError('Invalid email or password', ERROR_CODES.AUTH.INVALID_CREDENTIALS);
 
   if (!user) throw authError;
 
   // Guard: OAuth-only accounts have no password set
   if (!user.password) {
-    const oauthError = new Error(
-      'Tài khoản này sử dụng đăng nhập qua mạng xã hội. Vui lòng dùng nút Đăng nhập với Google.'
+    throw new AppError(
+      'This account uses social login. Please use Login with Google.',
+      400,
+      ERROR_CODES.AUTH.INVALID_CREDENTIALS
     );
-    oauthError.statusCode = 400;
-    throw oauthError;
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -87,9 +86,7 @@ const login = async (email, password, meta) => {
 
 const refresh = async (refreshTokenFromCookie, meta) => {
   if (!refreshTokenFromCookie) {
-    const error = new Error('No refresh token provided');
-    error.statusCode = 401;
-    throw error;
+    throw new AuthenticationError('No refresh token provided', ERROR_CODES.AUTH.TOKEN_MISSING);
   }
 
   // 1. Verify JWT signature / expiry
@@ -97,13 +94,12 @@ const refresh = async (refreshTokenFromCookie, meta) => {
   try {
     payload = verifyRefreshToken(refreshTokenFromCookie);
   } catch (err) {
-    const error = new Error(
+    throw new AuthenticationError(
       err.name === 'TokenExpiredError'
         ? 'Refresh token has expired. Please log in again.'
-        : 'Invalid refresh token'
+        : 'Invalid refresh token',
+      err.name === 'TokenExpiredError' ? ERROR_CODES.AUTH.TOKEN_EXPIRED : ERROR_CODES.AUTH.TOKEN_INVALID
     );
-    error.statusCode = 401;
-    throw error;
   }
 
   // 2. Check token has not been revoked
@@ -111,9 +107,7 @@ const refresh = async (refreshTokenFromCookie, meta) => {
     where: { token: refreshTokenFromCookie },
   });
   if (isRevoked) {
-    const error = new Error('Token has been revoked. Please log in again.');
-    error.statusCode = 401;
-    throw error;
+    throw new AuthenticationError('Token has been revoked. Please log in again.', ERROR_CODES.AUTH.TOKEN_INVALID);
   }
 
   // 3. Check token exists in DB and has not expired at DB level
@@ -121,17 +115,13 @@ const refresh = async (refreshTokenFromCookie, meta) => {
     where: { token: refreshTokenFromCookie },
   });
   if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
-    const error = new Error('Refresh token is invalid or expired');
-    error.statusCode = 401;
-    throw error;
+    throw new AuthenticationError('Refresh token is invalid or expired', ERROR_CODES.AUTH.TOKEN_INVALID);
   }
 
   // 4. Verify user still exists
   const user = await prisma.user.findUnique({ where: { id: payload.userId } });
   if (!user) {
-    const error = new Error('User no longer exists');
-    error.statusCode = 401;
-    throw error;
+    throw new AuthenticationError('User no longer exists', ERROR_CODES.AUTH.INVALID_CREDENTIALS);
   }
 
   // 5. Rotate: delete old refresh token from DB
@@ -179,9 +169,7 @@ const getMe = async (userId) => {
   });
 
   if (!user) {
-    const error = new Error('User not found');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('User');
   }
 
   return user;
@@ -226,15 +214,11 @@ const verifyEmail = async (rawToken) => {
   });
 
   if (!user) {
-    const error = new Error('Token xác thực không hợp lệ hoặc đã được sử dụng.');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Invalid or already used verification token.', 400, ERROR_CODES.AUTH.TOKEN_INVALID);
   }
 
   if (user.emailVerifyTokenExpiry < new Date()) {
-    const error = new Error('Token xác thực đã hết hạn. Vui lòng yêu cầu gửi lại email.');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Verification token has expired. Please request a new one.', 400, ERROR_CODES.AUTH.TOKEN_EXPIRED);
   }
 
   await prisma.user.update({
@@ -259,20 +243,18 @@ const verifyEmail = async (rawToken) => {
 const changePassword = async (user, currentPassword, newPassword) => {
   // Guard: OAuth-only accounts have no password — use "set password" flow instead
   if (!user.password) {
-    const error = new Error(
-      'Tài khoản OAuth chưa có mật khẩu. Hãy dùng chức năng Đặt mật khẩu.'
+    throw new AppError(
+      'OAuth account does not have a password. Please use Set Password feature.',
+      400,
+      ERROR_CODES.AUTH.INVALID_CREDENTIALS
     );
-    error.statusCode = 400;
-    throw error;
   }
 
   // Verify current password before allowing change
   if (currentPassword) {
     const isValid = await bcrypt.compare(currentPassword, user.password);
     if (!isValid) {
-      const error = new Error('Mật khẩu hiện tại không đúng.');
-      error.statusCode = 400;
-      throw error;
+      throw new AppError('Current password is incorrect.', 400, ERROR_CODES.AUTH.INVALID_CREDENTIALS);
     }
   }
 
@@ -344,15 +326,11 @@ const resetPassword = async (rawToken, newPassword) => {
   });
 
   if (!tokenRecord || tokenRecord.used) {
-    const error = new Error('Token đặt lại mật khẩu không hợp lệ hoặc đã được sử dụng.');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Password reset token is invalid or already used.', 400, ERROR_CODES.AUTH.TOKEN_INVALID);
   }
 
   if (tokenRecord.expiresAt < new Date()) {
-    const error = new Error('Token đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại.');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Password reset token has expired. Please request again.', 400, ERROR_CODES.AUTH.TOKEN_EXPIRED);
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);

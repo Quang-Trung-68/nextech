@@ -40,7 +40,7 @@ const ForgotPasswordPage = () => {
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
             <ShoppingBag className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">ShopNow</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">NexTech</h1>
           <p className="text-sm text-muted-foreground">Đặt lại mật khẩu của bạn</p>
         </div>
 

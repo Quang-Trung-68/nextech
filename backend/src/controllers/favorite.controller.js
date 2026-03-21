@@ -1,11 +1,13 @@
 const favoriteService = require('../services/favorite.service');
+const { AppError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
-const toggleFavorite = async (req, res) => {
+const toggleFavorite = async (req, res, next) => {
   try {
     const { productId } = req.params;
 
     if (!productId) {
-      return res.status(400).json({ success: false, message: 'productId is required' });
+      return next(new AppError('productId is required', 400, ERROR_CODES.SERVER.VALIDATION_ERROR));
     }
 
     const result = await favoriteService.toggleFavorite(req.user.id, productId);
@@ -15,15 +17,11 @@ const toggleFavorite = async (req, res) => {
       favorited: result.favorited,
     });
   } catch (error) {
-    if (error.statusCode === 404) {
-      return res.status(404).json({ success: false, message: error.message });
-    }
-    console.error('toggleFavorite Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    next(error);
   }
 };
 
-const getMyFavorites = async (req, res) => {
+const getMyFavorites = async (req, res, next) => {
   try {
     const data = await favoriteService.getUserFavorites(req.user.id);
 
@@ -32,8 +30,7 @@ const getMyFavorites = async (req, res) => {
       data,
     });
   } catch (error) {
-    console.error('getMyFavorites Error:', error);
-    return res.status(500).json({ success: false, message: 'Internal Server Error' });
+    next(error);
   }
 };
 

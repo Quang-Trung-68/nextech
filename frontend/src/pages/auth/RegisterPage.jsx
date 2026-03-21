@@ -29,7 +29,7 @@ const RegisterPage = () => {
             <ShoppingBag className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            ShopNow
+            NexTech
           </h1>
           <p className="text-sm text-muted-foreground">
             Tạo tài khoản để bắt đầu mua sắm

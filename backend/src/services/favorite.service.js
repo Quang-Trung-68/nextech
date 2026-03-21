@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma');
 const { addPriceFields } = require('../utils/price');
+const { NotFoundError } = require('../errors/AppError');
 
 const toggleFavorite = async (userId, productId) => {
   try {
@@ -25,9 +26,7 @@ const toggleFavorite = async (userId, productId) => {
   } catch (error) {
     // If the product does not exist, Prisma throws P2003
     if (error.code === 'P2003') {
-      const appError = new Error('Product not found');
-      appError.statusCode = 404;
-      throw appError;
+      throw new NotFoundError('Product');
     }
     throw error;
   }

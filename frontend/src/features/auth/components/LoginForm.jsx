@@ -5,8 +5,12 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import { loginSchema } from '@/schemas/auth.schema';
 import { useLogin } from '@/features/auth/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
+import useTranslatedError from '@/i18n/useTranslatedError';
 
 const LoginForm = () => {
+  const { t } = useTranslation(['auth', 'common']);
+  const getTranslatedError = useTranslatedError();
   const [showPassword, setShowPassword] = useState(false);
   const { mutate: login, isPending, error: serverError } = useLogin();
 
@@ -24,9 +28,7 @@ const LoginForm = () => {
   };
 
   // Trích xuất message lỗi từ server response
-  const serverErrorMessage =
-    serverError?.response?.data?.message ||
-    (serverError ? 'Đăng nhập thất bại. Vui lòng thử lại.' : null);
+  const serverErrorMessage = serverError ? getTranslatedError(serverError) : null;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
@@ -36,7 +38,7 @@ const LoginForm = () => {
           htmlFor="login-email"
           className="block text-sm font-medium text-foreground"
         >
-          Email
+          {t('auth:login.emailLabel')}
         </label>
         <input
           id="login-email"
@@ -62,7 +64,7 @@ const LoginForm = () => {
           htmlFor="login-password"
           className="block text-sm font-medium text-foreground"
         >
-          Mật khẩu
+          {t('auth:login.passwordLabel')}
         </label>
         <div className="relative">
           <input
@@ -77,7 +79,7 @@ const LoginForm = () => {
           />
           <button
             type="button"
-            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={showPassword ? t('common:actions.hidePassword', 'Hide password') : t('common:actions.showPassword', 'Show password')}
             onClick={() => setShowPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
           >
@@ -112,24 +114,24 @@ const LoginForm = () => {
         {isPending ? (
           <>
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-            Đang đăng nhập...
+            {t('common:status.loading')}
           </>
         ) : (
           <>
             <LogIn className="h-4 w-4" />
-            Đăng nhập
+            {t('auth:login.submitBtn')}
           </>
         )}
       </button>
 
       {/* ── Link to Register ───────────────────────────────────────────── */}
       <p className="text-center text-sm text-muted-foreground">
-        Chưa có tài khoản?{' '}
+        {t('auth:login.noAccount')}{' '}
         <Link
           to="/register"
           className="font-medium text-primary hover:underline"
         >
-          Đăng ký ngay
+          {t('common:nav.register')}
         </Link>
       </p>
     </form>

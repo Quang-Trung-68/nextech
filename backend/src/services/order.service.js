@@ -3,6 +3,8 @@ const cartService = require('./cart.service');
 const paymentService = require('./payment.service');
 const emailJob = require('../jobs/emailJob');
 const { getFinalPrice, getDiscountPercentFromSnapshot, addPriceFields } = require('../utils/price');
+const { AppError, NotFoundError, ConflictError, ForbiddenError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,12 +41,6 @@ const STATUS_FLOW = {
   SHIPPED: 'DELIVERED',
 };
 
-const createError = (message, statusCode = 400) => {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
-};
-
 // ─── User: Tạo đơn hàng ───────────────────────────────────────────────────────
 
 const createOrder = async (userId, shippingAddress, paymentMethod) => {
@@ -52,14 +48,14 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   const cartItems = userCart.items;
 
   if (cartItems.length === 0) {
-    throw createError('Giỏ hàng trống, không thể tạo đơn', 400);
+    throw new AppError('Cart is empty, cannot create order', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
   }
 
   let totalAmount = 0;
 
   for (const item of cartItems) {
     if (item.stock < item.quantity) {
-      throw createError(`Sản phẩm "${item.name}" không đủ hàng (còn ${item.stock})`, 400);
+      throw new ConflictError(`Product "${item.name}" does not have enough stock (remaining ${item.stock})`, ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
     }
     // Dùng finalPrice từ cart (đã được cart service tính) để đảm bảo nhất quán
     totalAmount += Number(item.finalPrice) * item.quantity;
@@ -203,10 +199,10 @@ const getOrderById = async (orderId, userId, role) => {
     include: ORDER_DETAIL_INCLUDE,
   });
 
-  if (!order) throw createError('Không tìm thấy đơn hàng', 404);
+  if (!order) throw new NotFoundError('Order');
 
   if (order.userId !== userId && role !== 'ADMIN') {
-    throw createError('Bạn không có quyền xem đơn hàng này', 403);
+    throw new ForbiddenError('You do not have permission to view this order');
   }
 
   return _addOrderItemDiscounts(order);
@@ -217,14 +213,15 @@ const getOrderById = async (orderId, userId, role) => {
 const cancelOrder = async (orderId, userId, reason) => {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
 
-  if (!order) throw createError('Không tìm thấy đơn hàng', 404);
-  if (order.userId !== userId) throw createError('Bạn không có quyền huỷ đơn hàng này', 403);
+  if (!order) throw new NotFoundError('Order');
+  if (order.userId !== userId) throw new ForbiddenError('You do not have permission to cancel this order');
 
   // CANCELLED/SHIPPED/DELIVERED đều bị block bởi guard này
   if (!['PENDING', 'PROCESSING'].includes(order.status)) {
-    throw createError(
-      `Không thể huỷ đơn ở trạng thái ${order.status}. Chỉ huỷ được khi PENDING hoặc PROCESSING`,
-      400
+    throw new AppError(
+      `Cannot cancel order in ${order.status} status. Only PENDING or PROCESSING orders can be cancelled.`,
+      400,
+      ERROR_CODES.ORDER.ORDER_CANNOT_BE_CANCELLED
     );
   }
 
@@ -248,7 +245,7 @@ const cancelOrder = async (orderId, userId, reason) => {
     cancelReason: reason,
     ...(requiresManualRefund && {
       refundNote:
-        'Đơn đã thanh toán qua Stripe. Vui lòng liên hệ hỗ trợ để được hoàn tiền thủ công.',
+        'Order was paid via Stripe. Please contact support for a manual refund.',
     }),
   };
 };
@@ -304,29 +301,31 @@ const getAllOrders = async ({ status, paymentStatus, userId, sortBy, sortOrder, 
 const adminUpdateOrderStatus = async (orderId, newStatus) => {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
 
-  if (!order) throw createError('Không tìm thấy đơn hàng', 404);
+  if (!order) throw new NotFoundError('Order');
 
   if (order.status === 'CANCELLED') {
-    throw createError('Không thể cập nhật đơn hàng đã bị huỷ', 400);
+    throw new AppError('Cannot update a cancelled order', 400, ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION);
   }
 
   if (order.status === 'DELIVERED') {
-    throw createError('Đơn hàng đã giao, không thể cập nhật thêm', 400);
+    throw new AppError('Order is already delivered, cannot update further', 400, ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION);
   }
 
   // Enforce flow: chỉ được đi đúng chiều PROCESSING → SHIPPED → DELIVERED
   // PENDING không có trong STATUS_FLOW (đơn Stripe chưa thanh toán)
   const expectedNext = STATUS_FLOW[order.status];
   if (!expectedNext) {
-    throw createError(
-      `Đơn hàng đang ở trạng thái ${order.status}, không thể cập nhật theo flow Admin. Chỉ áp dụng cho đơn đang PENDING, PROCESSING hoặc SHIPPED.`,
-      400
+    throw new AppError(
+      `Order is in ${order.status} status and cannot be updated via Admin flow. Only applies to PENDING, PROCESSING or SHIPPED.`,
+      400,
+      ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION
     );
   }
   if (newStatus !== expectedNext) {
-    throw createError(
-      `Không hợp lệ: đơn đang ở ${order.status}, bước tiếp theo phải là ${expectedNext}`,
-      400
+    throw new AppError(
+      `Invalid transition: order is in ${order.status}, next step must be ${expectedNext}`,
+      400,
+      ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION
     );
   }
 
@@ -381,7 +380,7 @@ const adminGetOrderById = async (orderId) => {
     include: ORDER_DETAIL_INCLUDE,
   });
 
-  if (!order) throw createError('Không tìm thấy đơn hàng', 404);
+  if (!order) throw new NotFoundError('Order');
   return _addOrderItemDiscounts(order);
 };
 

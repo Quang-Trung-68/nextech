@@ -1,6 +1,8 @@
 const prisma = require('../utils/prisma');
 const stripe = require('../utils/stripe');
 const emailJob = require('../jobs/emailJob');
+const { AppError, NotFoundError, ForbiddenError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 const handleWebhookEvent = async (rawBody, signature) => {
   let event;
@@ -11,9 +13,7 @@ const handleWebhookEvent = async (rawBody, signature) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
-    const error = new Error(`Webhook signature không hợp lệ: ${err.message}`);
-    error.statusCode = 400;
-    throw error;
+    throw new AppError(`Invalid webhook signature: ${err.message}`, 400, ERROR_CODES.PAYMENT.STRIPE_WEBHOOK_INVALID);
   }
 
   console.log(event.type);
@@ -134,33 +134,23 @@ const getOrderPaymentIntent = async (orderId, userId) => {
   });
 
   if (!order) {
-    const error = new Error('Order not found');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Order');
   }
 
   if (order.userId !== userId) {
-    const error = new Error('Not authorized');
-    error.statusCode = 403;
-    throw error;
+    throw new ForbiddenError('Not authorized to access this order');
   }
 
   if (order.paymentMethod !== 'STRIPE') {
-    const error = new Error('Order không sử dụng phương thức STRIPE');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Order does not use STRIPE payment method', 400, ERROR_CODES.PAYMENT.PAYMENT_FAILED);
   }
 
   if (order.paymentStatus === 'PAID') {
-    const error = new Error('Đơn hàng này đã được thanh toán');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('This order has already been paid', 400, ERROR_CODES.PAYMENT.PAYMENT_FAILED);
   }
 
   if (!order.stripeClientSecret) {
-    const error = new Error('Payment Intent chưa được tạo cho đơn hàng này');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Payment Intent has not been created for this order', 400, ERROR_CODES.PAYMENT.PAYMENT_INTENT_FAILED);
   }
 
   return {
@@ -189,15 +179,11 @@ const getOrderPaymentStatus = async (orderId, userId) => {
   });
 
   if (!order) {
-    const error = new Error('Order not found');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Order');
   }
 
   if (order.userId !== userId) {
-    const error = new Error('Not authorized');
-    error.statusCode = 403;
-    throw error;
+    throw new ForbiddenError('Not authorized to access this order');
   }
 
   return {

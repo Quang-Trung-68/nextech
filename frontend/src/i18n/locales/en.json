@@ -1,0 +1,235 @@
+{
+  "common": {
+    "nav": {
+      "logo": "NexTech",
+      "phones": "Phones",
+      "laptops": "Laptops",
+      "tablets": "Tablets",
+      "accessories": "Accessories",
+      "deals": "Deals",
+      "cart": "Cart",
+      "account": "Account",
+      "admin": "Admin",
+      "logout": "Logout",
+      "login": "Login",
+      "register": "Register",
+      "hello": "Hello"
+    },
+    "actions": {
+      "addToCart": "Add to Cart",
+      "buyNow": "Buy Now",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "delete": "Delete",
+      "edit": "Edit",
+      "back": "Back",
+      "loadMore": "Load More",
+      "search": "Search",
+      "filter": "Filter",
+      "apply": "Apply",
+      "reset": "Reset",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "status": {
+      "loading": "Loading...",
+      "error": "An error occurred",
+      "success": "Success",
+      "empty": "Empty",
+      "noResults": "No results found"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "of": "of",
+      "results": "results"
+    },
+    "language": {
+      "en": "EN",
+      "vi": "VI"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "emailLabel": "Email Address",
+      "passwordLabel": "Password",
+      "submitBtn": "Login",
+      "forgotPassword": "Forgot Password?",
+      "noAccount": "Don't have an account?",
+      "googleBtn": "Login with Google",
+      "successMsg": "Logged in successfully"
+    },
+    "register": {
+      "strength": {
+        "veryWeak": "Very Weak",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong",
+        "veryStrong": "Very Strong"
+      },
+      "title": "Create Account",
+      "nameLabel": "Full Name",
+      "emailLabel": "Email Address",
+      "passwordLabel": "Password",
+      "confirmPasswordLabel": "Confirm Password",
+      "submitBtn": "Register",
+      "hasAccount": "Already have an account?",
+      "successMsg": "Registration successful",
+      "verifyEmailNotice": "Please check your email to verify your account"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "description": "Enter your email and we'll send you a link to reset your password",
+      "emailLabel": "Email Address",
+      "submitBtn": "Send Reset Link",
+      "backToLogin": "Back to Login",
+      "successMsg": "Reset link sent successfully"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "passwordLabel": "New Password",
+      "confirmLabel": "Confirm Password",
+      "submitBtn": "Reset Password",
+      "successMsg": "Password reset successfully"
+    },
+    "verifyEmail": {
+      "title": "Verify Email",
+      "description": "Verifying your email address...",
+      "resendBtn": "Resend Verification Email",
+      "successMsg": "Email verified successfully"
+    }
+  },
+  "product": {
+    "list": {
+      "title": "Products",
+      "sortBy": "Sort By",
+      "priceRange": "Price Range",
+      "brand": "Brand",
+      "filterSidebar": "Filters",
+      "sortOptions": {
+        "newest": "Newest",
+        "priceAsc": "Price: Low to High",
+        "priceDesc": "Price: High to Low",
+        "popular": "Popular"
+      }
+    },
+    "detail": {
+      "addToCart": "Add to Cart",
+      "buyNow": "Buy Now",
+      "reviews": "Reviews",
+      "specs": "Specifications",
+      "relatedProducts": "Related Products",
+      "inStock": "In Stock",
+      "outOfStock": "Out of Stock",
+      "quantity": "Quantity"
+    },
+    "admin": {
+      "addProduct": "Add Product",
+      "editProduct": "Edit Product",
+      "deleteProduct": "Delete Product",
+      "uploadImages": "Upload Images",
+      "fields": {
+        "name": "Product Name",
+        "price": "Price",
+        "stock": "Stock",
+        "category": "Category",
+        "brand": "Brand",
+        "description": "Description"
+      }
+    }
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "emptyDescription": "Looks like you haven't added any items to the cart yet.",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "checkout": "Proceed to Checkout",
+    "continueShopping": "Continue Shopping",
+    "remove": "Remove",
+    "quantity": "Quantity",
+    "updateQuantity": "Update Quantity"
+  },
+  "order": {
+    "title": "Orders",
+    "myOrders": "My Orders",
+    "orderDetail": "Order Details",
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "shipping": "Shipping",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "fields": {
+      "orderDate": "Order Date",
+      "total": "Total",
+      "paymentMethod": "Payment Method",
+      "shippingAddress": "Shipping Address",
+      "items": "Items"
+    },
+    "actions": {
+      "cancelOrder": "Cancel Order",
+      "cancelConfirm": "Are you sure you want to cancel this order?",
+      "trackOrder": "Track Order"
+    },
+    "paymentMethod": {
+      "cod": "Cash on Delivery",
+      "stripe": "Credit Card (Stripe)"
+    }
+  },
+  "admin": {
+    "overview": {
+      "title": "Dashboard",
+      "totalRevenue": "Total Revenue",
+      "totalOrders": "Total Orders",
+      "totalUsers": "Total Users",
+      "totalProducts": "Total Products",
+      "recentOrders": "Recent Orders",
+      "topProducts": "Top Products"
+    },
+    "products": {
+      "title": "Products Management",
+      "addNew": "Add New Product",
+      "search": "Search products...",
+      "confirmDelete": "Are you sure you want to delete this product?"
+    },
+    "orders": {
+      "title": "Orders Management",
+      "updateStatus": "Update Status",
+      "filterByStatus": "Filter by Status"
+    },
+    "users": {
+      "title": "Users Management",
+      "role": "Role",
+      "verified": "Verified",
+      "createdAt": "Created At"
+    }
+  },
+  "errors": {
+    "INVALID_CREDENTIALS": "Invalid email or password",
+    "TOKEN_EXPIRED": "Session expired. Please log in again",
+    "TOKEN_INVALID": "Invalid session",
+    "TOKEN_MISSING": "Please log in to continue",
+    "EMAIL_NOT_VERIFIED": "Please verify your email before logging in",
+    "EMAIL_ALREADY_VERIFIED": "Email is already verified",
+    "ACCOUNT_ALREADY_EXISTS": "An account with this email already exists",
+    "REFRESH_TOKEN_INVALID": "Session is invalid, please log in again",
+    "USER_NOT_FOUND": "User not found",
+    "PRODUCT_NOT_FOUND": "Product not found",
+    "PRODUCT_OUT_OF_STOCK": "Product is out of stock",
+    "ORDER_NOT_FOUND": "Order not found",
+    "ORDER_CANNOT_BE_CANCELLED": "Order cannot be cancelled",
+    "CART_ITEM_NOT_FOUND": "Product not found in cart",
+    "PAYMENT_FAILED": "Payment failed",
+    "IMAGE_UPLOAD_FAILED": "Failed to upload images",
+    "INVALID_FILE_TYPE": "Invalid file type",
+    "FILE_TOO_LARGE": "File is too large",
+    "INTERNAL_SERVER_ERROR": "Internal server error. Please try again later.",
+    "VALIDATION_ERROR": "Invalid data provided",
+    "FORBIDDEN": "You do not have permission to perform this action",
+    "NOT_FOUND": "Resource not found",
+    "DEFAULT": "An unexpected error occurred. Please try again later."
+  }
+}

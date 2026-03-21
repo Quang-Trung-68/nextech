@@ -1,3 +1,5 @@
+const { ValidationError } = require('../errors/AppError');
+
 /**
  * Factory function tạo Express middleware từ Zod schema.
  *
@@ -10,18 +12,11 @@ const validate = (schema, source = 'body') => {
     const result = schema.safeParse(req[source]);
 
     if (!result.success) {
-      const flattened = result.error.flatten();
-      const errors = { ...flattened.fieldErrors };
-      
-      if (flattened.formErrors && flattened.formErrors.length > 0) {
-        errors._root = flattened.formErrors;
-      }
-
-      return next({
-        statusCode: 422,
-        message: 'Dữ liệu không hợp lệ',
-        errors,
-      });
+      const mappedErrors = result.error.errors.map(e => ({
+        field: e.path.join('.'),
+        message: e.message
+      }));
+      return next(new ValidationError(mappedErrors));
     }
 
     // Gán lại data đã sanitize (coerced, trimmed, stripped extra fields)

@@ -1,3 +1,6 @@
+require('dotenv').config();
+require('./src/jobs/scheduledEmailJob');
+require('./src/configs/passport.config'); // Register OAuth strategies (side-effect import)
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -5,8 +8,6 @@ const passport = require('passport');
 const serverConfig = require('./src/configs/server.config');
 const errorHandler = require('./src/middleware/errorHandler');
 const { specialRoutes, apiRoutes } = require('./src/configs/route.config');
-require('./src/configs/passport.config'); // Register OAuth strategies (side-effect import)
-require('./src/jobs/scheduledEmailJob');
 
 const app = express();
 

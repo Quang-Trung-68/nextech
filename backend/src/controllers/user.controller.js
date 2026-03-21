@@ -1,6 +1,8 @@
 const prisma = require('../utils/prisma');
 const cloudinary = require('../utils/cloudinary');
 const streamifier = require('streamifier');
+const { AppError, ConflictError, NotFoundError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
@@ -42,9 +44,7 @@ const updateProfile = async (req, res, next) => {
 const uploadAvatar = async (req, res, next) => {
   try {
     if (!req.file) {
-      const err = new Error('Vui lòng chọn ảnh để tải lên.');
-      err.statusCode = 400;
-      return next(err);
+      return next(new AppError('Please select an image to upload.', 400, ERROR_CODES.MEDIA.IMAGE_UPLOAD_FAILED));
     }
 
     // Stream upload to Cloudinary
@@ -104,9 +104,7 @@ const createAddress = async (req, res, next) => {
     // Giới hạn 5 địa chỉ
     const count = await prisma.address.count({ where: { userId: req.user.id } });
     if (count >= 5) {
-      const err = new Error('Bạn đã đạt giới hạn tối đa 5 địa chỉ.');
-      err.statusCode = 400;
-      return next(err);
+      return next(new ConflictError('You have reached the maximum limit of 5 addresses.', 'ADDRESS_LIMIT_REACHED'));
     }
 
     // Nếu đặt làm mặc định, bỏ mặc định cũ
@@ -150,9 +148,7 @@ const updateAddress = async (req, res, next) => {
       where: { id, userId: req.user.id },
     });
     if (!existing) {
-      const err = new Error('Địa chỉ không tồn tại.');
-      err.statusCode = 404;
-      return next(err);
+      return next(new NotFoundError('Address'));
     }
 
     if (isDefault && !existing.isDefault) {
@@ -184,9 +180,7 @@ const deleteAddress = async (req, res, next) => {
       where: { id, userId: req.user.id },
     });
     if (!existing) {
-      const err = new Error('Địa chỉ không tồn tại.');
-      err.statusCode = 404;
-      return next(err);
+      return next(new NotFoundError('Address'));
     }
 
     await prisma.address.delete({ where: { id } });
@@ -205,7 +199,7 @@ const deleteAddress = async (req, res, next) => {
       }
     }
 
-    res.status(200).json({ success: true, message: 'Đã xoá địa chỉ.' });
+    res.status(200).json({ success: true, message: 'Address deleted successfully.' });
   } catch (error) {
     next(error);
   }
@@ -222,9 +216,7 @@ const setDefaultAddress = async (req, res, next) => {
       where: { id, userId: req.user.id },
     });
     if (!existing) {
-      const err = new Error('Địa chỉ không tồn tại.');
-      err.statusCode = 404;
-      return next(err);
+      return next(new NotFoundError('Address'));
     }
 
     // Clear existing default

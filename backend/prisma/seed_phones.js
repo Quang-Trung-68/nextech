@@ -212,7 +212,13 @@ async function main() {
   ];
 
   for (const p of products) {
-    const created = await prisma.product.create({ data: p });
+    const data = { ...p };
+    if (data.discountPercent > 0) {
+      data.salePrice = data.price - (data.price * data.discountPercent / 100);
+    }
+    delete data.discountPercent;
+
+    const created = await prisma.product.create({ data });
     console.log(`  ✅ ${created.name}`);
   }
 

@@ -1,98 +1,97 @@
-const serverConfig = require('../configs/server.config');
+const { ZodError } = require('zod');
+const { Prisma } = require('@prisma/client');
+const { AppError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
-/**
- * Centralized error handler middleware
- */
 module.exports = (err, req, res, next) => {
+  // Log the error stack to console (do not expose to client)
+  console.error('[Global Error]', err);
 
-  let statusCode = err.statusCode || 500;
-  let message = err.message || 'Internal Server Error';
+  let statusCode = 500;
+  let code = ERROR_CODES.SERVER.INTERNAL_SERVER_ERROR;
+  let message = 'An unexpected error occurred';
+  let errors = undefined;
 
-  // --- Zod Validation Errors (422) ---
-  // Phải đặt TRƯỚC generic handler để trả về fieldErrors dạng object
-  if (statusCode === 422 && err.errors) {
-    return res.status(422).json({
-      success: false,
-      message: err.message,
-      errors: err.errors, // object { field: [messages] }
-      ...(serverConfig.nodeEnv === 'development' && { stack: err.stack }),
-    });
-  }
-
-  // --- Multer Errors ---
-  if (err.name === 'MulterError' || err.code === 'INVALID_FILE_FORMAT' || err.message === 'INVALID_FILE_FORMAT') {
-    // Nếu upload đã lên Cloudinary thành công nhưng xảy ra lỗi sau đó, tiến hành rollback
-    if (req.cloudinaryFiles && req.cloudinaryFiles.length > 0) {
-      const cloudinary = require('../utils/cloudinary');
-      Promise.all(req.cloudinaryFiles.map(file => {
-        if (file.publicId) return cloudinary.uploader.destroy(file.publicId);
-        return null;
-      })).catch(console.error);
-    }
-    
+  if (err instanceof AppError) {
+    statusCode = err.statusCode;
+    code = err.code;
+    message = err.message;
+    if (err.errors) errors = err.errors;
+  } else if (err instanceof ZodError) {
     statusCode = 400;
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      message = 'Kích thước file quá lớn (tối đa 5MB)';
-      return res.status(400).json({ success: false, message, errors: { files: [message] } });
-    }
-    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-      message = 'Vượt quá số lượng file cho phép hoặc sai tên biến field';
-      return res.status(400).json({ success: false, message, errors: { files: [message] } });
-    }
-    if (err.code === 'INVALID_FILE_FORMAT' || err.message === 'INVALID_FILE_FORMAT') {
-      message = 'Định dạng file không hợp lệ (chỉ nhận jpg, png, webp)';
-      return res.status(400).json({ success: false, message, errors: { files: [message] } });
-    }
-  }
-
-  // --- Prisma Errors ---
-  if (err.name === 'PrismaClientKnownRequestError') {
-    // Unique constraint failed (e.g. duplicate email)
+    code = ERROR_CODES.SERVER.VALIDATION_ERROR;
+    message = 'Validation Error';
+    errors = err.errors.map(e => ({
+      field: e.path.join('.'),
+      message: e.message
+    }));
+  } else if (err instanceof Prisma.PrismaClientKnownRequestError || err.name === 'PrismaClientKnownRequestError') {
     if (err.code === 'P2002') {
+      statusCode = 409;
+      code = 'CONFLICT';
+      const fields = err.meta?.target ? err.meta.target.join(', ') : 'unknown';
+      message = `Duplicate field value: ${fields}`;
+    } else if (err.code === 'P2025') {
+      statusCode = 404;
+      code = ERROR_CODES.SERVER.NOT_FOUND;
+      message = 'Resource not found';
+    } else if (err.code === 'P2003') {
       statusCode = 400;
-      message = 'Duplicate field value entered';
+      code = 'INVALID_REFERENCE';
+      message = 'Invalid reference or foreign key constraint failed';
     } else {
-      statusCode = 400;
-      message = `Database error: ${err.message}`;
+      statusCode = 500;
+      code = ERROR_CODES.SERVER.INTERNAL_SERVER_ERROR;
+      message = 'Database error occurred';
     }
-  } else if (err.name === 'PrismaClientValidationError') {
-    statusCode = 400;
-    message = 'Invalid data input for the database';
-  }
-
-  // --- Cloudinary Errors ---
-  if (err.http_code) {
-    statusCode = err.http_code;
-    message = err.message || 'Cloudinary Error';
-  }
-
-
-  // --- JWT Errors ---
-  if (err.name === 'JsonWebTokenError') {
+  } else if (err.name === 'JsonWebTokenError') {
     statusCode = 401;
-    message = 'Invalid token. Please log in again!';
+    code = ERROR_CODES.AUTH.TOKEN_INVALID;
+    message = 'Invalid token';
   } else if (err.name === 'TokenExpiredError') {
     statusCode = 401;
-    message = 'Your token has expired! Please log in again.';
-  }
-
-  // --- express-validator context errors (legacy) ---
-  if (err.array && typeof err.array === 'function') {
+    code = ERROR_CODES.AUTH.TOKEN_EXPIRED;
+    message = 'Token expired';
+  } else if (err.name === 'MulterError') {
     statusCode = 400;
-    message = 'Validation Error';
-    const errorMessages = err.array().map((e) => e.msg);
-    return res.status(statusCode).json({
-      success: false,
-      message,
-      errors: errorMessages,
-    });
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      code = ERROR_CODES.MEDIA.FILE_TOO_LARGE;
+      message = 'File size is too large';
+    } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      code = ERROR_CODES.MEDIA.IMAGE_UPLOAD_FAILED;
+      message = 'Unexpected file field';
+    } else {
+      code = ERROR_CODES.MEDIA.IMAGE_UPLOAD_FAILED;
+      message = 'File upload error';
+    }
+  } else if (err.code === 'INVALID_FILE_FORMAT' || err.message === 'INVALID_FILE_FORMAT') {
+    statusCode = 400;
+    code = ERROR_CODES.MEDIA.INVALID_FILE_TYPE;
+    message = 'Invalid file format';
+  } else if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    statusCode = 400;
+    code = 'INVALID_JSON';
+    message = 'Invalid JSON payload';
   }
 
-  // Final catch-all response format
-  res.status(statusCode).json({
+  // Rollback uploaded files if error
+  if (req.cloudinaryFiles && req.cloudinaryFiles.length > 0) {
+    const cloudinary = require('../utils/cloudinary');
+    Promise.all(req.cloudinaryFiles.map(file => {
+      if (file.publicId) return cloudinary.uploader.destroy(file.publicId);
+      return null;
+    })).catch(console.error);
+  }
+
+  const response = {
     success: false,
     message,
-    ...(serverConfig.nodeEnv === 'development' && { stack: err.stack }), // Stack trace for dev
-  });
-};
+    code
+  };
 
+  if (errors) {
+    response.errors = errors;
+  }
+
+  res.status(statusCode).json(response);
+};

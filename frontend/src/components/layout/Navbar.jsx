@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import useAuthStore from '@/stores/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
+import { useTranslation } from 'react-i18next';
+import LanguageToggle from '@/components/common/LanguageToggle';
 
 const Navbar = () => {
+  const { t } = useTranslation(['common']);
   const { isAuthenticated, user, clearAuth } = useAuthStore();
 
   const { data: cartData } = useQuery({
@@ -20,7 +23,9 @@ const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-card text-card-foreground shadow-sm border-b">
-      <Link to="/" className="text-2xl font-bold tracking-tight text-primary">E-Commerce</Link>
+      <Link to="/" className="text-2xl font-bold tracking-tight text-primary">
+        {t('common:nav.logo')}
+      </Link>
       
       <div className="flex items-center gap-6">
         {isAuthenticated && (
@@ -36,21 +41,29 @@ const Navbar = () => {
 
         {isAuthenticated ? (
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Hello, {user?.name}</span>
+            <LanguageToggle />
+            <span className="text-sm font-medium">{t('common:nav.hello')}, {user?.name}</span>
             {user?.role === 'ADMIN' && (
-              <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">Admin</Link>
+              <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
+                {t('common:nav.admin')}
+              </Link>
             )}
             <button 
               onClick={clearAuth} 
               className="text-sm font-medium text-destructive hover:underline"
             >
-              Logout
+              {t('common:nav.logout')}
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <Link to="/login" className="px-4 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">Login</Link>
-            <Link to="/register" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">Register</Link>
+            <LanguageToggle />
+            <Link to="/login" className="px-4 py-2 text-sm font-medium rounded-md hover:bg-muted transition-colors">
+              {t('common:nav.login')}
+            </Link>
+            <Link to="/register" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+              {t('common:nav.register')}
+            </Link>
           </div>
         )}
       </div>

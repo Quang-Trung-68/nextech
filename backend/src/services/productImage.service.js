@@ -1,11 +1,11 @@
 const prisma = require('../utils/prisma');
 const cloudinary = require('../utils/cloudinary');
+const { AppError, NotFoundError, ConflictError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 exports.uploadImages = async (productId, files) => {
   if (!files || files.length === 0) {
-    const error = new Error('Không có file hoặc file không hợp lệ');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('No files or invalid files uploaded', 400, ERROR_CODES.MEDIA.IMAGE_UPLOAD_FAILED);
   }
 
   // Check product existence
@@ -15,9 +15,7 @@ exports.uploadImages = async (productId, files) => {
     await Promise.all(
       files.map((file) => cloudinary.uploader.destroy(file.publicId))
     );
-    const error = new Error('Không tìm thấy sản phẩm');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Product');
   }
 
   // files đã là [{ url, publicId }] từ uploadToCloudinary middleware
@@ -55,9 +53,7 @@ exports.deleteImages = async (productId, publicIds) => {
   });
 
   if (!product) {
-    const error = new Error('Không tìm thấy sản phẩm');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Product');
   }
 
   const currentImages = product.images || [];
@@ -68,9 +64,7 @@ exports.deleteImages = async (productId, publicIds) => {
 
   // Kiểm tra xem tất cả các publicIds gửi lên có thuộc về sản phẩm này không
   if (imagesToRemove.length !== publicIds.length) {
-    const error = new Error('Một hoặc nhiều public_id không thuộc về sản phẩm này');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('One or more public_ids do not belong to this product', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
   }
 
   const imagesToKeep = currentImages.filter(
@@ -78,9 +72,7 @@ exports.deleteImages = async (productId, publicIds) => {
   );
 
   if (imagesToKeep.length === 0) {
-    const error = new Error('Sản phẩm phải có ít nhất 1 ảnh');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Product must have at least 1 image', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
   }
 
   // Xóa DB trước để đảm bảo tính nhất quán (tránh ảnh chết trên giao diện)

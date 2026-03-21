@@ -1,5 +1,7 @@
 const prisma = require('../utils/prisma');
 const { getFinalPrice, getDiscountPercent, addPriceFields } = require('../utils/price');
+const { NotFoundError, ConflictError, AppError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 const _getOrCreateCart = async (userId) => {
   return await prisma.cart.upsert({
@@ -68,15 +70,11 @@ const addToCart = async (userId, productId, quantity) => {
   });
 
   if (!product) {
-    const error = new Error('Sản phẩm không tồn tại');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Product');
   }
 
   if (product.stock <= 0) {
-    const error = new Error('Sản phẩm đã hết hàng');
-    error.statusCode = 400;
-    throw error;
+    throw new ConflictError('Product is out of stock', ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
   }
 
   const cart = await _getOrCreateCart(userId);
@@ -94,9 +92,7 @@ const addToCart = async (userId, productId, quantity) => {
     if (existingItem) {
       const newQuantity = existingItem.quantity + quantity;
       if (newQuantity > product.stock) {
-        const error = new Error(`Chỉ còn ${product.stock} sản phẩm`);
-        error.statusCode = 400;
-        throw error;
+        throw new ConflictError(`Only ${product.stock} items left in stock`, ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
       }
 
       await tx.cartItem.update({
@@ -105,9 +101,7 @@ const addToCart = async (userId, productId, quantity) => {
       });
     } else {
       if (quantity > product.stock) {
-        const error = new Error(`Chỉ còn ${product.stock} sản phẩm`);
-        error.statusCode = 400;
-        throw error;
+        throw new ConflictError(`Only ${product.stock} items left in stock`, ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
       }
 
       await tx.cartItem.create({
@@ -137,9 +131,7 @@ const updateCartItem = async (userId, productId, quantity) => {
   });
 
   if (!existingItem) {
-    const error = new Error('Sản phẩm không có trong giỏ');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Cart item');
   }
 
   if (quantity === 0) {
@@ -148,9 +140,7 @@ const updateCartItem = async (userId, productId, quantity) => {
     });
   } else {
     if (quantity > existingItem.product.stock) {
-      const error = new Error(`Chỉ còn ${existingItem.product.stock} sản phẩm`);
-      error.statusCode = 400;
-      throw error;
+      throw new ConflictError(`Only ${existingItem.product.stock} items left in stock`, ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
     }
 
     await prisma.cartItem.update({
@@ -173,9 +163,7 @@ const removeFromCart = async (userId, productId) => {
   });
 
   if (!existingItem) {
-    const error = new Error('Sản phẩm không có trong giỏ');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Cart item');
   }
 
   await prisma.cartItem.deleteMany({
@@ -195,14 +183,14 @@ const clearCart = async (userId) => {
   });
 
   if (!cart) {
-    return { message: 'Đã xóa giỏ hàng' };
+    return { message: 'Cart cleared' };
   }
 
   await prisma.cartItem.deleteMany({
     where: { cartId: cart.id },
   });
 
-  return { message: 'Đã xóa giỏ hàng' };
+  return { message: 'Cart cleared' };
 };
 
 module.exports = {

@@ -5,6 +5,8 @@ const {
   setAccessTokenCookie,
   clearAccessTokenCookie
 } = require('../utils/cookie');
+const { AuthenticationError, AppError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 /** Helper to extract metadata from the request */
 const _getMeta = (req) => ({
@@ -54,9 +56,7 @@ const refresh = async (req, res, next) => {
     const refreshToken = req.cookies['refresh_token'];
 
     if (!refreshToken) {
-      const error = new Error('No refresh token in cookie. Please log in.');
-      error.statusCode = 401;
-      return next(error);
+      return next(new AuthenticationError('No refresh token in cookie. Please log in.', ERROR_CODES.AUTH.TOKEN_MISSING));
     }
 
     const { accessTokenData, refreshTokenData } = await authService.refresh(
@@ -122,7 +122,7 @@ const sendVerificationEmail = async (req, res, next) => {
     await authService.sendEmailVerification(req.user);
     res.status(200).json({
       success: true,
-      message: 'Email xác thực đã được gửi. Vui lòng kiểm tra hộp thư.',
+      message: 'Verification email sent. Please check your inbox.',
     });
   } catch (error) {
     next(error);
@@ -137,15 +137,13 @@ const verifyEmail = async (req, res, next) => {
   try {
     const { token } = req.query;
     if (!token) {
-      const error = new Error('Token xác thực không được cung cấp.');
-      error.statusCode = 400;
-      return next(error);
+      return next(new AppError('No verification token provided.', 400, ERROR_CODES.AUTH.TOKEN_MISSING));
     }
 
     await authService.verifyEmail(token);
     res.status(200).json({
       success: true,
-      message: 'Email đã được xác thực thành công. Bạn có thể tiếp tục sử dụng dịch vụ.',
+      message: 'Email successfully verified. You can now use our services.',
     });
   } catch (error) {
     next(error);
@@ -164,7 +162,7 @@ const changePassword = async (req, res, next) => {
     await authService.changePassword(req.user, currentPassword, newPassword);
     res.status(200).json({
       success: true,
-      message: 'Mật khẩu đã được thay đổi thành công. Vui lòng đăng nhập lại.',
+      message: 'Password successfully changed. Please log in again.',
     });
   } catch (error) {
     next(error);
@@ -184,7 +182,7 @@ const forgotPassword = async (req, res, next) => {
     // Always respond with 200 regardless of whether the email exists
     res.status(200).json({
       success: true,
-      message: 'Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu.',
+      message: 'If the email exists in our system, you will receive password reset instructions.',
     });
   } catch (error) {
     next(error);
@@ -201,7 +199,7 @@ const resetPassword = async (req, res, next) => {
     await authService.resetPassword(token, newPassword);
     res.status(200).json({
       success: true,
-      message: 'Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập với mật khẩu mới.',
+      message: 'Password has been reset successfully. Please log in with your new password.',
     });
   } catch (error) {
     next(error);

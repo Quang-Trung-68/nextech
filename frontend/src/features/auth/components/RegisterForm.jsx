@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus, AlertCircle } from 'lucide-react';
 import { registerSchema } from '@/schemas/auth.schema';
 import { useRegister } from '@/features/auth/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
+import useTranslatedError from '@/i18n/useTranslatedError';
 
 // ─── Password Strength Helpers ────────────────────────────────────────────────
 /**
@@ -24,14 +26,15 @@ function getPasswordStrength(password) {
 
 const STRENGTH_CONFIG = [
   { label: '', color: 'bg-border' },               // 0 – empty
-  { label: 'Rất yếu', color: 'bg-destructive' },   // 1
-  { label: 'Yếu', color: 'bg-orange-400' },         // 2
-  { label: 'Trung bình', color: 'bg-yellow-400' },  // 3
-  { label: 'Mạnh', color: 'bg-green-500' },          // 4
-  { label: 'Rất mạnh', color: 'bg-emerald-500' },   // 5
+  { label: 'auth:register.strength.veryWeak', color: 'bg-destructive' },   // 1
+  { label: 'auth:register.strength.weak', color: 'bg-orange-400' },         // 2
+  { label: 'auth:register.strength.medium', color: 'bg-yellow-400' },  // 3
+  { label: 'auth:register.strength.strong', color: 'bg-green-500' },          // 4
+  { label: 'auth:register.strength.veryStrong', color: 'bg-emerald-500' },   // 5
 ];
 
 const PasswordStrengthBar = ({ password }) => {
+  const { t } = useTranslation(['auth']);
   const score = getPasswordStrength(password);
   const { label, color } = STRENGTH_CONFIG[score];
 
@@ -53,7 +56,7 @@ const PasswordStrengthBar = ({ password }) => {
           score <= 2 ? 'text-destructive' :
           score === 3 ? 'text-yellow-500' : 'text-green-600'
         }`}>
-          {label}
+          {label ? t(label) : ''}
         </p>
       )}
     </div>
@@ -62,6 +65,8 @@ const PasswordStrengthBar = ({ password }) => {
 
 // ─── Register Form ────────────────────────────────────────────────────────────
 const RegisterForm = () => {
+  const { t } = useTranslation(['auth', 'common']);
+  const getTranslatedError = useTranslatedError();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const { mutate: register, isPending, error: serverError } = useRegister();
@@ -85,9 +90,7 @@ const RegisterForm = () => {
     register(payload);
   };
 
-  const serverErrorMessage =
-    serverError?.response?.data?.message ||
-    (serverError ? 'Đăng ký thất bại. Vui lòng thử lại.' : null);
+  const serverErrorMessage = serverError ? getTranslatedError(serverError) : null;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
@@ -97,7 +100,7 @@ const RegisterForm = () => {
           htmlFor="register-name"
           className="block text-sm font-medium text-foreground"
         >
-          Họ tên
+          {t('auth:register.nameLabel')}
         </label>
         <input
           id="register-name"
@@ -123,7 +126,7 @@ const RegisterForm = () => {
           htmlFor="register-email"
           className="block text-sm font-medium text-foreground"
         >
-          Email
+          {t('auth:register.emailLabel')}
         </label>
         <input
           id="register-email"
@@ -149,7 +152,7 @@ const RegisterForm = () => {
           htmlFor="register-password"
           className="block text-sm font-medium text-foreground"
         >
-          Mật khẩu
+          {t('auth:register.passwordLabel')}
         </label>
         <div className="relative">
           <input
@@ -164,7 +167,7 @@ const RegisterForm = () => {
           />
           <button
             type="button"
-            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={showPassword ? t('common:actions.hidePassword', 'Hide password') : t('common:actions.showPassword', 'Show password')}
             onClick={() => setShowPassword((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
           >
@@ -187,7 +190,7 @@ const RegisterForm = () => {
           htmlFor="register-confirm-password"
           className="block text-sm font-medium text-foreground"
         >
-          Xác nhận mật khẩu
+          {t('auth:register.confirmPasswordLabel')}
         </label>
         <div className="relative">
           <input
@@ -202,7 +205,7 @@ const RegisterForm = () => {
           />
           <button
             type="button"
-            aria-label={showConfirm ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={showConfirm ? t('common:actions.hidePassword', 'Hide password') : t('common:actions.showPassword', 'Show password')}
             onClick={() => setShowConfirm((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
           >
@@ -237,24 +240,24 @@ const RegisterForm = () => {
         {isPending ? (
           <>
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-            Đang đăng ký...
+            {t('common:status.loading')}
           </>
         ) : (
           <>
             <UserPlus className="h-4 w-4" />
-            Tạo tài khoản
+            {t('auth:register.submitBtn')}
           </>
         )}
       </button>
 
       {/* ── Link to Login ──────────────────────────────────────────────── */}
       <p className="text-center text-sm text-muted-foreground">
-        Đã có tài khoản?{' '}
+        {t('auth:register.hasAccount')}{' '}
         <Link
           to="/login"
           className="font-medium text-primary hover:underline"
         >
-          Đăng nhập
+          {t('common:nav.login')}
         </Link>
       </p>
     </form>

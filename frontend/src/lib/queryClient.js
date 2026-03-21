@@ -1,12 +1,22 @@
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
+import i18n from '@/i18n/i18n';
+
+const getTranslatedError = (error) => {
+  const code = error?.response?.data?.code;
+  if (code) {
+    const translated = i18n.t(`errors:${code}`);
+    if (translated !== `errors:${code}`) return translated;
+  }
+  return error?.response?.data?.message || i18n.t('errors:DEFAULT');
+};
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       // Toast thông báo lỗi global cho các hàm GET (queries) nếu có lỗi
       if(error?.response?.status !== 401) {
-        toast.error(`Lỗi tải dữ liệu: ${error?.response?.data?.message || error.message || 'Có lỗi xảy ra!'}`);
+        toast.error(`${i18n.t('common:status.error')}: ${getTranslatedError(error)}`);
       }
     },
   }),
@@ -16,7 +26,7 @@ const queryClient = new QueryClient({
       if (mutation.options.meta?.suppressErrorToast) return;
       // Toast thông báo lỗi global cho các hàm mutation còn lại
       if (error?.response?.status !== 401) {
-        toast.error(error.response?.data?.message || error.message || 'Có lỗi xảy ra!');
+        toast.error(getTranslatedError(error));
       }
     },
   }),

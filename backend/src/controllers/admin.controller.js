@@ -1,6 +1,8 @@
 const statsService = require('../services/stats.service');
 const adminProductService = require('../services/adminProduct.service');
 const adminUserService = require('../services/adminUser.service');
+const { AppError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
@@ -112,7 +114,7 @@ const uploadImages = async (req, res, next) => {
     // req.cloudinaryFiles được set bởi uploadToCloudinary middleware
     const cloudinaryFiles = req.cloudinaryFiles;
     if (!cloudinaryFiles || cloudinaryFiles.length === 0) {
-      return res.status(400).json({ success: false, message: 'No images uploaded' });
+      return next(new AppError('No images uploaded', 400, ERROR_CODES.MEDIA.IMAGE_UPLOAD_FAILED));
     }
     // cloudinaryFiles = [{ url, publicId }] - đã được upload lên Cloudinary
     res.status(200).json({ success: true, images: cloudinaryFiles });
@@ -126,7 +128,7 @@ const deleteImage = async (req, res, next) => {
     // publicId might be passed in body or encoded in params
     const publicId = req.params.publicId || req.body.publicId; 
     if (!publicId) {
-      return res.status(400).json({ success: false, message: 'Missing publicId' });
+      return next(new AppError('Missing publicId', 400, ERROR_CODES.SERVER.VALIDATION_ERROR));
     }
     await cloudinary.uploader.destroy(publicId);
     res.status(200).json({ success: true, message: 'Image deleted from Cloudinary' });

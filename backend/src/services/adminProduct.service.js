@@ -1,13 +1,8 @@
 const prisma = require('../utils/prisma');
 const ApiFeatures = require('../utils/apiFeatures');
 const { addPriceFields } = require('../utils/price');
-
-const createError = (message, statusCode = 400) => {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
-};
-
+const { AppError, NotFoundError, ConflictError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 const getProducts = async (queryParams) => {
   const features = new ApiFeatures(queryParams).search().filter().sort().paginate();
   const q = features.build();
@@ -44,7 +39,7 @@ const getProductById = async (id) => {
     where: { id },
     include: { images: true, reviews: { include: { user: { select: { name: true } } } } },
   });
-  if (!product) throw createError('Sản phẩm không tồn tại', 404);
+  if (!product) throw new NotFoundError('Product');
   return addPriceFields(product);
 };
 
@@ -65,14 +60,14 @@ const createProduct = async (data) => {
 
 const updateProduct = async (id, data) => {
   const existing = await prisma.product.findUnique({ where: { id } });
-  if (!existing) throw createError('Sản phẩm không tồn tại', 404);
+  if (!existing) throw new NotFoundError('Product');
 
   // Task 6: Validate salePrice < price
   const priceToCheck = data.price != null ? parseFloat(data.price) : parseFloat(existing.price);
   if (data.salePrice != null) {
     const salePriceVal = parseFloat(data.salePrice);
     if (salePriceVal >= priceToCheck) {
-      throw createError('Giá khuyến mãi phải nhỏ hơn giá gốc', 400);
+      throw new AppError('Sale price must be less than original price', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
     }
   }
 
@@ -93,7 +88,7 @@ const updateProduct = async (id, data) => {
 
 const deleteProduct = async (id) => {
   const existing = await prisma.product.findUnique({ where: { id } });
-  if (!existing) throw createError('Sản phẩm không tồn tại', 404);
+  if (!existing) throw new NotFoundError('Product');
 
   // Kiểm tra sản phẩm đang nằm trong đơn hàng chưa DELIVERED
   const activeOrderItem = await prisma.orderItem.findFirst({
@@ -107,9 +102,9 @@ const deleteProduct = async (id) => {
   });
 
   if (activeOrderItem) {
-    throw createError(
-      `Không thể xoá sản phẩm đang có trong đơn hàng chưa hoàn thành (đơn #${activeOrderItem.order.id}, trạng thái: ${activeOrderItem.order.status})`,
-      400
+    throw new ConflictError(
+      `Cannot delete product because it is in an uncompleted order (order #${activeOrderItem.order.id}, status: ${activeOrderItem.order.status})`,
+      'CONFLICT'
     );
   }
 

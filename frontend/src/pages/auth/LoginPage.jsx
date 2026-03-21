@@ -74,7 +74,7 @@ const LoginPage = () => {
             <ShoppingBag className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            ShopNow
+            NexTech
           </h1>
           <p className="text-sm text-muted-foreground">
             Đăng nhập để tiếp tục mua sắm

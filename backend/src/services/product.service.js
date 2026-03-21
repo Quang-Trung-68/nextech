@@ -1,6 +1,7 @@
 const prisma = require('../utils/prisma');
 const ApiFeatures = require('../utils/apiFeatures');
 const { addPriceFields } = require('../utils/price');
+const { NotFoundError } = require('../errors/AppError');
 
 const getProducts = async (queryParams) => {
   const features = new ApiFeatures(queryParams)
@@ -48,9 +49,7 @@ const getProductById = async (id) => {
   });
 
   if (!product) {
-    const error = new Error('Product not found');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Product');
   }
 
   return addPriceFields(product);
@@ -75,9 +74,7 @@ const updateProduct = async (id, data) => {
   const existingProduct = await prisma.product.findUnique({ where: { id } });
 
   if (!existingProduct) {
-    const error = new Error('Product not found');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Product');
   }
 
   const payload = { ...data };
@@ -98,9 +95,7 @@ const deleteProduct = async (id) => {
   const existingProduct = await prisma.product.findUnique({ where: { id } });
 
   if (!existingProduct) {
-    const error = new Error('Product not found');
-    error.statusCode = 404;
-    throw error;
+    throw new NotFoundError('Product');
   }
 
   return prisma.product.delete({

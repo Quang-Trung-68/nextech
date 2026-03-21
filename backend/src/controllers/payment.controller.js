@@ -1,4 +1,6 @@
 const paymentService = require('../services/payment.service');
+const { AppError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 /**
  * POST /api/payments/webhook
@@ -10,7 +12,7 @@ const handleWebhook = async (req, res, next) => {
   const signature = req.headers['stripe-signature'];
 
   if (!signature) {
-    return res.status(400).json({ success: false, message: 'Missing Stripe-Signature header' });
+    return next(new AppError('Missing Stripe-Signature header.', 400, ERROR_CODES.PAYMENT.STRIPE_WEBHOOK_INVALID));
   }
 
   try {

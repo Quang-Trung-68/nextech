@@ -1,10 +1,7 @@
 const prisma = require('../utils/prisma');
 
-const createError = (message, statusCode = 400) => {
-  const error = new Error(message);
-  error.statusCode = statusCode;
-  return error;
-};
+const { AppError, NotFoundError, ConflictError } = require('../errors/AppError');
+const ERROR_CODES = require('../errors/errorCodes');
 
 const USER_SELECT = {
   id: true,
@@ -61,7 +58,7 @@ const getUserById = async (userId, orderPage = 1, orderLimit = 10) => {
     select: USER_SELECT,
   });
 
-  if (!user) throw createError('Người dùng không tồn tại', 404);
+  if (!user) throw new NotFoundError('User');
 
   const orderSkip = (orderPage - 1) * orderLimit;
 
@@ -99,7 +96,7 @@ const getUserById = async (userId, orderPage = 1, orderLimit = 10) => {
  */
 const toggleUserStatus = async (targetUserId, requestingAdminId) => {
   if (targetUserId === requestingAdminId) {
-    throw createError('Không thể khoá tài khoản của chính mình', 400);
+    throw new ConflictError('Cannot lock your own account', 'CONFLICT');
   }
 
   const user = await prisma.user.findUnique({
@@ -107,7 +104,7 @@ const toggleUserStatus = async (targetUserId, requestingAdminId) => {
     select: USER_SELECT,
   });
 
-  if (!user) throw createError('Người dùng không tồn tại', 404);
+  if (!user) throw new NotFoundError('User');
 
   const newIsActive = !user.isActive;
 
@@ -132,8 +129,8 @@ const toggleUserStatus = async (targetUserId, requestingAdminId) => {
     user: updated,
     action: updated.isActive ? 'unlocked' : 'locked',
     message: updated.isActive
-      ? `Tài khoản ${updated.email} đã được mở khoá`
-      : `Tài khoản ${updated.email} đã bị khoá và toàn bộ phiên đăng nhập đã bị thu hồi`,
+      ? `Account ${updated.email} has been unlocked`
+      : `Account ${updated.email} has been locked and all sessions have been revoked`,
   };
 };
 

@@ -55,7 +55,7 @@ const VerifyEmailNoticePage = () => {
         <div className="rounded-xl border border-border bg-muted/40 p-5 text-left space-y-3">
           {[
             { step: '1', text: 'Kiểm tra hộp thư của bạn (kể cả thư mục Spam).' },
-            { step: '2', text: 'Mở email từ ShopNow và nhấn "Xác thực ngay".' },
+            { step: '2', text: 'Mở email từ NexTech và nhấn "Xác thực ngay".' },
             { step: '3', text: 'Quay lại trình duyệt và làm mới trang.' },
           ].map(({ step, text }) => (
             <div key={step} className="flex items-start gap-3">

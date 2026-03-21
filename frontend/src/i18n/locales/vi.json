@@ -1,0 +1,235 @@
+{
+  "common": {
+    "nav": {
+      "logo": "NexTech",
+      "phones": "Điện thoại",
+      "laptops": "Laptop",
+      "tablets": "Tablet",
+      "accessories": "Phụ kiện",
+      "deals": "Khuyến mãi",
+      "cart": "Giỏ hàng",
+      "account": "Tài khoản",
+      "admin": "Quản trị",
+      "logout": "Đăng xuất",
+      "login": "Đăng nhập",
+      "register": "Đăng ký",
+      "hello": "Xin chào"
+    },
+    "actions": {
+      "addToCart": "Thêm vào giỏ",
+      "buyNow": "Mua ngay",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "confirm": "Xác nhận",
+      "delete": "Xóa",
+      "edit": "Chỉnh sửa",
+      "back": "Quay lại",
+      "loadMore": "Tải thêm",
+      "search": "Tìm kiếm",
+      "filter": "Lọc",
+      "apply": "Áp dụng",
+      "reset": "Đặt lại",
+      "showPassword": "Hiện mật khẩu",
+      "hidePassword": "Ẩn mật khẩu"
+    },
+    "status": {
+      "loading": "Đang tải...",
+      "error": "Đã xảy ra lỗi",
+      "success": "Thành công",
+      "empty": "Trống",
+      "noResults": "Không tìm thấy kết quả"
+    },
+    "pagination": {
+      "showing": "Hiển thị",
+      "of": "trên",
+      "results": "kết quả"
+    },
+    "language": {
+      "en": "EN",
+      "vi": "VI"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Chào mừng trở lại",
+      "emailLabel": "Địa chỉ Email",
+      "passwordLabel": "Mật khẩu",
+      "submitBtn": "Đăng nhập",
+      "forgotPassword": "Quên mật khẩu?",
+      "noAccount": "Chưa có tài khoản?",
+      "googleBtn": "Đăng nhập với Google",
+      "successMsg": "Đăng nhập thành công"
+    },
+    "register": {
+      "strength": {
+        "veryWeak": "Rất yếu",
+        "weak": "Yếu",
+        "medium": "Trung bình",
+        "strong": "Mạnh",
+        "veryStrong": "Rất mạnh"
+      },
+      "title": "Tạo tài khoản",
+      "nameLabel": "Họ và tên",
+      "emailLabel": "Địa chỉ Email",
+      "passwordLabel": "Mật khẩu",
+      "confirmPasswordLabel": "Xác nhận mật khẩu",
+      "submitBtn": "Đăng ký",
+      "hasAccount": "Đã có tài khoản?",
+      "successMsg": "Đăng ký thành công",
+      "verifyEmailNotice": "Vui lòng kiểm tra email để xác thực tài khoản"
+    },
+    "forgotPassword": {
+      "title": "Quên mật khẩu",
+      "description": "Nhập email của bạn và chúng tôi sẽ gửi liên kết đặt lại mật khẩu",
+      "emailLabel": "Địa chỉ Email",
+      "submitBtn": "Gửi liên kết",
+      "backToLogin": "Quay lại Đăng nhập",
+      "successMsg": "Liên kết đặt lại mật khẩu đã được gửi"
+    },
+    "resetPassword": {
+      "title": "Đặt lại mật khẩu",
+      "passwordLabel": "Mật khẩu mới",
+      "confirmLabel": "Xác nhận mật khẩu",
+      "submitBtn": "Đặt lại mật khẩu",
+      "successMsg": "Đặt lại mật khẩu thành công"
+    },
+    "verifyEmail": {
+      "title": "Xác thực Email",
+      "description": "Đang xác thực địa chỉ email của bạn...",
+      "resendBtn": "Gửi lại email xác thực",
+      "successMsg": "Xác thực email thành công"
+    }
+  },
+  "product": {
+    "list": {
+      "title": "Sản phẩm",
+      "sortBy": "Sắp xếp theo",
+      "priceRange": "Khoảng giá",
+      "brand": "Thương hiệu",
+      "filterSidebar": "Bộ lọc",
+      "sortOptions": {
+        "newest": "Mới nhất",
+        "priceAsc": "Giá: Tăng dần",
+        "priceDesc": "Giá: Giảm dần",
+        "popular": "Bán chạy"
+      }
+    },
+    "detail": {
+      "addToCart": "Thêm vào giỏ",
+      "buyNow": "Mua ngay",
+      "reviews": "Đánh giá",
+      "specs": "Thông số kỹ thuật",
+      "relatedProducts": "Sản phẩm liên quan",
+      "inStock": "Còn hàng",
+      "outOfStock": "Hết hàng",
+      "quantity": "Số lượng"
+    },
+    "admin": {
+      "addProduct": "Thêm sản phẩm",
+      "editProduct": "Sửa sản phẩm",
+      "deleteProduct": "Xóa sản phẩm",
+      "uploadImages": "Tải ảnh lên",
+      "fields": {
+        "name": "Tên sản phẩm",
+        "price": "Giá",
+        "stock": "Tồn kho",
+        "category": "Danh mục",
+        "brand": "Thương hiệu",
+        "description": "Mô tả"
+      }
+    }
+  },
+  "cart": {
+    "title": "Giỏ hàng",
+    "empty": "Giỏ hàng của bạn đang trống",
+    "emptyDescription": "Có vẻ như bạn chưa thêm sản phẩm nào vào giỏ hàng.",
+    "subtotal": "Tạm tính",
+    "total": "Tổng cộng",
+    "checkout": "Tiến hành thanh toán",
+    "continueShopping": "Tiếp tục mua sắm",
+    "remove": "Xóa",
+    "quantity": "Số lượng",
+    "updateQuantity": "Cập nhật số lượng"
+  },
+  "order": {
+    "title": "Đơn hàng",
+    "myOrders": "Đơn hàng của tôi",
+    "orderDetail": "Chi tiết đơn hàng",
+    "status": {
+      "pending": "Chờ xử lý",
+      "processing": "Đang xử lý",
+      "shipping": "Đang giao",
+      "delivered": "Đã giao",
+      "cancelled": "Đã hủy"
+    },
+    "fields": {
+      "orderDate": "Ngày đặt",
+      "total": "Tổng tiền",
+      "paymentMethod": "Phương thức thanh toán",
+      "shippingAddress": "Địa chỉ giao hàng",
+      "items": "Sản phẩm"
+    },
+    "actions": {
+      "cancelOrder": "Hủy đơn hàng",
+      "cancelConfirm": "Bạn có chắc chắn muốn hủy đơn hàng này?",
+      "trackOrder": "Theo dõi đơn hàng"
+    },
+    "paymentMethod": {
+      "cod": "Thanh toán khi nhận hàng (COD)",
+      "stripe": "Thẻ tín dụng (Stripe)"
+    }
+  },
+  "admin": {
+    "overview": {
+      "title": "Tổng quan",
+      "totalRevenue": "Doanh thu",
+      "totalOrders": "Đơn hàng",
+      "totalUsers": "Người dùng",
+      "totalProducts": "Sản phẩm",
+      "recentOrders": "Đơn hàng gần đây",
+      "topProducts": "Sản phẩm bán chạy"
+    },
+    "products": {
+      "title": "Quản lý Sản phẩm",
+      "addNew": "Thêm sản phẩm mới",
+      "search": "Tìm kiếm sản phẩm...",
+      "confirmDelete": "Bạn có chắc chắn muốn xóa sản phẩm này?"
+    },
+    "orders": {
+      "title": "Quản lý Đơn hàng",
+      "updateStatus": "Cập nhật trạng thái",
+      "filterByStatus": "Lọc theo trạng thái"
+    },
+    "users": {
+      "title": "Quản lý Người dùng",
+      "role": "Vai trò",
+      "verified": "Đã xác thực",
+      "createdAt": "Ngày tạo"
+    }
+  },
+  "errors": {
+    "INVALID_CREDENTIALS": "Email hoặc mật khẩu không chính xác",
+    "TOKEN_EXPIRED": "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại",
+    "TOKEN_INVALID": "Phiên đăng nhập không hợp lệ",
+    "TOKEN_MISSING": "Vui lòng đăng nhập để tiếp tục",
+    "EMAIL_NOT_VERIFIED": "Vui lòng xác thực email trước khi đăng nhập",
+    "EMAIL_ALREADY_VERIFIED": "Email đã được xác thực",
+    "ACCOUNT_ALREADY_EXISTS": "Tài khoản với email này đã tồn tại",
+    "REFRESH_TOKEN_INVALID": "Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại",
+    "USER_NOT_FOUND": "Người dùng không tồn tại",
+    "PRODUCT_NOT_FOUND": "Sản phẩm không tồn tại",
+    "PRODUCT_OUT_OF_STOCK": "Sản phẩm đã hết hàng",
+    "ORDER_NOT_FOUND": "Đơn hàng không tồn tại",
+    "ORDER_CANNOT_BE_CANCELLED": "Đơn hàng không thể hủy",
+    "CART_ITEM_NOT_FOUND": "Không tìm thấy sản phẩm trong giỏ hàng",
+    "PAYMENT_FAILED": "Thanh toán thất bại",
+    "IMAGE_UPLOAD_FAILED": "Tải ảnh lên thất bại",
+    "INVALID_FILE_TYPE": "Định dạng file không hợp lệ",
+    "FILE_TOO_LARGE": "Kích thước file quá lớn",
+    "INTERNAL_SERVER_ERROR": "Lỗi máy chủ. Vui lòng thử lại sau.",
+    "VALIDATION_ERROR": "Dữ liệu không hợp lệ",
+    "FORBIDDEN": "Bạn không có quyền thực hiện hành động này",
+    "NOT_FOUND": "Không tìm thấy tài nguyên",
+    "DEFAULT": "Đã xảy ra lỗi. Vui lòng thử lại sau."
+  }
+}

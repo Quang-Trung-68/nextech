@@ -104,7 +104,7 @@ const VerifyEmailPage = () => {
         icon={<CheckCircle2 className="h-12 w-12 text-green-600" />}
         bg="bg-green-50 dark:bg-green-900/20"
         title="Xác thực thành công! 🎉"
-        description="Email của bạn đã được xác thực. Bây giờ bạn có thể sử dụng đầy đủ các tính năng của ShopNow."
+        description="Email của bạn đã được xác thực. Bây giờ bạn có thể sử dụng đầy đủ các tính năng của NexTech."
         footer={
           <Link to="/">
             <Button id="btn-goto-home" className="gap-2" size="lg">
