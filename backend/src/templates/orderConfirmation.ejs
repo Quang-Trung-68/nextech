@@ -165,13 +165,42 @@
                 </tr>
                 <% }) %>
 
-                <!-- Total row -->
+                <!-- Summary rows -->
                 <tr>
-                  <td colspan="3" style="padding:16px 12px;text-align:right;color:#1e293b;font-size:15px;font-weight:700;">
-                    Tổng cộng:
+                  <td colspan="3" style="padding:16px 12px 0 12px;text-align:right;color:#64748b;font-size:14px;">
+                    Tạm tính:
                   </td>
-                  <td style="padding:16px 12px;text-align:right;color:#2563eb;font-size:17px;font-weight:700;white-space:nowrap;">
-                    <%= Number(order.totalAmount).toLocaleString('vi-VN') %>₫
+                  <td style="padding:16px 12px 0 12px;text-align:right;color:#1e293b;font-size:14px;font-weight:600;white-space:nowrap;">
+                    <%= formatVNDEmail(Number(order.totalAmount) + Number(order.discountAmount || 0)) %>
+                  </td>
+                </tr>
+
+                <% if (order.discountAmount > 0) { %>
+                <tr>
+                  <td colspan="3" style="padding:8px 12px 0 12px;text-align:right;color:#64748b;font-size:14px;">
+                    Mã giảm giá <%= order.coupon ? '(' + order.coupon.code + ')' : '' %>:
+                  </td>
+                  <td style="padding:8px 12px 0 12px;text-align:right;color:#dc2626;font-size:14px;font-weight:600;white-space:nowrap;">
+                    - <%= formatVNDEmail(order.discountAmount) %>
+                  </td>
+                </tr>
+                <% } %>
+
+                <tr>
+                  <td colspan="3" style="padding:8px 12px 8px 12px;text-align:right;color:#1e293b;font-size:15px;font-weight:700;">
+                    Phí vận chuyển:
+                  </td>
+                  <td style="padding:8px 12px 8px 12px;text-align:right;color:#16a34a;font-size:14px;font-weight:700;white-space:nowrap;">
+                    Miễn phí
+                  </td>
+                </tr>
+
+                <tr>
+                  <td colspan="3" style="padding:16px 12px;text-align:right;color:#1e293b;font-size:16px;font-weight:700;border-top:2px solid #f1f5f9;">
+                    Tổng thanh toán:
+                  </td>
+                  <td style="padding:16px 12px;text-align:right;color:#2563eb;font-size:20px;font-weight:900;white-space:nowrap;border-top:2px solid #f1f5f9;">
+                    <%= formatVNDEmail(order.totalAmount) %>
                   </td>
                 </tr>
               </table>

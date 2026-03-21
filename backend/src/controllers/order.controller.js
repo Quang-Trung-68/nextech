@@ -8,8 +8,8 @@ const orderService = require('../services/order.service');
  */
 const createOrder = async (req, res, next) => {
   try {
-    const { shippingAddress, paymentMethod } = req.body;
-    const result = await orderService.createOrder(req.user.id, shippingAddress, paymentMethod);
+    const { shippingAddress, paymentMethod, couponCode } = req.body;
+    const result = await orderService.createOrder(req.user.id, shippingAddress, paymentMethod, couponCode);
     res.status(201).json({ success: true, ...result });
   } catch (error) {
     next(error);

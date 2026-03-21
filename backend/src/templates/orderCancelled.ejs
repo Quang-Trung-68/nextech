@@ -3,92 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đơn hàng đang được xử lý! 📦</title>
+  <title>[NexTech] Đơn hàng của bạn đã bị hủy</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8;padding:40px 0;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- Header -->
           <tr>
-            <td style="background-color:#2563eb;padding:32px 40px;text-align:center;">
+            <td style="background-color:#dc2626;padding:32px 40px;text-align:center;">
               <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">
                 <%= appName || 'NexTech' %>
               </h1>
             </td>
           </tr>
+          <!-- Body -->
           <tr>
             <td style="padding:40px 40px 32px 40px;">
               <h2 style="margin:0 0 16px 0;color:#1e293b;font-size:20px;font-weight:600;">
-                Đơn hàng của bạn đang được xử lý! 📦
+                Đơn hàng của bạn đã bị hủy ❌
               </h2>
               <p style="margin:0 0 12px 0;color:#475569;font-size:15px;line-height:1.6;">
                 Xin chào <strong style="color:#1e293b;"><%= user.name %></strong>,
               </p>
               <p style="margin:0 0 24px 0;color:#475569;font-size:15px;line-height:1.6;">
-                Chúng tôi đã nhận được thông tin và đang tiến hành xử lý/đóng gói đơn hàng của bạn. Chúng tôi sẽ thông báo cho bạn ngay khi đơn hàng được giao cho đơn vị vận chuyển.
+                Chúng tôi xin thông báo rằng đơn hàng của bạn tại <strong><%= appName || 'NexTech' %></strong> đã bị hủy.
+                <% if (cancelReason) { %>
+                  <br/>Lý do: <em><%= cancelReason %></em>
+                <% } %>
               </p>
 
-              <div style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:20px;margin-bottom:24px;">
+              <!-- Order Info -->
+              <div style="background-color:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:20px;margin-bottom:24px;">
                 <p style="margin:0 0 8px 0;font-size:14px;color:#64748b;">
                   Mã đơn hàng: <strong style="color:#1e293b;">#<%= String(order.id).slice(-8).toUpperCase() %></strong>
                 </p>
                 <p style="margin:0;font-size:14px;color:#64748b;">
-                  Trạng thái: 
-                  <span style="display:inline-block;background-color:#eab308;color:#ffffff;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">
-                    PROCESSING
+                  Trạng thái:
+                  <span style="display:inline-block;background-color:#dc2626;color:#ffffff;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">
+                    ĐÃ HỦY
                   </span>
                 </p>
               </div>
 
-              <h3 style="margin:0 0 12px 0;font-size:16px;color:#1e293b;">Chi tiết sản phẩm</h3>
+              <!-- Items table -->
+              <h3 style="margin:0 0 12px 0;font-size:16px;color:#1e293b;">Sản phẩm trong đơn</h3>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-collapse:collapse;">
                 <%
                   function formatVNDEmail(amount) {
                     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(amount));
                   }
-                  function getDiscountPercentFromSnapshotEmail(price, originalPrice) {
-                    const p = parseFloat(price);
-                    const o = parseFloat(originalPrice);
-                    if (!o || o <= 0 || p >= o) return 0;
-                    return Math.round((1 - p / o) * 100);
-                  }
                 %>
-                <% order.items.forEach(function(item) {
-                  const discountPercent = getDiscountPercentFromSnapshotEmail(item.price, item.originalPrice);
-                %>
+                <% (order.items || []).forEach(function(item) { %>
                 <tr>
                   <td style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#475569;">
-                    <%= item.name %> <strong style="color:#1e293b;">x<%= item.quantity %></strong>
+                    <%= item.name || (item.product ? item.product.name : 'Sản phẩm') %> <strong style="color:#1e293b;">x<%= item.quantity %></strong>
                   </td>
                   <td align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:bold;white-space:nowrap;">
-                    <% if (discountPercent > 0) { %>
-                      <span style="text-decoration:line-through;color:#999;font-size:12px;">
-                        <%= item.originalPrice != null ? formatVNDEmail(item.originalPrice) : '' %>
-                      </span>
-                      <span style="color:#e53e3e;font-weight:bold;">
-                        <%= formatVNDEmail(item.price) %>
-                      </span>
-                      <span style="color:#e53e3e;font-size:11px;"> (-<%= discountPercent %>%)</span>
-                    <% } else { %>
-                      <%= formatVNDEmail(item.price) %>
-                    <% } %>
+                    <%= formatVNDEmail(item.price) %>
                   </td>
                 </tr>
                 <% }); %>
               </table>
 
+              <!-- Summary -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-top:1px solid #e2e8f0;padding-top:16px;">
-                <tr>
-                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;">Tạm tính:</td>
-                  <td align="right" style="font-size:14px;color:#1e293b;padding-bottom:8px;font-weight:600;">
-                    <%= formatVNDEmail(Number(order.totalAmount) + Number(order.discountAmount || 0)) %>
-                  </td>
-                </tr>
                 <% if (order.discountAmount > 0) { %>
                 <tr>
                   <td style="font-size:14px;color:#64748b;padding-bottom:8px;">
-                    Mã giảm giá <%= order.coupon ? '(' + order.coupon.code + ')' : '' %>:
+                    Giảm giá <%= order.coupon ? '(' + order.coupon.code + ')' : '' %>:
                   </td>
                   <td align="right" style="font-size:14px;color:#dc2626;padding-bottom:8px;font-weight:600;">
                     - <%= formatVNDEmail(order.discountAmount) %>
@@ -96,21 +80,29 @@
                 </tr>
                 <% } %>
                 <tr>
-                  <td style="font-size:16px;color:#1e293b;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;">Tổng thanh toán:</td>
-                  <td align="right" style="font-size:20px;color:#2563eb;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;">
+                  <td style="font-size:16px;color:#1e293b;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;">Tổng đơn hàng:</td>
+                  <td align="right" style="font-size:20px;color:#dc2626;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;">
                     <%= Number(order.totalAmount).toLocaleString('vi-VN') %> ₫
                   </td>
                 </tr>
               </table>
 
-              <h3 style="margin:0 0 8px 0;font-size:16px;color:#1e293b;">Địa chỉ giao hàng</h3>
-              <p style="margin:0 0 24px 0;font-size:14px;color:#475569;line-height:1.6;">
-                <%= order.shippingAddress.fullName %><br/>
-                <%= order.shippingAddress.phone %><br/>
-                <%= order.shippingAddress.addressLine || order.shippingAddress.address %>, <%= order.shippingAddress.ward %>, <%= order.shippingAddress.city %>
+              <!-- Refund note (if paid via Stripe) -->
+              <% if (requiresManualRefund) { %>
+              <div style="background-color:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:16px;margin-bottom:24px;">
+                <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6;">
+                  ⚠️ <strong>Lưu ý hoàn tiền:</strong> Đơn hàng này đã được thanh toán qua Stripe. Chúng tôi sẽ xử lý hoàn tiền trong vòng 5–10 ngày làm việc. Vui lòng liên hệ hỗ trợ nếu cần thêm thông tin.
+                </p>
+              </div>
+              <% } %>
+
+              <p style="margin:0;color:#64748b;font-size:14px;line-height:1.6;">
+                Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email hỗ trợ.<br/>
+                Rất mong được phục vụ bạn trong những lần mua sắm tiếp theo!
               </p>
             </td>
           </tr>
+          <!-- Footer -->
           <tr>
             <td style="padding:24px 40px;border-top:1px solid #e2e8f0;text-align:center;">
               <p style="margin:0;color:#94a3b8;font-size:12px;line-height:1.5;">

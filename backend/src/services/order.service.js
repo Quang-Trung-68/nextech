@@ -4,6 +4,7 @@ const paymentService = require('./payment.service');
 const emailJob = require('../jobs/emailJob');
 const { getFinalPrice, getDiscountPercentFromSnapshot, addPriceFields } = require('../utils/price');
 const { AppError, NotFoundError, ConflictError, ForbiddenError } = require('../errors/AppError');
+const { validateCoupon } = require('./coupon.service');
 const ERROR_CODES = require('../errors/errorCodes');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -19,6 +20,8 @@ const ORDER_DETAIL_INCLUDE = {
   user: {
     select: { id: true, name: true, email: true },
   },
+  coupon: true,
+  invoice: true,
 };
 
 /**
@@ -43,7 +46,7 @@ const STATUS_FLOW = {
 
 // ─── User: Tạo đơn hàng ───────────────────────────────────────────────────────
 
-const createOrder = async (userId, shippingAddress, paymentMethod) => {
+const createOrder = async (userId, shippingAddress, paymentMethod, couponCode) => {
   const userCart = await cartService.getCart(userId);
   const cartItems = userCart.items;
 
@@ -61,17 +64,37 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
     totalAmount += Number(item.finalPrice) * item.quantity;
   }
 
+  // ─── Coupon logic ────────────────────────────────────────────────────────
+  let discountAmount = 0;
+  let appliedCouponId = null;
+
+  if (couponCode) {
+    // Re-validate phía server — không tin dữ liệu từ client
+    const { coupon, discountAmount: calculated } = await validateCoupon({
+      code: couponCode,
+      userId,
+      orderAmount: totalAmount,
+    });
+    discountAmount = calculated;
+    appliedCouponId = coupon.id;
+  }
+
+  // finalAmount = tổng sau khi trừ coupon, tối thiểu = 0
+  const finalAmount = Math.max(totalAmount - discountAmount, 0);
+
   // COD,STRIPE → PENDING chờ xử lý
   const initialStatus = 'PENDING';
 
-  // $transaction: tạo Order + cắt stock + xoá Cart (nếu không phải STRIPE)
-  const transactionItems = [
-    prisma.order.create({
+  // $transaction: tạo Order + tạo Invoice + cắt stock + xoá Cart (nếu COD)
+  const order = await prisma.$transaction(async (tx) => {
+    const createdOrder = await tx.order.create({
       data: {
         userId,
         shippingAddress,
         paymentMethod,
-        totalAmount,
+        totalAmount: finalAmount,
+        discountAmount,
+        couponId: appliedCouponId,
         status: initialStatus,
         orderItems: {
           create: cartItems.map((item) => ({
@@ -85,20 +108,42 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
         },
       },
       include: ORDER_DETAIL_INCLUDE,
-    }),
-    ...cartItems.map((item) =>
-      prisma.product.update({
+    });
+
+    // Cắt stock
+    for (const item of cartItems) {
+      await tx.product.update({
         where: { id: item.productId },
         data: { stock: { decrement: item.quantity } },
-      })
-    )
-  ];
+      });
+    }
 
-  if (paymentMethod === 'COD') {
-    transactionItems.push(prisma.cartItem.deleteMany({ where: { cart: { userId } } }));
+    // Xóa cart items nếu là COD
+    if (paymentMethod === 'COD') {
+      await tx.cartItem.deleteMany({ where: { cart: { userId } } });
+    }
+
+    // Tạo Invoice Draft ngay trong cùng transaction
+    const InvoiceService = require('./invoice.service');
+    await InvoiceService.createDraftForOrder(createdOrder.id, tx);
+
+    return createdOrder;
+  });
+
+  // Coupon side-effects sau khi Order đã được tạo thành công.
+  // Thực hiện trong transaction riêng ngay sau để đảm bảo atomicity
+  if (appliedCouponId) {
+    await prisma.$transaction([
+      prisma.coupon.update({
+        where: { id: appliedCouponId },
+        data: { usedCount: { increment: 1 } },
+      }),
+      prisma.couponUsage.create({
+        data: { couponId: appliedCouponId, userId, orderId: order.id },
+      }),
+    ]);
   }
 
-  const [order] = await prisma.$transaction(transactionItems);
   const orderWithDiscounts = _addOrderItemDiscounts(order);
 
   // Bổ sung lookup thông tin User để Email context lấy được tên truy cập và Email
@@ -123,16 +168,16 @@ const createOrder = async (userId, shippingAddress, paymentMethod) => {
   const VND_TO_USD_RATE = 25000;
   const currency = (process.env.STRIPE_CURRENCY || 'usd').toLowerCase();
 
-  // Task 4: Payment Intent dùng totalAmount đã giảm giá (tính từ finalPrice)
-  let finalAmount;
+  // Payment Intent dùng finalAmount (đã trừ coupon)
+  let stripeAmount;
   if (currency === 'vnd') {
-    finalAmount = Math.round(Number(totalAmount));
+    stripeAmount = Math.round(Number(finalAmount));
   } else {
-    finalAmount = Math.round((Number(totalAmount) / VND_TO_USD_RATE) * 100);
+    stripeAmount = Math.round((Number(finalAmount) / VND_TO_USD_RATE) * 100);
   }
 
   const paymentIntent = await paymentService.createPaymentIntent(
-    finalAmount,
+    stripeAmount,
     currency,
     { orderId: orderWithDiscounts.id, userId }
   );
@@ -231,13 +276,30 @@ const cancelOrder = async (orderId, userId, reason) => {
 
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
-    data: {
-      status: 'CANCELLED',
-      // Ghi chú vào shippingAddress (hoặc metadata nếu schema có) — đây là cách đơn giản
-      // Trong production nên có field notes/cancelReason riêng trong schema
-    },
+    data: { status: 'CANCELLED' },
     include: ORDER_DETAIL_INCLUDE,
   });
+
+  // Fire-and-forget: gửi email thông báo hủy đơn đến người mua
+  if (updatedOrder.user?.email) {
+    emailJob.dispatchOrderCancelledEmail(updatedOrder.user.email, {
+      user: { name: updatedOrder.user.name },
+      order: {
+        id: updatedOrder.id,
+        items: updatedOrder.orderItems.map(oi => ({
+          name: oi.product?.name || 'Sản phẩm',
+          quantity: oi.quantity,
+          price: oi.price,
+          originalPrice: oi.originalPrice,
+        })),
+        totalAmount: updatedOrder.totalAmount,
+        discountAmount: updatedOrder.discountAmount,
+        coupon: updatedOrder.coupon,
+      },
+      cancelReason: reason || null,
+      requiresManualRefund,
+    });
+  }
 
   return {
     order: updatedOrder,
@@ -311,7 +373,45 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
     throw new AppError('Order is already delivered, cannot update further', 400, ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION);
   }
 
-  // Enforce flow: chỉ được đi đúng chiều PROCESSING → SHIPPED → DELIVERED
+  // ── Admin cancel: PENDING hoặc PROCESSING → CANCELLED ──────────────────────
+  if (newStatus === 'CANCELLED') {
+    if (!['PENDING', 'PROCESSING'].includes(order.status)) {
+      throw new AppError(
+        `Cannot cancel order in ${order.status} status. Only PENDING or PROCESSING orders can be cancelled.`,
+        400,
+        ERROR_CODES.ORDER.ORDER_CANNOT_BE_CANCELLED
+      );
+    }
+    const cancelled = await prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'CANCELLED' },
+      include: ORDER_DETAIL_INCLUDE,
+    });
+
+    // Fire-and-forget: gửi email thông báo hủy đến người mua
+    if (cancelled.user?.email) {
+      emailJob.dispatchOrderCancelledEmail(cancelled.user.email, {
+        user: { name: cancelled.user.name },
+        order: {
+          id: cancelled.id,
+          items: cancelled.orderItems.map(oi => ({
+            name: oi.product?.name || 'Sản phẩm',
+            quantity: oi.quantity,
+            price: oi.price,
+            originalPrice: oi.originalPrice,
+          })),
+          totalAmount: cancelled.totalAmount,
+          discountAmount: cancelled.discountAmount,
+          coupon: cancelled.coupon,
+        },
+        cancelReason: 'Hủy bởi quản trị viên',
+        requiresManualRefund: cancelled.paymentMethod === 'STRIPE' && cancelled.paymentStatus === 'PAID',
+      });
+    }
+    return cancelled;
+  }
+
+  // ── Enforce forward flow: PROCESSING → SHIPPED → DELIVERED ─────────────────
   // PENDING không có trong STATUS_FLOW (đơn Stripe chưa thanh toán)
   const expectedNext = STATUS_FLOW[order.status];
   if (!expectedNext) {
@@ -342,6 +442,8 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         id: updatedOrder.id,
         items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
         totalAmount: updatedOrder.totalAmount,
+        discountAmount: updatedOrder.discountAmount,
+        coupon: updatedOrder.coupon,
         shippingAddress: updatedOrder.shippingAddress
       }
     });
@@ -352,6 +454,8 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         id: updatedOrder.id,
         items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
         totalAmount: updatedOrder.totalAmount,
+        discountAmount: updatedOrder.discountAmount,
+        coupon: updatedOrder.coupon,
         shippingAddress: updatedOrder.shippingAddress,
         trackingUrl: updatedOrder.trackingUrl ?? null
       }
@@ -363,10 +467,18 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         id: updatedOrder.id,
         items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
         totalAmount: updatedOrder.totalAmount,
+        discountAmount: updatedOrder.discountAmount,
+        coupon: updatedOrder.coupon,
         shippingAddress: updatedOrder.shippingAddress,
         trackingUrl: updatedOrder.trackingUrl ?? null
       }
     });
+
+    // Dispatch job gửi email hóa đơn
+    const invoice = await prisma.invoice.findUnique({ where: { orderId: updatedOrder.id } });
+    if (invoice) {
+        emailJob.dispatchInvoiceEmail(invoice.id);
+    }
   }
 
   return updatedOrder;

@@ -49,8 +49,9 @@ const ProfileAddressesPage = lazy(() => import('@/features/profile/pages/Profile
 // ─── Admin (role = ADMIN) — Lazy ─────────────────────────────────────────────
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
 const AdminProductPage   = lazy(() => import('@/pages/admin/AdminProductPage'));
-const AdminOrderPage     = lazy(() => import('@/pages/admin/AdminOrderPage'));
+const AdminOrdersPage    = lazy(() => import('@/pages/admin/orders/AdminOrdersPage'));
 const AdminUserPage      = lazy(() => import('@/pages/admin/AdminUserPage'));
+const AdminCouponsPage   = lazy(() => import('@/pages/admin/AdminCouponsPage'));
 
 const routes = [
   {
@@ -179,11 +180,15 @@ const routes = [
           },
           {
             path: 'orders',
-            element: <AdminOrderPage />,
+            element: <AdminOrdersPage />,
           },
           {
             path: 'users',
             element: <AdminUserPage />,
+          },
+          {
+            path: 'coupons',
+            element: <AdminCouponsPage />,
           },
         ],
       },

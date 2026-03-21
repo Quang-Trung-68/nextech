@@ -5,6 +5,8 @@ import { useAdminOrders, useUpdateOrderStatus } from '@/features/admin/hooks/use
 import { DataTable } from '@/features/admin/components/DataTable';
 import { CustomPagination } from '@/features/admin/components/CustomPagination';
 import { StatusBadge } from '@/features/admin/components/StatusBadge';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/lib/toast';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -15,13 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import OrderDetailModal from './components/OrderDetailModal';
 
-const AdminOrderPage = () => {
+const AdminOrdersPage = () => {
   usePageTitle('Manage Orders | Admin');
 
   const [params, setParams] = useState({ page: 1, limit: 10, search: '', paymentStatus: '', status: '' });
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500);
+
+  // States for Order Detail Modal
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setParams(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
@@ -38,6 +45,16 @@ const AdminOrderPage = () => {
         onError: (err) => toast.error(err.response?.data?.message || 'Failed to update status'),
       }
     );
+  };
+
+  const handleRowClick = (order) => {
+    setSelectedOrderId(order.id);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    // Don't reset selectedOrderId immediately to keep it visible during close animation
   };
 
   const columns = [
@@ -69,10 +86,10 @@ const AdminOrderPage = () => {
           value={params.paymentStatus || 'all'}
           onValueChange={(value) => setParams((prev) => ({ ...prev, paymentStatus: value !== 'all' ? value : '', page: 1 }))}
         >
-          <SelectTrigger className="w-[130px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
+          <SelectTrigger className="w-[130px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
             <SelectValue placeholder="Payment (all)" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent onClick={e => e.stopPropagation()}>
             <SelectItem value="all">Payment (all)</SelectItem>
             <SelectItem value="UNPAID">Unpaid</SelectItem>
             <SelectItem value="PAID">Paid</SelectItem>
@@ -80,6 +97,9 @@ const AdminOrderPage = () => {
           </SelectContent>
         </Select>
       ),
+      cell: ({ row }) => (
+        <span className="capitalize">{row.original.paymentMethod}</span>
+      )
     },
     {
       accessorKey: 'status',
@@ -88,10 +108,10 @@ const AdminOrderPage = () => {
           value={params.status || 'all'}
           onValueChange={(value) => setParams((prev) => ({ ...prev, status: value !== 'all' ? value : '', page: 1 }))}
         >
-          <SelectTrigger className="w-[120px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
+          <SelectTrigger className="w-[120px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
             <SelectValue placeholder="Status (all)" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent onClick={e => e.stopPropagation()}>
             <SelectItem value="all">Status (all)</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
             <SelectItem value="PROCESSING">Processing</SelectItem>
@@ -107,21 +127,22 @@ const AdminOrderPage = () => {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => {
+        const orderId = row.original.id;
         const status = row.original.status;
         return (
-          <div className="flex gap-2 text-xs">
+          <div className="flex gap-2 text-xs" onClick={e => e.stopPropagation()}>
             {status === 'PENDING' && (
-              <Button size="sm" variant="outline" onClick={() => handleStatusChange(row.original.id, 'PROCESSING')} disabled={isUpdating}>
+              <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'PROCESSING')} disabled={isUpdating}>
                 Mark Processing
               </Button>
             )}
             {status === 'PROCESSING' && (
-              <Button size="sm" variant="outline" onClick={() => handleStatusChange(row.original.id, 'SHIPPED')} disabled={isUpdating}>
+              <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'SHIPPED')} disabled={isUpdating}>
                 Mark Shipped
               </Button>
             )}
             {status === 'SHIPPED' && (
-              <Button size="sm" variant="outline" onClick={() => handleStatusChange(row.original.id, 'DELIVERED')} disabled={isUpdating}>
+              <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'DELIVERED')} disabled={isUpdating}>
                 Mark Delivered
               </Button>
             )}
@@ -148,9 +169,19 @@ const AdminOrderPage = () => {
       </div>
 
       {isLoading ? (
-        <div>Loading orders...</div>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       ) : (
-        <DataTable columns={columns} data={data?.orders || []} />
+        <DataTable
+          columns={columns}
+          data={data?.orders || []}
+          onRowClick={handleRowClick}
+        />
       )}
 
       {data?.pagination?.totalPages > 1 && (
@@ -162,8 +193,14 @@ const AdminOrderPage = () => {
           />
         </div>
       )}
+
+      <OrderDetailModal
+        orderId={selectedOrderId}
+        open={isModalOpen}
+        onClose={handleModalClose}
+      />
     </div>
   );
 };
 
-export default AdminOrderPage;
+export default AdminOrdersPage;

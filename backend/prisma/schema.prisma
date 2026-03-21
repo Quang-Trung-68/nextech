@@ -29,6 +29,7 @@ model User {
   refreshTokens          RefreshToken[]
   reviews                Review[]
   revokedTokens          RevokedToken[]
+  couponUsages           CouponUsage[]
 
   @@map("users")
 }
@@ -139,13 +140,18 @@ model Order {
   paymentStatus         PaymentStatus @default(UNPAID)
   paymentMethod         String
   totalAmount           Decimal       @db.Decimal(15, 2)
+  discountAmount        Decimal       @default(0) @db.Decimal(15, 2)
   shippingAddress       Json
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
   stripeClientSecret    String?
   stripePaymentIntentId String?       @unique
+  couponId              Int?
+  coupon                Coupon?       @relation(fields: [couponId], references: [id])
+  couponUsage           CouponUsage?
   orderItems            OrderItem[]
   user                  User          @relation(fields: [userId], references: [id])
+  invoice               Invoice?
 
   @@map("orders")
 }
@@ -228,9 +234,47 @@ model Favorite {
   @@map("favorites")
 }
 
+model Coupon {
+  id                Int              @id @default(autoincrement())
+  code              String           @unique
+  type              CouponDiscountType
+  value             Float
+  maxDiscountAmount Float?
+  minOrderAmount    Float
+  maxUsage          Int
+  usedCount         Int              @default(0)
+  expiresAt         DateTime
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  orders            Order[]
+  couponUsages      CouponUsage[]
+
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id        Int      @id @default(autoincrement())
+  couponId  Int
+  userId    String
+  orderId   String   @unique
+  createdAt DateTime @default(now())
+  coupon    Coupon   @relation(fields: [couponId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@unique([couponId, userId])
+  @@map("coupon_usages")
+}
+
 enum Role {
   USER
   ADMIN
+}
+
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
 }
 
 enum OrderStatus {
@@ -245,4 +289,70 @@ enum PaymentStatus {
   UNPAID
   PAID
   REFUNDED
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  invoiceNumber  String        @unique
+  orderId        String        @unique
+  order          Order         @relation(fields: [orderId], references: [id])
+  status         InvoiceStatus @default(DRAFT)
+
+  // Snapshot người mua tại thời điểm đặt hàng
+  buyerName      String
+  buyerEmail     String
+  buyerPhone     String?
+  buyerAddress   String
+  buyerCompany   String?
+  buyerTaxCode   String?
+
+  // Snapshot người bán tại thời điểm đặt hàng
+  sellerName     String
+  sellerAddress  String
+  sellerTaxCode  String
+
+  // Tài chính (VND — không có xu)
+  subtotal       Decimal  @db.Decimal(12, 0)
+  discountAmount Decimal  @default(0) @db.Decimal(12, 0)
+  vatRate        Decimal  @default(0.10) @db.Decimal(4, 3)
+  vatAmount      Decimal  @db.Decimal(12, 0)
+  totalAmount    Decimal  @db.Decimal(12, 0)
+
+  // Email
+  emailSentAt    DateTime?
+
+  issuedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  items          InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+
+  productName String
+  sku         String?
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(12, 0)
+  totalPrice  Decimal @db.Decimal(12, 0)
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  CANCELLED
+}
+
+model ShopSettings {
+  id          String   @id @default("singleton")
+  shopName    String   @default("NexTech")
+  shopAddress String   @default("")
+  taxCode     String   @default("")
+  bankAccount String?
+  phone       String?
+  email       String?
+  updatedAt   DateTime @updatedAt
 }

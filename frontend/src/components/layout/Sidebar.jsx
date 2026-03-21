@@ -11,7 +11,8 @@ import {
   ArrowLeft, 
   LogOut, 
   ChevronLeft, 
-  ChevronRight 
+  ChevronRight,
+  Tag,
 } from 'lucide-react';
 
 // Custom Avatar component replacing Shadcn Avatar to avoid missing dependencies
@@ -50,6 +51,7 @@ const Sidebar = ({ isMobile }) => {
     { name: 'Products', to: '/admin/products', icon: Package },
     { name: 'Orders', to: '/admin/orders', icon: ShoppingCart },
     { name: 'Users', to: '/admin/users', icon: Users },
+    { name: 'Coupons', to: '/admin/coupons', icon: Tag },
   ];
 
   return (

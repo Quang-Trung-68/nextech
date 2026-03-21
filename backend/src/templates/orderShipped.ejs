@@ -78,10 +78,26 @@
                 <% }); %>
               </table>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-top:1px solid #e2e8f0;padding-top:16px;">
                 <tr>
-                  <td style="font-size:16px;color:#475569;font-weight:bold;">Tổng cộng:</td>
-                  <td align="right" style="font-size:18px;color:#2563eb;font-weight:bold;">
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;">Tạm tính:</td>
+                  <td align="right" style="font-size:14px;color:#1e293b;padding-bottom:8px;font-weight:600;">
+                    <%= formatVNDEmail(Number(order.totalAmount) + Number(order.discountAmount || 0)) %>
+                  </td>
+                </tr>
+                <% if (order.discountAmount > 0) { %>
+                <tr>
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;">
+                    Mã giảm giá <%= order.coupon ? '(' + order.coupon.code + ')' : '' %>:
+                  </td>
+                  <td align="right" style="font-size:14px;color:#dc2626;padding-bottom:8px;font-weight:600;">
+                    - <%= formatVNDEmail(order.discountAmount) %>
+                  </td>
+                </tr>
+                <% } %>
+                <tr>
+                  <td style="font-size:16px;color:#1e293b;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;">Tổng thanh toán:</td>
+                  <td align="right" style="font-size:20px;color:#2563eb;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;">
                     <%= Number(order.totalAmount).toLocaleString('vi-VN') %> ₫
                   </td>
                 </tr>

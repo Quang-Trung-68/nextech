@@ -15,6 +15,7 @@ import { AddressPicker } from '@/features/checkout/components/AddressPicker';
 import { PaymentMethodSelector } from '@/features/checkout/components/PaymentMethodSelector';
 import { StripeCardInput } from '@/features/checkout/components/StripeCardInput';
 import { CheckoutSummary } from '@/features/checkout/components/CheckoutSummary';
+import { CouponInput } from '@/features/checkout/components/CouponInput';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,8 +44,10 @@ const CheckoutPageForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState(null);
   const [stripeError, setStripeError] = useState(null);
-
   const [pendingOrder, setPendingOrder] = useState(null);
+
+  // ─── Coupon state (local only, không persist sang Zustand/localStorage) ───
+  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountAmount, couponId }
 
   // Form config
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
@@ -91,7 +94,9 @@ const CheckoutPageForm = () => {
           addressLine: data.shippingAddress.addressLine,
           ward: data.shippingAddress.ward,
           city: data.shippingAddress.city
-        }
+        },
+        // Gửi couponCode nếu user đã apply — server sẽ re-validate
+        ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
       };
 
       if (data.paymentMethod === 'STRIPE') {
@@ -196,7 +201,12 @@ const CheckoutPageForm = () => {
                 </AccordionTrigger>
                 <AccordionContent className="pt-0 pb-2 border-t border-[#d2d2d7] mt-2 px-1">
                   <div className="mt-4">
-                    <CheckoutSummary cartItems={cartItems} totalItems={totalItems} totalPrice={totalPrice} />
+                    <CheckoutSummary
+                      cartItems={cartItems}
+                      totalItems={totalItems}
+                      totalPrice={totalPrice}
+                      appliedCoupon={appliedCoupon}
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -211,6 +221,24 @@ const CheckoutPageForm = () => {
 
           <ShippingForm register={register} errors={errors} />
           <PaymentMethodSelector register={register} selectedMethod={selectedMethod} />
+
+          {/* ─── Coupon Section ─────────────────────────────────────────── */}
+          <div className="bg-white p-4 md:p-6 rounded-2xl border border-border">
+            <h2 className="text-base font-bold tracking-tight text-foreground mb-3">Mã giảm giá</h2>
+            <CouponInput
+              orderAmount={totalPrice}
+              appliedCoupon={appliedCoupon}
+              onApply={(coupon) => {
+                setAppliedCoupon(coupon);
+                // Reset pending Stripe order nếu đơn đã được tạo trước khi apply coupon
+                setPendingOrder(null);
+              }}
+              onRemove={() => {
+                setAppliedCoupon(null);
+                setPendingOrder(null);
+              }}
+            />
+          </div>
 
           {selectedMethod === 'STRIPE' && (
              <StripeCardInput error={stripeError} />
@@ -227,7 +255,12 @@ const CheckoutPageForm = () => {
         </div>
 
         <div className="hidden lg:flex flex-col sticky top-24 lg:col-span-1">
-          <CheckoutSummary cartItems={cartItems} totalItems={totalItems} totalPrice={totalPrice} />
+          <CheckoutSummary
+            cartItems={cartItems}
+            totalItems={totalItems}
+            totalPrice={totalPrice}
+            appliedCoupon={appliedCoupon}
+          />
         </div>
       </form>
     </div>

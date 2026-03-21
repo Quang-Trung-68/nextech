@@ -265,8 +265,21 @@ const OrderDetailPage = () => {
             <div className="space-y-3 text-[14px] text-apple-secondary mb-6">
               <div className="flex justify-between items-center">
                 <span>Tạm tính</span>
-                <span className="font-medium text-apple-dark">{formatVND(totalAmount)}</span>
+                <span className="font-medium text-apple-dark">{formatVND(Number(totalAmount) + Number(order.discountAmount || 0))}</span>
               </div>
+              {order.discountAmount > 0 && (
+                <div className="flex justify-between items-center text-green-600">
+                  <span className="flex items-center gap-1">
+                    Giảm giá
+                    {order.coupon && (
+                      <span className="font-mono text-[10px] bg-green-100 text-green-700 rounded px-1 py-0.5 font-bold tracking-wider">
+                        {order.coupon.code}
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium">− {formatVND(order.discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span>Vận chuyển</span>
                 <span className="font-medium text-green-600">Miễn phí</span>

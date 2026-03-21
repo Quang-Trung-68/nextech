@@ -30,6 +30,7 @@ export const adminKeys = {
   revenue: (year, month) => [...adminKeys.all, 'revenue', year, month],
   products: (params) => [...adminKeys.all, 'products', params],
   orders: (params) => [...adminKeys.all, 'orders', params],
+  orderDetail: (id) => [...adminKeys.all, 'orders', 'detail', id],
   users: (params) => [...adminKeys.all, 'users', params],
 };
 
@@ -215,6 +216,21 @@ export function useAdminOrders(params) {
 }
 
 /**
+ * GET /api/admin/orders/:id
+ */
+export function useAdminOrderDetail(orderId) {
+  return useQuery({
+    queryKey: adminKeys.orderDetail(orderId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/orders/${orderId}`);
+      // Response shape: { success: true, order: {...} }
+      return data.order || data;
+    },
+    enabled: !!orderId,
+  });
+}
+
+/**
  * PATCH /api/admin/orders/:id/status
  */
 export function useUpdateOrderStatus() {
@@ -225,6 +241,25 @@ export function useUpdateOrderStatus() {
         `/admin/orders/${id}/status`,
         { status, reason }
       );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.orders({}) });
+    },
+  });
+}
+
+/**
+ * PATCH /api/admin/orders/:id/status — Cancel an order (status: CANCELLED)
+ */
+export function useCancelOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const { data } = await axiosInstance.patch(`/admin/orders/${id}/status`, {
+        status: 'CANCELLED',
+        reason: 'Hủy bởi quản trị viên',
+      });
       return data;
     },
     onSuccess: () => {

@@ -24,6 +24,13 @@ const createOrderSchema = z.object({
   paymentMethod: z.enum(['COD', 'STRIPE'], {
     errorMap: () => ({ message: 'Phương thức thanh toán không hợp lệ (COD hoặc STRIPE)' }),
   }),
+
+  couponCode: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .nullable(),
 });
 
 /**
@@ -40,15 +47,15 @@ const cancelOrderSchema = z.object({
 /**
  * Schema validate body cho PATCH /api/admin/orders/:id/status (admin cập nhật)
  * Flow hợp lệ: PROCESSING → SHIPPED → DELIVERED
- * Không được set CANCELLED ở đây (dùng cancel endpoint của user)
- * Không được set PENDING (trạng thái ban đầu, không đi ngược)
+ * Admin cũng có thể huỷ đơn: PENDING/PROCESSING → CANCELLED
  */
 const adminUpdateOrderStatusSchema = z.object({
-  status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED'], {
+  status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
     errorMap: () => ({
-      message: 'Trạng thái không hợp lệ. Admin chỉ có thể cập nhật: PROCESSING → SHIPPED → DELIVERED',
+      message: 'Trạng thái không hợp lệ. Admin có thể cập nhật: PROCESSING → SHIPPED → DELIVERED, hoặc CANCELLED.',
     }),
   }),
+  reason: z.string().trim().optional(),
 });
 
 /**
