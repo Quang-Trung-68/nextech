@@ -34,4 +34,17 @@ router.patch(
   orderController.adminUpdateOrderStatus
 );
 
+const AdminInvoiceController = require('../controllers/invoice.controller');
+
+// GET /api/admin/orders/:orderId/invoice — Lấy invoice của một order
+router.get(
+  '/:orderId/invoice',
+  AdminInvoiceController.getByOrderId
+);
+
+// POST /api/admin/orders/:orderId/invoice — Tạo invoice thủ công từ admin
+router.post(
+  '/:orderId/invoice',
+  AdminInvoiceController.createManual
+);
 module.exports = router;

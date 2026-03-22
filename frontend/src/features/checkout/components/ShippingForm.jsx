@@ -1,6 +1,8 @@
 import { Input } from '@/components/ui/input';
+import { Controller } from 'react-hook-form';
+import { AddressSelector } from '@/components/shared/AddressSelector';
 
-export function ShippingForm({ register, errors }) {
+export function ShippingForm({ register, errors, control }) {
   return (
     <div className="bg-white p-6 rounded-2xl border border-border space-y-4">
       <h2 className="text-base font-semibold tracking-tight text-foreground mb-4 text-apple-secondary">Xác nhận hoặc chỉnh sửa thông tin</h2>
@@ -34,6 +36,29 @@ export function ShippingForm({ register, errors }) {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Controller
+          control={control}
+          name="shippingAddress.city"
+          render={({ field: cityField, fieldState: cityState }) => (
+            <Controller
+              control={control}
+              name="shippingAddress.ward"
+              render={({ field: wardField, fieldState: wardState }) => (
+                <AddressSelector
+                  cityValue={cityField.value}
+                  onCityChange={cityField.onChange}
+                  cityError={cityState.error?.message}
+                  wardValue={wardField.value}
+                  onWardChange={wardField.onChange}
+                  wardError={wardState.error?.message}
+                />
+              )}
+            />
+          )}
+        />
+      </div>
+
       <div className="space-y-1">
         <label className="text-sm font-medium text-muted-foreground">Tên đường/phố <span className="text-destructive">*</span></label>
         <Input 
@@ -44,34 +69,6 @@ export function ShippingForm({ register, errors }) {
         {errors.shippingAddress?.addressLine && (
           <p className="text-xs text-destructive mt-1">{errors.shippingAddress.addressLine.message}</p>
         )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Ward */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Tên xã/phường <span className="text-destructive">*</span></label>
-          <Input 
-            {...register('shippingAddress.ward')} 
-            placeholder="Ví dụ: Phường 4"
-            className={errors.shippingAddress?.ward ? "border-destructive focus-visible:ring-destructive" : ""}
-          />
-          {errors.shippingAddress?.ward && (
-            <p className="text-xs text-destructive mt-1">{errors.shippingAddress.ward.message}</p>
-          )}
-        </div>
-
-        {/* City */}
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">Tên tỉnh/thành phố <span className="text-destructive">*</span></label>
-          <Input 
-            {...register('shippingAddress.city')} 
-            placeholder="Ví dụ: TP. Hồ Chí Minh"
-            className={errors.shippingAddress?.city ? "border-destructive focus-visible:ring-destructive" : ""}
-          />
-          {errors.shippingAddress?.city && (
-            <p className="text-xs text-destructive mt-1">{errors.shippingAddress.city.message}</p>
-          )}
-        </div>
       </div>
     </div>
   );

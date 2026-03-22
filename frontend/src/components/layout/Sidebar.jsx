@@ -13,6 +13,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   Tag,
+  Settings,
 } from 'lucide-react';
 
 // Custom Avatar component replacing Shadcn Avatar to avoid missing dependencies
@@ -52,6 +53,7 @@ const Sidebar = ({ isMobile }) => {
     { name: 'Orders', to: '/admin/orders', icon: ShoppingCart },
     { name: 'Users', to: '/admin/users', icon: Users },
     { name: 'Coupons', to: '/admin/coupons', icon: Tag },
+    { name: 'Settings', to: '/admin/settings', icon: Settings },
   ];
 
   return (
@@ -126,7 +128,7 @@ const Sidebar = ({ isMobile }) => {
           to="/"
           end
           title={!isMobile && collapsed ? "Back to Shop" : undefined}
-          className={({ isActive }) => cn(
+          className={() => cn(
             'flex items-center rounded-md font-medium transition-colors',
             !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
             'text-muted-foreground hover:bg-muted hover:text-foreground'

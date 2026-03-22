@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+
 import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useMyFavorites, FavoriteButton } from '@/features/favorites';
 
 const FavoriteProductCard = ({ product }) => {
-  const { id, name, images, finalPrice, price, discountPercent, brand, rating, stock } = product;
+  const { id, name, images, finalPrice, price, discountPercent, brand } = product;
 
   const firstImage =
     images?.[0]?.url ||

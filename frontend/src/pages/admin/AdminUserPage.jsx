@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useAdminUsers, useToggleUserStatus } from '@/features/admin/hooks/useAdmin';
 import { DataTable } from '@/features/admin/components/DataTable';
@@ -14,13 +14,13 @@ const AdminUserPage = () => {
   usePageTitle('Manage Users | Admin');
 
   const currentUser = useAuthStore((s) => s.user);
-  const [params, setParams] = useState({ page: 1, limit: 10, search: '' });
+  const [filterState, setFilterState] = useState({ page: 1, limit: 10 });
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500);
-
-  useEffect(() => {
-    setParams(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
-  }, [debouncedSearch]);
+  const params = useMemo(
+    () => ({ ...filterState, search: debouncedSearch, page: 1 }),
+    [debouncedSearch, filterState]
+  );
 
   const { data, isLoading } = useAdminUsers(params);
   const { mutate: toggleStatus, isPending: isUpdating } = useToggleUserStatus();
@@ -142,7 +142,7 @@ const AdminUserPage = () => {
           <CustomPagination
             currentPage={params.page}
             totalPages={data.pagination.totalPages}
-            onPageChange={(page) => setParams({ ...params, page })}
+            onPageChange={(page) => setFilterState(prev => ({ ...prev, page }))}
           />
         </div>
       )}

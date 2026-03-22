@@ -79,7 +79,7 @@ const ProductDetailPage = () => {
     );
   }
 
-  const { name, description, price, salePrice, finalPrice, discountPercent, isNewArrival, manufactureYear, stock, category, rating, numReviews, images } = product;
+  const { name, description, price, finalPrice, discountPercent, isNewArrival, manufactureYear, stock, category, rating, numReviews, images } = product;
   const isOutOfStock = stock === 0;
 
   // Xử lý tăng giảm số lượng input

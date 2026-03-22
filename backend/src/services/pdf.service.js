@@ -116,10 +116,10 @@ const PdfService = {
       const colRightX = margin + colWidth + 20;
       const infoY = doc.y;
 
-      // Đường kẻ dọc ngăn cách
+      // Đường kẻ dọc ngăn cách — đủ cao cho COMPANY (5 dòng) hay CÁ NHÂN (3 dòng)
       doc
         .moveTo(margin + colWidth + 10, infoY - 5)
-        .lineTo(margin + colWidth + 10, infoY + 120)
+        .lineTo(margin + colWidth + 10, infoY + 160)
         .strokeColor('#e2e8f0')
         .lineWidth(1)
         .stroke();
@@ -145,31 +145,104 @@ const PdfService = {
         .text(invoice.sellerAddress, colLeftX, doc.y + 3, { width: colWidth });
 
       // Cột phải — NGƯỜI MUA
+      // Lấy loại người mua từ order (nếu có), fallback: có buyerCompany → COMPANY
+      const buyerType = invoice.order?.vatBuyerType
+        ?? (invoice.buyerCompany ? 'COMPANY' : 'INDIVIDUAL');
+      const buyerTypeLabel = buyerType === 'COMPANY' ? 'DOANH NGHIỆP' : 'CÁ NHÂN';
+
       doc
         .fontSize(9)
         .fillColor('#94a3b8')
         .font('Roboto-Bold')
-        .text('NGƯỜI MUA', colRightX, infoY, { width: colWidth });
+        .text(`NGƯỜI MUA — ${buyerTypeLabel}`, colRightX, infoY, { width: colWidth });
 
-      doc
-        .fontSize(11)
-        .fillColor('#1e293b')
-        .font('Roboto-Bold')
-        .text(invoice.buyerName, colRightX, infoY + 13, { width: colWidth });
+      let buyerY = infoY + 13;
 
-      doc
-        .fontSize(10)
-        .fillColor('#475569')
-        .font('Roboto')
-        .text(`Email: ${invoice.buyerEmail}`, colRightX, infoY + 27, { width: colWidth })
-        .text(invoice.buyerAddress, colRightX, infoY + 40, { width: colWidth });
+      if (buyerType === 'COMPANY') {
+        // ── CÔNG TY ──
+        // Dòng 1: Tên công ty (nổi bật)
+        if (invoice.buyerCompany) {
+          doc
+            .fontSize(11)
+            .fillColor('#1e293b')
+            .font('Roboto-Bold')
+            .text(invoice.buyerCompany, colRightX, buyerY, { width: colWidth });
+          buyerY = doc.y + 2;
+        }
 
-      if (invoice.buyerTaxCode) {
-        doc.font('Roboto').text(`MST: ${invoice.buyerTaxCode}`, colRightX, doc.y + 3, { width: colWidth });
+        // Dòng 2: Đại diện
+        if (invoice.buyerName) {
+          doc
+            .fontSize(10)
+            .fillColor('#475569')
+            .font('Roboto')
+            .text(`Đại diện: ${invoice.buyerName}`, colRightX, buyerY, { width: colWidth });
+          buyerY = doc.y + 2;
+        }
+
+        // Dòng 3: MST
+        if (invoice.buyerTaxCode) {
+          doc
+            .fontSize(10)
+            .fillColor('#475569')
+            .font('Roboto')
+            .text(`MST: ${invoice.buyerTaxCode}`, colRightX, buyerY, { width: colWidth });
+          buyerY = doc.y + 2;
+        }
+
+        // Dòng 4: Địa chỉ công ty
+        if (invoice.buyerAddress) {
+          doc
+            .fontSize(10)
+            .fillColor('#475569')
+            .font('Roboto')
+            .text(invoice.buyerAddress, colRightX, buyerY, { width: colWidth });
+          buyerY = doc.y + 2;
+        }
+
+        // Dòng 5: Email nhận hóa đơn
+        const companyEmail = invoice.order?.vatBuyerEmail ?? invoice.buyerEmail;
+        if (companyEmail) {
+          doc
+            .fontSize(10)
+            .fillColor('#475569')
+            .font('Roboto')
+            .text(`Email HĐ: ${companyEmail}`, colRightX, buyerY, { width: colWidth });
+          buyerY = doc.y + 2;
+        }
+      } else {
+        // ── CÁ NHÂN ──
+        // Dòng 1: Họ tên
+        doc
+          .fontSize(11)
+          .fillColor('#1e293b')
+          .font('Roboto-Bold')
+          .text(invoice.buyerName, colRightX, buyerY, { width: colWidth });
+        buyerY = doc.y + 2;
+
+        // Dòng 2: Địa chỉ
+        if (invoice.buyerAddress) {
+          doc
+            .fontSize(10)
+            .fillColor('#475569')
+            .font('Roboto')
+            .text(invoice.buyerAddress, colRightX, buyerY, { width: colWidth });
+          buyerY = doc.y + 2;
+        }
+
+        // Dòng 3: Email (cá nhân — email tài khoản)
+        if (invoice.buyerEmail) {
+          doc
+            .fontSize(10)
+            .fillColor('#475569')
+            .font('Roboto')
+            .text(`Email: ${invoice.buyerEmail}`, colRightX, buyerY, { width: colWidth });
+          buyerY = doc.y + 2;
+        }
       }
 
-      // Reset Y sau 2 cột
-      doc.y = infoY + 130;
+      // Reset Y sau 2 cột — lấy Y lớn hơn để tránh overlap dù buyer có nhiều hay ít dòng
+      doc.y = Math.max(buyerY + 8, infoY + 130);
 
       // ── ĐƯỜNG KẺ NGANG ────────────────────────────────────────────────────
       const line2Y = doc.y;

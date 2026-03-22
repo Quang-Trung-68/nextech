@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { AddressSelector } from '@/components/shared/AddressSelector';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
@@ -153,6 +154,27 @@ const AddressFormDialog = ({ open, onClose, editingAddress = null }) => {
               )}
             />
 
+            <Controller
+              control={form.control}
+              name="city"
+              render={({ field: cityField, fieldState: cityState }) => (
+                <Controller
+                  control={form.control}
+                  name="ward"
+                  render={({ field: wardField, fieldState: wardState }) => (
+                    <AddressSelector
+                      cityValue={cityField.value}
+                      onCityChange={cityField.onChange}
+                      cityError={cityState.error?.message}
+                      wardValue={wardField.value}
+                      onWardChange={wardField.onChange}
+                      wardError={wardState.error?.message}
+                    />
+                  )}
+                />
+              )}
+            />
+
             <FormField
               control={form.control}
               name="address"
@@ -161,34 +183,6 @@ const AddressFormDialog = ({ open, onClose, editingAddress = null }) => {
                   <FormLabel>Địa chỉ (số nhà, tên đường)</FormLabel>
                   <FormControl>
                     <Input placeholder="123 Đường Lê Lợi" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="ward"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Xã / Phường</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Phường Bến Nghé" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="city"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Thành phố / Tỉnh</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Hồ Chí Minh" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

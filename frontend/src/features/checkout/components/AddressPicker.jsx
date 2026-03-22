@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AddressSelector } from '@/components/shared/AddressSelector';
 
 const vnPhoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
 
@@ -39,6 +40,7 @@ export function AddressPicker({ onSelect, currentUser }) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(newAddressSchema),
@@ -235,6 +237,29 @@ export function AddressPicker({ onSelect, currentUser }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Controller
+              control={control}
+              name="city"
+              render={({ field: cityField, fieldState: cityState }) => (
+                <Controller
+                  control={control}
+                  name="ward"
+                  render={({ field: wardField, fieldState: wardState }) => (
+                    <AddressSelector
+                      cityValue={cityField.value}
+                      onCityChange={cityField.onChange}
+                      cityError={cityState.error?.message}
+                      wardValue={wardField.value}
+                      onWardChange={wardField.onChange}
+                      wardError={wardState.error?.message}
+                    />
+                  )}
+                />
+              )}
+            />
+          </div>
+
           <div className="space-y-1">
             <label className="text-xs font-medium text-apple-secondary">Địa chỉ (số nhà, tên đường) *</label>
             <Input
@@ -243,27 +268,6 @@ export function AddressPicker({ onSelect, currentUser }) {
               className={`bg-white text-sm ${errors.address ? 'border-destructive' : ''}`}
             />
             {errors.address && <p className="text-xs text-destructive">{errors.address.message}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-apple-secondary">Xã / Phường *</label>
-              <Input
-                {...register('ward')}
-                placeholder="Phường Bến Nghé"
-                className={`bg-white text-sm ${errors.ward ? 'border-destructive' : ''}`}
-              />
-              {errors.ward && <p className="text-xs text-destructive">{errors.ward.message}</p>}
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-apple-secondary">Thành phố / Tỉnh *</label>
-              <Input
-                {...register('city')}
-                placeholder="TP. Hồ Chí Minh"
-                className={`bg-white text-sm ${errors.city ? 'border-destructive' : ''}`}
-              />
-              {errors.city && <p className="text-xs text-destructive">{errors.city.message}</p>}
-            </div>
           </div>
 
           <div className="flex items-center gap-3 pt-1">

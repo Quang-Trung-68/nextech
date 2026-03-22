@@ -21,8 +21,11 @@ import {
   X,
   Receipt,
   AlertTriangle,
+  FilePlus,
+  Rocket
 } from 'lucide-react';
 import { format } from 'date-fns';
+import axiosInstance from '@/lib/axios';
 
 // ─── Status configs ────────────────────────────────────────────────────────────
 
@@ -77,7 +80,7 @@ const LoadingSkeleton = () => (
 
 // ─── Confirm cancel AlertDialog ───────────────────────────────────────────────
 
-const CancelConfirmDialog = ({ open, onOpenChange, orderId, orderNum, onConfirm, isPending }) => (
+const CancelConfirmDialog = ({ open, onOpenChange, orderNum, onConfirm, isPending }) => (
   <AlertDialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
     <AlertDialogPrimitive.Portal>
       <AlertDialogPrimitive.Backdrop className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0" />
@@ -153,6 +156,26 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
         toast.error(err.response?.data?.message || 'Không thể hủy đơn hàng');
       },
     });
+  };
+
+  const handleCreateInvoice = async () => {
+    try {
+      await axiosInstance.post(`/admin/orders/${orderId}/invoice`, {});
+      toast.success('Đã tạo hóa đơn nháp thành công');
+      refetch();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Có lỗi khi tạo hóa đơn');
+    }
+  };
+
+  const handleIssueInvoice = async (invoiceId) => {
+    try {
+      await axiosInstance.patch(`/admin/invoices/${invoiceId}/issue`);
+      toast.success('Phát hành hóa đơn thành công');
+      refetch();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Có lỗi khi phát hành');
+    }
   };
 
   const addr      = order ? parseAddress(order.shippingAddress) : null;
@@ -283,15 +306,55 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                               </div>
                             </div>
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="w-full sm:w-auto gap-2"
-                            onClick={() => window.open(`${import.meta.env.VITE_API_URL}/admin/invoices/${order.invoice.id}/pdf`, '_blank')}
-                          >
-                            <Receipt className="h-4 w-4" />
-                            Tải file PDF
-                          </Button>
+                          
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+                            {order.invoice.status === 'DRAFT' && (
+                              <Button 
+                                variant="default" 
+                                size="sm"
+                                className="w-full sm:w-auto gap-2"
+                                onClick={() => handleIssueInvoice(order.invoice.id)}
+                              >
+                                <Rocket className="h-4 w-4" />
+                                Phát hành
+                              </Button>
+                            )}
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="w-full sm:w-auto gap-2"
+                              onClick={() => window.open(`${import.meta.env.VITE_API_URL}/admin/invoices/${order.invoice.id}/pdf`, '_blank')}
+                            >
+                              <Receipt className="h-4 w-4" />
+                              Tải PDF
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── 1.6 Chưa có Invoice ───────────────────────── */}
+                    {!order.invoice && (
+                      <div>
+                         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+                          <span className="h-px flex-1 bg-border" /> Hóa đơn VAT <span className="h-px flex-1 bg-border" />
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-center justify-between rounded-xl border border-dashed p-4 gap-4">
+                           <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+                               <Receipt className="h-5 w-5 text-gray-400" />
+                             </div>
+                             <div>
+                                <p className="font-semibold text-sm text-muted-foreground">Chưa có hóa đơn</p>
+                                {order.vatInvoiceRequested && (
+                                  <p className="text-xs text-amber-600 font-medium">Khách hàng có yêu cầu xuất VAT</p>
+                                )}
+                             </div>
+                           </div>
+                           <Button size="sm" variant="outline" className="gap-2" onClick={handleCreateInvoice}>
+                             <FilePlus className="h-4 w-4" />
+                             Tạo Hóa Đơn Thủ Công
+                           </Button>
                         </div>
                       </div>
                     )}
@@ -473,7 +536,6 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
       <CancelConfirmDialog
         open={showConfirm}
         onOpenChange={setShowConfirm}
-        orderId={orderId}
         orderNum={orderNum}
         onConfirm={handleConfirmCancel}
         isPending={isCancelling}

@@ -52,6 +52,7 @@ const AdminProductPage   = lazy(() => import('@/pages/admin/AdminProductPage'));
 const AdminOrdersPage    = lazy(() => import('@/pages/admin/orders/AdminOrdersPage'));
 const AdminUserPage      = lazy(() => import('@/pages/admin/AdminUserPage'));
 const AdminCouponsPage   = lazy(() => import('@/pages/admin/AdminCouponsPage'));
+const AdminSettingsPage  = lazy(() => import('@/pages/admin/AdminSettingsPage'));
 
 const routes = [
   {
@@ -189,6 +190,10 @@ const routes = [
           {
             path: 'coupons',
             element: <AdminCouponsPage />,
+          },
+          {
+            path: 'settings',
+            element: <AdminSettingsPage />,
           },
         ],
       },

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Headphones, X, MessageSquare, Phone, MessageCircle } from 'lucide-react';
 
-// eslint-disable-next-line react/prop-types
 const SubButton = ({ icon, tooltip, label, href, bgColor, delay, onClick, isOpen }) => {
   const isLink = !!href;
   const baseClasses = `relative flex h-11 w-11 items-center justify-center rounded-full shadow-md transition-all duration-200 ease-out group ${bgColor} ${
@@ -44,21 +43,17 @@ const SubButton = ({ icon, tooltip, label, href, bgColor, delay, onClick, isOpen
 
 export default function SupportWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [showHint, setShowHint] = useState(() => !sessionStorage.getItem('support_hint_shown'));
   const widgetRef = useRef(null);
 
   useEffect(() => {
-    // First-visit tooltip
-    const hintShown = sessionStorage.getItem('support_hint_shown');
-    if (!hintShown) {
-      setShowHint(true);
-      const timer = setTimeout(() => {
-        setShowHint(false);
-        sessionStorage.setItem('support_hint_shown', '1');
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
+    if (!showHint) return;
+    const timer = setTimeout(() => {
+      setShowHint(false);
+      sessionStorage.setItem('support_hint_shown', '1');
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [showHint]);
 
   useEffect(() => {
     // Close on outside click (mobile)

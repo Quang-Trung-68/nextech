@@ -16,7 +16,7 @@ import { formatVND } from '@/utils/price';
 import { Link } from 'react-router-dom';
 
 export function CartItem({ item, onUpdateQuantity, onRemove }) {
-  const { productId, name, price, salePrice, finalPrice, discountPercent, image, stock, quantity, lineTotal, subtotal } = item;
+  const { productId, name, price, finalPrice, discountPercent, image, stock, quantity, lineTotal, subtotal } = item;
   const displayLineTotal = lineTotal ?? subtotal;
   const displayFinalPrice = finalPrice ?? price;
   const itemImage = image || '/placeholder.png'; // Fallback image

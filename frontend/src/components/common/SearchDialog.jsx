@@ -15,17 +15,12 @@ const SearchDialog = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    const focusTimer = setTimeout(() => {
       setRecentSearches(getRecentSearches());
-      // Thêm setTimeout nhỏ để chắc chắn render xong và focus vào ô input
-      const focusTimer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(focusTimer);
-    } else {
-      setInputValue('');
-      setDebouncedQuery('');
-    }
+      inputRef.current?.focus();
+    }, 0);
+    return () => clearTimeout(focusTimer);
   }, [isOpen]);
 
   useEffect(() => {

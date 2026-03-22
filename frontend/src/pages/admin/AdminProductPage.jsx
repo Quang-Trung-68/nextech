@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/features/admin/hooks/useAdmin';
@@ -21,13 +21,13 @@ import {
 const AdminProductPage = () => {
   usePageTitle('Manage Products | Admin');
   
-  const [params, setParams] = useState({ page: 1, limit: 10, search: '', category: '' });
+  const [filterState, setFilterState] = useState({ page: 1, limit: 10, category: '' });
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500);
-
-  useEffect(() => {
-    setParams(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
-  }, [debouncedSearch]);
+  const params = useMemo(
+    () => ({ ...filterState, search: debouncedSearch, page: 1 }),
+    [debouncedSearch, filterState]
+  );
   
   const { data, isLoading } = useAdminProducts(params);
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
@@ -61,7 +61,7 @@ const AdminProductPage = () => {
       header: () => (
         <Select
           value={params.category || 'all'}
-          onValueChange={(value) => setParams((prev) => ({ ...prev, category: value !== 'all' ? value : '', page: 1 }))}
+          onValueChange={(value) => setFilterState((prev) => ({ ...prev, category: value !== 'all' ? value : '', page: 1 }))}
         >
           <SelectTrigger className="w-[140px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
             <SelectValue placeholder="Category (all)" />
@@ -197,7 +197,7 @@ const AdminProductPage = () => {
           <CustomPagination
             currentPage={params.page}
             totalPages={data.pagination.totalPages}
-            onPageChange={(page) => setParams({ ...params, page })}
+            onPageChange={(page) => setFilterState(prev => ({ ...prev, page }))}
           />
         </div>
       )}

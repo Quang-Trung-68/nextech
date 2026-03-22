@@ -103,6 +103,62 @@
                 </tr>
               </table>
 
+              <% if (typeof invoice !== 'undefined' && invoice) { %>
+              <h3 style="margin:24px 0 12px 0;font-size:16px;color:#1e293b;border-top:1px solid #e2e8f0;padding-top:24px;">Thông tin xuất hóa đơn VAT</h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;background-color:#f8fafc;border-radius:6px;padding:16px;border:1px solid #e2e8f0;">
+                <tr>
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;">Công ty:</td>
+                  <td align="right" style="font-size:14px;color:#1e293b;padding-bottom:8px;font-weight:600;"><%= invoice.buyerCompany || invoice.buyerName %></td>
+                </tr>
+                <tr>
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;">Mã số thuế:</td>
+                  <td align="right" style="font-size:14px;color:#1e293b;padding-bottom:8px;font-weight:600;"><%= invoice.buyerTaxCode || 'Cá nhân' %></td>
+                </tr>
+                <tr>
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;">Địa chỉ:</td>
+                  <td align="right" style="font-size:14px;color:#1e293b;padding-bottom:8px;font-weight:600;"><%= invoice.buyerAddress %></td>
+                </tr>
+              </table>
+
+              <h3 style="margin:0 0 12px 0;font-size:16px;color:#1e293b;">Chi tiết VAT (Pre-tax)</h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-collapse:collapse;">
+                <tr>
+                  <th align="left" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Sản phẩm</th>
+                  <th align="center" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">SL</th>
+                  <th align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Đơn giá</th>
+                  <th align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#64748b;">Thành tiền</th>
+                </tr>
+                <% invoice.items.forEach(function(item) { %>
+                  <tr>
+                    <td style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#475569;"><%= item.productName %></td>
+                    <td align="center" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;"><%= item.quantity %></td>
+                    <td align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;"><%= formatVNDEmail(item.unitPrice) %></td>
+                    <td align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:bold;"><%= formatVNDEmail(item.totalPrice) %></td>
+                  </tr>
+                <% }); %>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border-top:1px solid #e2e8f0;padding-top:16px;">
+                <tr>
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;" colspan="3">Tổng tiền hàng (chưa VAT)</td>
+                  <td align="right" style="font-size:14px;color:#1e293b;padding-bottom:8px;font-weight:600;"><%= formatVNDEmail(invoice.subtotal) %></td>
+                </tr>
+                <% if (Number(invoice.discountAmount) > 0) { %>
+                <tr>
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;" colspan="3">Chiết khấu</td>
+                  <td align="right" style="font-size:14px;color:#dc2626;padding-bottom:8px;font-weight:600;">- <%= formatVNDEmail(invoice.discountAmount) %></td>
+                </tr>
+                <% } %>
+                <tr>
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;" colspan="3">Thuế VAT (<%= Number(invoice.vatRate) * 100 %>%)</td>
+                  <td align="right" style="font-size:14px;color:#1e293b;padding-bottom:8px;font-weight:600;"><%= formatVNDEmail(invoice.vatAmount) %></td>
+                </tr>
+                <tr>
+                  <td style="font-size:16px;color:#1e293b;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;" colspan="3"><strong>Tổng thanh toán</strong></td>
+                  <td align="right" style="font-size:16px;color:#2563eb;font-weight:bold;padding-top:8px;border-top:1px solid #f1f5f9;"><strong><%= formatVNDEmail(invoice.totalAmount) %></strong></td>
+                </tr>
+              </table>
+              <% } %>
+
               <h3 style="margin:0 0 8px 0;font-size:16px;color:#1e293b;">Địa chỉ giao hàng</h3>
               <p style="margin:0 0 24px 0;font-size:14px;color:#475569;line-height:1.6;">
                 <%= order.shippingAddress.fullName %><br/>

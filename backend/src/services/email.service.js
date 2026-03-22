@@ -94,14 +94,24 @@ const EmailService = {
     });
   },
 
-  async sendOrderDeliveredEmail(to, { user, order }) {
-    const html = await _renderTemplate('orderDelivered', { user, order });
-    await transporter.sendMail({
+  async sendOrderDeliveredEmail(to, { user, order, invoice }, pdfBuffer) {
+    const html = await _renderTemplate('orderDelivered', { user, order, invoice });
+    const mailOptions = {
       from: FROM(),
       to,
       subject: `[${APP()}] Đơn hàng đã giao thành công! ✅`,
       html,
-    });
+    };
+    if (invoice && pdfBuffer) {
+      mailOptions.attachments = [
+        {
+          filename: `${invoice.invoiceNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ];
+    }
+    await transporter.sendMail(mailOptions);
   },
 
   async sendOrderCancelledEmail(to, { user, order, cancelReason, requiresManualRefund }) {
@@ -131,7 +141,7 @@ const EmailService = {
     const formatDate = (d) => d ? format(new Date(d), 'dd/MM/yyyy') : '';
     const formatVND = (amount) => Math.round(Number(amount)).toLocaleString('vi-VN') + ' đ';
 
-    const html = await _renderTemplate('invoice-email', {
+    const html = await _renderTemplate('invoiceEmail', {
       invoiceNumber: invoice.invoiceNumber,
       buyerName: invoice.buyerName,
       totalAmount: formatVND(invoice.totalAmount),

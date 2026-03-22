@@ -17,21 +17,67 @@ const shippingAddressSchema = z.object({
 
 /**
  * Schema validate body cho POST /api/orders
+ * VAT: dùng superRefine để tránh lỗi duplicate discriminator của z.union
  */
-const createOrderSchema = z.object({
-  shippingAddress: shippingAddressSchema,
+const createOrderSchema = z
+  .object({
+    shippingAddress: shippingAddressSchema,
 
-  paymentMethod: z.enum(['COD', 'STRIPE'], {
-    errorMap: () => ({ message: 'Phương thức thanh toán không hợp lệ (COD hoặc STRIPE)' }),
-  }),
+    paymentMethod: z.enum(['COD', 'STRIPE'], {
+      errorMap: () => ({ message: 'Phương thức thanh toán không hợp lệ (COD hoặc STRIPE)' }),
+    }),
 
-  couponCode: z
-    .string()
-    .trim()
-    .min(1)
-    .optional()
-    .nullable(),
-});
+    couponCode: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .nullable(),
+
+    // VAT fields — tất cả optional ở tầng object, validate chặt trong superRefine
+    vatInvoiceRequested:    z.boolean().optional().default(false),
+    vatBuyerType:           z.enum(['INDIVIDUAL', 'COMPANY']).optional(),
+    vatBuyerName:           z.string().optional(),
+    vatBuyerAddress:        z.string().optional(),
+    vatBuyerEmail:          z.string().optional(),
+    vatBuyerCompany:        z.string().optional(),
+    vatBuyerTaxCode:        z.string().optional(),
+    vatBuyerCompanyAddress: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.vatInvoiceRequested) return;
+
+    // INDIVIDUAL — name/address optional, backend fallback từ shippingAddress
+    if (data.vatBuyerType === 'INDIVIDUAL') return;
+
+    // COMPANY — 5 field bắt buộc
+    if (data.vatBuyerType === 'COMPANY') {
+      if (!data.vatBuyerName || data.vatBuyerName.trim() === '') {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Vui lòng nhập tên người đại diện', path: ['vatBuyerName'] });
+      }
+      if (!data.vatBuyerCompany || data.vatBuyerCompany.trim() === '') {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Vui lòng nhập tên công ty', path: ['vatBuyerCompany'] });
+      }
+      if (!data.vatBuyerTaxCode || !/^\d{10}(\d{3})?$/.test(data.vatBuyerTaxCode.trim())) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Mã số thuế không hợp lệ (10 hoặc 13 số)', path: ['vatBuyerTaxCode'] });
+      }
+      if (!data.vatBuyerCompanyAddress || data.vatBuyerCompanyAddress.trim() === '') {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Vui lòng nhập địa chỉ công ty', path: ['vatBuyerCompanyAddress'] });
+      }
+      if (!data.vatBuyerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.vatBuyerEmail.trim())) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Email công ty không hợp lệ', path: ['vatBuyerEmail'] });
+      }
+      return;
+    }
+
+    // vatInvoiceRequested = true nhưng không chọn loại → báo lỗi
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Vui lòng chọn loại người mua (Cá nhân hoặc Công ty)',
+      path: ['vatBuyerType'],
+    });
+  });
+
 
 /**
  * Schema validate body cho PATCH /api/orders/:id/cancel (user tự huỷ)

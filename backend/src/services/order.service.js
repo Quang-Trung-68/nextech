@@ -46,7 +46,7 @@ const STATUS_FLOW = {
 
 // ─── User: Tạo đơn hàng ───────────────────────────────────────────────────────
 
-const createOrder = async (userId, shippingAddress, paymentMethod, couponCode) => {
+const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, orderData) => {
   const userCart = await cartService.getCart(userId);
   const cartItems = userCart.items;
 
@@ -96,6 +96,14 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode) =
         discountAmount,
         couponId: appliedCouponId,
         status: initialStatus,
+        vatInvoiceRequested: orderData?.vatInvoiceRequested || false,
+        vatBuyerType: orderData?.vatBuyerType,
+        vatBuyerName: orderData?.vatBuyerName,
+        vatBuyerAddress: orderData?.vatBuyerAddress,
+        vatBuyerEmail: orderData?.vatBuyerEmail,
+        vatBuyerCompany: orderData?.vatBuyerCompany,
+        vatBuyerTaxCode: orderData?.vatBuyerTaxCode,
+        vatBuyerCompanyAddress: orderData?.vatBuyerCompanyAddress,
         orderItems: {
           create: cartItems.map((item) => ({
             productId: item.productId,
@@ -123,12 +131,17 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode) =
       await tx.cartItem.deleteMany({ where: { cart: { userId } } });
     }
 
-    // Tạo Invoice Draft ngay trong cùng transaction
-    const InvoiceService = require('./invoice.service');
-    await InvoiceService.createDraftForOrder(createdOrder.id, tx);
-
     return createdOrder;
   });
+
+  if (orderData?.vatInvoiceRequested) {
+    try {
+      const { createDraftInvoice } = require('./invoice.service');
+      await createDraftInvoice(order.id);
+    } catch (err) {
+      console.error(`[Invoice] Failed to create draft for order ${order.id}:`, err);
+    }
+  }
 
   // Coupon side-effects sau khi Order đã được tạo thành công.
   // Thực hiện trong transaction riêng ngay sau để đảm bảo atomicity
@@ -461,6 +474,20 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       }
     });
   } else if (newStatus === 'DELIVERED') {
+    const { getInvoiceByOrderId, issueInvoice } = require('./invoice.service');
+    const invoice = await getInvoiceByOrderId(updatedOrder.id);
+    let issuedInvoice = null;
+
+    if (invoice && invoice.status === 'DRAFT') {
+      try {
+        issuedInvoice = await issueInvoice(invoice.id);
+      } catch (err) {
+        console.error(`[Invoice] Failed to issue/send for order ${updatedOrder.id}:`, err);
+      }
+    } else if (invoice && invoice.status === 'ISSUED') {
+      issuedInvoice = invoice;
+    }
+
     emailJob.dispatchOrderDeliveredEmail(updatedOrder.user.email, {
       user: { name: updatedOrder.user.name },
       order: {
@@ -471,14 +498,9 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         coupon: updatedOrder.coupon,
         shippingAddress: updatedOrder.shippingAddress,
         trackingUrl: updatedOrder.trackingUrl ?? null
-      }
+      },
+      invoice: issuedInvoice,
     });
-
-    // Dispatch job gửi email hóa đơn
-    const invoice = await prisma.invoice.findUnique({ where: { orderId: updatedOrder.id } });
-    if (invoice) {
-        emailJob.dispatchInvoiceEmail(invoice.id);
-    }
   }
 
   return updatedOrder;

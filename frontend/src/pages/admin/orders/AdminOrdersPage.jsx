@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAdminOrders, useUpdateOrderStatus } from '@/features/admin/hooks/useAdmin';
@@ -22,7 +22,7 @@ import OrderDetailModal from './components/OrderDetailModal';
 const AdminOrdersPage = () => {
   usePageTitle('Manage Orders | Admin');
 
-  const [params, setParams] = useState({ page: 1, limit: 10, search: '', paymentStatus: '', status: '' });
+  const [filterState, setFilterState] = useState({ page: 1, limit: 10, paymentStatus: '', status: '' });
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500);
 
@@ -30,9 +30,10 @@ const AdminOrdersPage = () => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    setParams(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
-  }, [debouncedSearch]);
+  const params = useMemo(
+    () => ({ ...filterState, search: debouncedSearch, page: 1 }),
+    [debouncedSearch, filterState]
+  );
 
   const { data, isLoading } = useAdminOrders(params);
   const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();
@@ -84,7 +85,7 @@ const AdminOrdersPage = () => {
       header: () => (
         <Select
           value={params.paymentStatus || 'all'}
-          onValueChange={(value) => setParams((prev) => ({ ...prev, paymentStatus: value !== 'all' ? value : '', page: 1 }))}
+          onValueChange={(value) => setFilterState((prev) => ({ ...prev, paymentStatus: value !== 'all' ? value : '', page: 1 }))}
         >
           <SelectTrigger className="w-[130px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
             <SelectValue placeholder="Payment (all)" />
@@ -106,7 +107,7 @@ const AdminOrdersPage = () => {
       header: () => (
         <Select
           value={params.status || 'all'}
-          onValueChange={(value) => setParams((prev) => ({ ...prev, status: value !== 'all' ? value : '', page: 1 }))}
+          onValueChange={(value) => setFilterState((prev) => ({ ...prev, status: value !== 'all' ? value : '', page: 1 }))}
         >
           <SelectTrigger className="w-[120px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
             <SelectValue placeholder="Status (all)" />
@@ -189,7 +190,7 @@ const AdminOrdersPage = () => {
           <CustomPagination
             currentPage={params.page}
             totalPages={data.pagination.totalPages}
-            onPageChange={(page) => setParams({ ...params, page })}
+            onPageChange={(page) => setFilterState(prev => ({ ...prev, page }))}
           />
         </div>
       )}

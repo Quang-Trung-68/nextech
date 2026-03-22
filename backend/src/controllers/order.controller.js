@@ -8,8 +8,9 @@ const orderService = require('../services/order.service');
  */
 const createOrder = async (req, res, next) => {
   try {
-    const { shippingAddress, paymentMethod, couponCode } = req.body;
-    const result = await orderService.createOrder(req.user.id, shippingAddress, paymentMethod, couponCode);
+    const { shippingAddress, paymentMethod, couponCode, vatInvoiceRequested, vatBuyerType, vatBuyerName, vatBuyerAddress, vatBuyerEmail, vatBuyerCompany, vatBuyerTaxCode, vatBuyerCompanyAddress } = req.body;
+    const orderData = { vatInvoiceRequested, vatBuyerType, vatBuyerName, vatBuyerAddress, vatBuyerEmail, vatBuyerCompany, vatBuyerTaxCode, vatBuyerCompanyAddress };
+    const result = await orderService.createOrder(req.user.id, shippingAddress, paymentMethod, couponCode, orderData);
     res.status(201).json({ success: true, ...result });
   } catch (error) {
     next(error);

@@ -16,6 +16,7 @@ import { PaymentMethodSelector } from '@/features/checkout/components/PaymentMet
 import { StripeCardInput } from '@/features/checkout/components/StripeCardInput';
 import { CheckoutSummary } from '@/features/checkout/components/CheckoutSummary';
 import { CouponInput } from '@/features/checkout/components/CouponInput';
+import { VatInvoiceForm } from '@/features/checkout/components/VatInvoiceForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,7 @@ const CheckoutPageForm = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountAmount, couponId }
 
   // Form config
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, getValues, control, formState: { errors } } = useForm({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       shippingAddress: {
@@ -61,6 +62,14 @@ const CheckoutPageForm = () => {
         city: '',
       },
       paymentMethod: 'COD',
+      vatInvoiceRequested: false,
+      vatBuyerType: undefined,
+      vatBuyerName: undefined,
+      vatBuyerAddress: undefined,
+      vatBuyerEmail: undefined,
+      vatBuyerCompany: undefined,
+      vatBuyerTaxCode: undefined,
+      vatBuyerCompanyAddress: undefined,
     },
   });
 
@@ -97,6 +106,14 @@ const CheckoutPageForm = () => {
         },
         // Gửi couponCode nếu user đã apply — server sẽ re-validate
         ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
+        vatInvoiceRequested: data.vatInvoiceRequested,
+        vatBuyerType: data.vatBuyerType,
+        vatBuyerName: data.vatBuyerName,
+        vatBuyerAddress: data.vatBuyerAddress,
+        vatBuyerEmail: data.vatBuyerEmail,
+        vatBuyerCompany: data.vatBuyerCompany,
+        vatBuyerTaxCode: data.vatBuyerTaxCode,
+        vatBuyerCompanyAddress: data.vatBuyerCompanyAddress,
       };
 
       if (data.paymentMethod === 'STRIPE') {
@@ -219,8 +236,10 @@ const CheckoutPageForm = () => {
             <AddressPicker onSelect={handleAddressSelect} currentUser={user} />
           </div>
 
-          <ShippingForm register={register} errors={errors} />
+          <ShippingForm register={register} errors={errors} control={control} />
           <PaymentMethodSelector register={register} selectedMethod={selectedMethod} />
+
+          <VatInvoiceForm register={register} watch={watch} errors={errors} setValue={setValue} getValues={getValues} />
 
           {/* ─── Coupon Section ─────────────────────────────────────────── */}
           <div className="bg-white p-4 md:p-6 rounded-2xl border border-border">

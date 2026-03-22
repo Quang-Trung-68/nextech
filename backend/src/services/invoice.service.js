@@ -1,182 +1,189 @@
 const prisma = require('../utils/prisma');
-const { generateInvoiceNumber } = require('../utils/invoiceNumber');
-const { AppError, NotFoundError } = require('../errors/AppError');
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const INVOICE_INCLUDE = {
-  items: true,
-};
+const { calculateVatBreakdown } = require('../utils/vatCalculator')
+const { generateInvoiceNumber } = require('../utils/invoiceNumber')
+const PdfService = require('./pdf.service')
+const EmailService = require('./email.service')
 
 /**
- * Chuyển đổi shippingAddress (JSON) thành chuỗi địa chỉ đọc được.
- * @param {object|string} addr
- * @returns {string}
+ * Include shape chuẩn để tính VAT
  */
-const _formatAddress = (addr) => {
-  if (!addr) return '';
-  if (typeof addr === 'string') return addr;
-  return [addr.address || addr.addressLine, addr.ward, addr.city]
-    .filter(Boolean)
-    .join(', ');
-};
+const ORDER_INVOICE_INCLUDE = {
+  orderItems: {
+    include: { product: true },
+  },
+  user: true,
+  invoice: { include: { items: true } },
+}
 
-// ─── Service ──────────────────────────────────────────────────────────────────
+async function getOrderForInvoice(orderId) {
+  return prisma.order.findUniqueOrThrow({
+    where: { id: orderId },
+    include: ORDER_INVOICE_INCLUDE,
+  })
+}
 
-const InvoiceService = {
-  /**
-   * Tạo Invoice DRAFT ngay khi Order được tạo.
-   * PHẢI chạy trong transaction (tx) được truyền từ ngoài vào.
-   * Tuyệt đối không gọi prisma.xxx trực tiếp bên trong hàm này.
-   *
-   * @param {string} orderId
-   * @param {import('@prisma/client').Prisma.TransactionClient} tx
-   * @returns {Promise<import('@prisma/client').Invoice>}
-   */
-  async createDraftForOrder(orderId, tx) {
-    // Fetch Order (include orderItems → product, user, shippingAddress)
-    const order = await tx.order.findUnique({
-      where: { id: orderId },
-      include: {
-        orderItems: {
-          include: {
-            product: { select: { id: true, name: true } },
-          },
-        },
-        user: {
-          select: { id: true, name: true, email: true, phone: true },
-        },
+/**
+ * Lấy VAT rate từ ShopSettings, fallback 10% nếu chưa cấu hình
+ */
+async function getVatRate() {
+  const settings = await prisma.shopSettings.findUnique({
+    where: { id: 'singleton' },
+  })
+  return Number(settings?.vatRate ?? 0.10)
+}
+
+/**
+ * Tạo Invoice DRAFT và lưu vào DB.
+ *
+ * Gọi khi:
+ *   - Checkout: user request VAT (vatInvoiceRequested = true)
+ *   - Admin: tạo thủ công cho bất kỳ order nào
+ *
+ * Idempotent: nếu invoice đã tồn tại thì trả về invoice cũ, không tạo mới.
+ *
+ * @param {string} orderId
+ * @param {Object|null} overrideBuyerInfo - Admin có thể override thông tin buyer
+ * @returns {Promise<Invoice>}
+ */
+async function createDraftInvoice(orderId, overrideBuyerInfo = null) {
+  const [order, shopSettings, vatRate] = await Promise.all([
+    getOrderForInvoice(orderId),
+    prisma.shopSettings.findUnique({ where: { id: 'singleton' } }),
+    getVatRate(),
+  ])
+
+  // Idempotent guard
+  if (order.invoice) {
+    return order.invoice
+  }
+
+  const breakdown      = calculateVatBreakdown(order, vatRate)
+  const invoiceNumber  = await generateInvoiceNumber()
+  const shippingAddr   = order.shippingAddress // Json field từ Order
+
+  // Buyer info: override (admin) > VAT fields từ Order > fallback user/shipping
+  const isIndividual = order.vatBuyerType === 'INDIVIDUAL' || !order.vatBuyerType
+  const buyerName    = overrideBuyerInfo?.buyerName    ?? order.vatBuyerName    ?? shippingAddr?.fullName    ?? order.user.name
+  const buyerEmail   = overrideBuyerInfo?.buyerEmail   ?? (order.vatBuyerType === 'COMPANY' ? order.vatBuyerEmail : null) ?? order.user.email
+  const buyerPhone   = overrideBuyerInfo?.buyerPhone   ?? shippingAddr?.phone       ?? order.user.phone
+  const buyerAddress = overrideBuyerInfo?.buyerAddress ?? (
+    isIndividual
+      ? (order.vatBuyerAddress ?? shippingAddr?.address ?? '')
+      : (order.vatBuyerCompanyAddress ?? shippingAddr?.address ?? '')
+  )
+  const buyerCompany = overrideBuyerInfo?.buyerCompany ?? order.vatBuyerCompany     ?? null
+  const buyerTaxCode = overrideBuyerInfo?.buyerTaxCode ?? order.vatBuyerTaxCode     ?? null
+
+  return prisma.invoice.create({
+    data: {
+      invoiceNumber,
+      orderId,
+      status: 'DRAFT',
+
+      // Snapshot buyer
+      buyerName,
+      buyerEmail,
+      buyerPhone,
+      buyerAddress,
+      buyerCompany,
+      buyerTaxCode,
+
+      // Snapshot seller từ ShopSettings tại thời điểm tạo
+      sellerName:    shopSettings?.shopName    ?? 'NexTech',
+      sellerAddress: shopSettings?.shopAddress ?? '',
+      sellerTaxCode: shopSettings?.taxCode     ?? '',
+
+      // Tài chính — tất cả pre-tax
+      subtotal:       breakdown.subtotal,
+      discountAmount: breakdown.discountAmount,
+      vatRate:        breakdown.vatRate,  // snapshot — quan trọng khi thuế suất thay đổi
+      vatAmount:      breakdown.vatAmount,
+      totalAmount:    breakdown.totalAmount,
+
+      items: {
+        create: breakdown.items.map((item) => ({
+          productName: item.productName,
+          sku:         item.sku,
+          quantity:    item.quantity,
+          unitPrice:   item.unitPrice,
+          totalPrice:  item.totalPrice,
+        })),
       },
-    });
+    },
+    include: { items: true },
+  })
+}
 
-    if (!order) throw new NotFoundError('Order');
+/**
+ * Chuyển Invoice DRAFT → ISSUED, set issuedAt.
+ * Gọi khi: Order chuyển sang DELIVERED.
+ */
+async function issueInvoice(invoiceId) {
+  return prisma.invoice.update({
+    where: { id: invoiceId },
+    data: {
+      status:   'ISSUED',
+      issuedAt: new Date(),
+    },
+    include: { items: true, order: { include: { user: true } } },
+  })
+}
 
-    // Fetch ShopSettings (singleton)
-    const shop = await tx.shopSettings.findUnique({ where: { id: 'singleton' } });
-    if (!shop) throw new AppError('ShopSettings chưa được cấu hình', 500, 'SHOP_SETTINGS_MISSING');
+/**
+ * Lấy Invoice theo orderId (kèm items, để generate PDF hoặc admin xem)
+ */
+async function getInvoiceByOrderId(orderId) {
+  return prisma.invoice.findUnique({
+    where: { orderId },
+    include: {
+      items: true,
+      order: { include: { user: true } },
+    },
+  })
+}
 
-    // ── Tính toán tài chính ──────────────────────────────────────────────────
-    const VAT_RATE = 0.10;
+/**
+ * Lấy Invoice theo invoiceId (kèm items + order/user, để generate PDF hoặc admin xem)
+ */
+async function getInvoiceById(invoiceId) {
+  return prisma.invoice.findUniqueOrThrow({
+    where: { id: invoiceId },
+    include: {
+      items: true,
+      order: { include: { user: true } },
+    },
+  })
+}
 
-    const subtotal = order.orderItems.reduce((sum, item) => {
-      return sum + Number(item.price) * item.quantity;
-    }, 0);
+/**
+ * Gửi lại email hóa đơn kèm PDF cho buyer.
+ * Cập nhật emailSentAt sau khi gửi thành công.
+ */
+async function resendInvoiceEmail(invoiceId) {
+  const invoice = await getInvoiceById(invoiceId)
+  const pdfBuffer = await PdfService.generateBuffer(invoice)
+  await EmailService.sendInvoiceEmail(invoice.buyerEmail, invoice, pdfBuffer)
+  return prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { emailSentAt: new Date() },
+  })
+}
 
-    const discountAmount = Number(order.discountAmount || 0);
-    const vatAmount = Math.round(subtotal * VAT_RATE);
-    const totalAmount = subtotal - discountAmount + vatAmount;
+/**
+ * Admin hủy invoice
+ */
+async function cancelInvoice(invoiceId) {
+  return prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { status: 'CANCELLED' },
+  })
+}
 
-    // ── Sinh số hóa đơn (trong cùng transaction) ─────────────────────────────
-    const invoiceNumber = await generateInvoiceNumber(tx);
-
-    // ── Snapshot buyer info ──────────────────────────────────────────────────
-    const addr = order.shippingAddress || {};
-    const buyerName = (typeof addr === 'object' && addr.fullName) || order.user?.name || '';
-    const buyerPhone = (typeof addr === 'object' && addr.phone) || order.user?.phone || null;
-    const buyerAddress = _formatAddress(addr);
-
-    // ── Tạo Invoice + InvoiceItems trong transaction ─────────────────────────
-    const invoice = await tx.invoice.create({
-      data: {
-        invoiceNumber,
-        orderId,
-        status: 'DRAFT',
-
-        // Buyer snapshot
-        buyerName,
-        buyerEmail: order.user?.email || '',
-        buyerPhone,
-        buyerAddress,
-        buyerCompany: null,
-        buyerTaxCode: null,
-
-        // Seller snapshot
-        sellerName: shop.shopName,
-        sellerAddress: shop.shopAddress,
-        sellerTaxCode: shop.taxCode,
-
-        // Tài chính
-        subtotal: Math.round(subtotal),
-        discountAmount: Math.round(discountAmount),
-        vatRate: VAT_RATE,
-        vatAmount,
-        totalAmount: Math.round(totalAmount),
-
-        items: {
-          create: order.orderItems.map((item) => ({
-            productName: item.product?.name || 'Sản phẩm',
-            sku: item.product?.sku || null,
-            quantity: item.quantity,
-            unitPrice: Math.round(Number(item.price)),
-            totalPrice: Math.round(Number(item.price) * item.quantity),
-          })),
-        },
-      },
-      include: INVOICE_INCLUDE,
-    });
-
-    return invoice;
-  },
-
-  /**
-   * Cập nhật Invoice: status → ISSUED, issuedAt → now().
-   *
-   * @param {string} invoiceId
-   * @returns {Promise<import('@prisma/client').Invoice>}
-   */
-  async issueInvoice(invoiceId) {
-    const invoice = await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: {
-        status: 'ISSUED',
-        issuedAt: new Date(),
-      },
-      include: INVOICE_INCLUDE,
-    });
-    return invoice;
-  },
-
-  /**
-   * Fetch Invoice đầy đủ (include items).
-   * Throw NotFoundError 404 nếu không tồn tại.
-   *
-   * @param {string} invoiceId
-   * @returns {Promise<import('@prisma/client').Invoice>}
-   */
-  async getInvoiceById(invoiceId) {
-    const invoice = await prisma.invoice.findUnique({
-      where: { id: invoiceId },
-      include: INVOICE_INCLUDE,
-    });
-    if (!invoice) throw new NotFoundError('Invoice');
-    return invoice;
-  },
-
-  /**
-   * Gửi lại email hóa đơn đã phát hành cho buyer.
-   *
-   * @param {string} invoiceId
-   * @returns {Promise<void>}
-   */
-  async resendInvoiceEmail(invoiceId) {
-    const invoice = await this.getInvoiceById(invoiceId);
-
-    if (invoice.status !== 'ISSUED') {
-      throw new AppError('Chỉ có thể gửi lại hóa đơn đã phát hành', 400, 'INVOICE_NOT_ISSUED');
-    }
-
-    // Lazy require để tránh circular dependency
-    const PdfService = require('./pdf.service');
-    const EmailService = require('./email.service');
-
-    const pdfBuffer = await PdfService.generateBuffer(invoice);
-    await EmailService.sendInvoiceEmail(invoice.buyerEmail, invoice, pdfBuffer);
-
-    await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: { emailSentAt: new Date() },
-    });
-  },
-};
-
-module.exports = InvoiceService;
+module.exports = {
+  createDraftInvoice,
+  issueInvoice,
+  getInvoiceById,
+  getInvoiceByOrderId,
+  cancelInvoice,
+  resendInvoiceEmail,
+}

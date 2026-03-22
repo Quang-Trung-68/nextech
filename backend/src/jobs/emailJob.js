@@ -65,7 +65,20 @@ const dispatchOrderProcessingEmail = (to, data) => {
 };
 
 const dispatchOrderDeliveredEmail = (to, data) => {
-  sendWithRetry('ORDER_DELIVERED', to, data, () => EmailService.sendOrderDeliveredEmail(to, data));
+  sendWithRetry('ORDER_DELIVERED', to, data, async () => {
+    let pdfBuffer = undefined;
+    if (data.invoice) {
+      pdfBuffer = await PdfService.generateBuffer(data.invoice);
+    }
+    await EmailService.sendOrderDeliveredEmail(to, data, pdfBuffer);
+
+    if (data.invoice) {
+      await prisma.invoice.update({
+        where: { id: data.invoice.id },
+        data: { emailSentAt: new Date() },
+      });
+    }
+  });
 };
 
 const dispatchOrderCancelledEmail = (to, data) => {
