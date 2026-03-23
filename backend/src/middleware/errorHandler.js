@@ -17,6 +17,13 @@ module.exports = (err, req, res, next) => {
     code = err.code;
     message = err.message;
     if (err.errors) errors = err.errors;
+  } else if (typeof err?.statusCode === 'number') {
+    // Middleware đôi khi ném `new Error()` và gán `err.statusCode/err.code`.
+    // Bắt buộc tôn trọng các giá trị này để client nhận đúng status (vd: 401)
+    // thay vì luôn trả về 500.
+    statusCode = err.statusCode;
+    if (err.code) code = err.code;
+    message = err.message || message;
   } else if (err instanceof ZodError) {
     statusCode = 400;
     code = ERROR_CODES.SERVER.VALIDATION_ERROR;

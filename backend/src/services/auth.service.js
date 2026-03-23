@@ -125,7 +125,17 @@ const refresh = async (refreshTokenFromCookie, meta) => {
   }
 
   // 5. Rotate: delete old refresh token from DB
-  await prisma.refreshToken.delete({ where: { token: refreshTokenFromCookie } });
+  // deleteMany avoids throwing P2025 in race-condition scenarios (another refresh rotated the token already),
+  // and lets us translate it into a proper 401 AuthenticationError.
+  const deleteResult = await prisma.refreshToken.deleteMany({
+    where: { token: refreshTokenFromCookie },
+  });
+  if (deleteResult.count !== 1) {
+    throw new AuthenticationError(
+      'Refresh token is invalid or expired',
+      ERROR_CODES.AUTH.TOKEN_INVALID
+    );
+  }
 
   // 6. Issue new token pair
   const { accessTokenData, refreshTokenData } = await _createTokenPair(user, meta);

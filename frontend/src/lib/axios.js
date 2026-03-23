@@ -62,6 +62,9 @@ axiosInstance.interceptors.response.use(
       
       // Nếu đang trong quá trình refresh token từ 1 request khác -> Đẩy vào queue
       if (isRefreshing) {
+        // Đánh dấu để request này không tự kích hoạt refresh lại lần nữa
+        // (tránh loop khi refresh thất bại do token đã bị xoay bởi request khác).
+        originalRequest._retry = true;
         return new Promise(function(resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
@@ -93,14 +96,18 @@ axiosInstance.interceptors.response.use(
         // Retry lại request hiện tại (trình duyệt sẽ tự gắn HttpOnly Cookie access_token mới)
         return axiosInstance(originalRequest);
         
-      } catch (refreshError) {
-        // Nếu refresh thất bại (VD: refreshToken hết hạn) -> Xóa queue, clear auth và redirect
-        processQueue(refreshError);
-        useAuthStore.getState().clearAuth();
-        
-        window.location.href = '/login'; // Chuyển hướng người dùng về trang login
-        
-        return Promise.reject(refreshError);
+      } catch {
+        // Nếu refresh thất bại (VD: refreshToken hết hạn) thì thường cần logout.
+        // Tuy nhiên trong race-condition (token đã bị xoay bởi request khác) thì có thể
+        // cookies access_token đã được cập nhật rồi. Thử retry request gốc 1 lần trước khi logout.
+        processQueue(null);
+        try {
+          return await axiosInstance(originalRequest);
+        } catch (retryError) {
+          useAuthStore.getState().clearAuth();
+          window.location.href = '/login'; // Chuyển hướng người dùng về trang login
+          return Promise.reject(retryError);
+        }
       } finally {
         // Tắt cờ refresh sau khi xong xuôi
         isRefreshing = false;
