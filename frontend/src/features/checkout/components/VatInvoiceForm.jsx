@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+import { AddressSelector } from '@/components/shared/AddressSelector';
 
 /**
  * Field helper — hiển thị label + input + error message
@@ -44,12 +45,13 @@ const inputClass = (hasError) =>
 export const VatInvoiceForm = ({ register, watch, errors, setValue, getValues }) => {
   const isVatRequested = watch('vatInvoiceRequested');
   const vatBuyerType   = watch('vatBuyerType');
+  const shippingAddress = watch('shippingAddress');
 
-  // Local state để điều khiển loại người mua (INDIVIDUAL / COMPANY)
-  // Sync với RHF's vatBuyerType
   const [localType, setLocalType] = useState('INDIVIDUAL');
 
-  // Khi bật VAT: đặt vatBuyerType = INDIVIDUAL và pre-fill từ shipping
+  const lastAutoFillNameRef = useRef('');
+  const lastAutoFillAddressRef = useRef('');
+
   useEffect(() => {
     if (isVatRequested) {
       if (!vatBuyerType) {
@@ -61,19 +63,41 @@ export const VatInvoiceForm = ({ register, watch, errors, setValue, getValues })
     }
   }, [isVatRequested]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Pre-fill cá nhân từ shippingAddress khi chuyển sang INDIVIDUAL
   useEffect(() => {
     if (isVatRequested && localType === 'INDIVIDUAL') {
-      const shipping = getValues('shippingAddress');
-      // Chỉ pre-fill nếu field còn trống để không đè lên giá trị user đã sửa
-      const currentName    = getValues('vatBuyerName');
-      const currentAddress = getValues('vatBuyerAddress');
-      if (!currentName)    setValue('vatBuyerName',    shipping?.fullName    ?? '', { shouldValidate: false });
-      if (!currentAddress) setValue('vatBuyerAddress', shipping?.addressLine ?? '', { shouldValidate: false });
-    }
-  }, [localType, isVatRequested]); // eslint-disable-line react-hooks/exhaustive-deps
+      const fullAddrParts = [
+        shippingAddress?.addressLine,
+        shippingAddress?.ward,
+        shippingAddress?.city
+      ].filter(p => p && p.trim() !== '');
+      const fullAddr = fullAddrParts.join(', ');
+      const newName = shippingAddress?.fullName || '';
 
-  // Khi tắt VAT: reset toàn bộ VAT fields
+      const currentName = getValues('vatBuyerName');
+      const currentAddress = getValues('vatBuyerAddress');
+
+      if (!currentName || currentName === lastAutoFillNameRef.current) {
+        setValue('vatBuyerName', newName, { shouldValidate: false });
+        lastAutoFillNameRef.current = newName;
+      }
+      if (!currentAddress || currentAddress === lastAutoFillAddressRef.current) {
+        setValue('vatBuyerAddress', fullAddr, { shouldValidate: false });
+        lastAutoFillAddressRef.current = fullAddr;
+      }
+    }
+  }, [shippingAddress?.fullName, shippingAddress?.addressLine, shippingAddress?.ward, shippingAddress?.city, isVatRequested, localType, setValue, getValues]);
+
+  const companyLine = watch('vatBuyerCompanyAddressLine');
+  const companyWard = watch('vatBuyerCompanyWard');
+  const companyCity = watch('vatBuyerCompanyCity');
+
+  useEffect(() => {
+    if (localType === 'COMPANY') {
+      const parts = [companyLine, companyWard, companyCity].filter(p => p && p.trim() !== '');
+      setValue('vatBuyerCompanyAddress', parts.join(', '), { shouldValidate: parts.length > 0 });
+    }
+  }, [companyLine, companyWard, companyCity, localType, setValue]);
+
   useEffect(() => {
     if (!isVatRequested) {
       setValue('vatBuyerType',           undefined, { shouldValidate: false });
@@ -87,23 +111,19 @@ export const VatInvoiceForm = ({ register, watch, errors, setValue, getValues })
     }
   }, [isVatRequested, setValue]);
 
-  // Xử lý khi user chọn loại người mua
   const handleTypeChange = (type) => {
     setLocalType(type);
     setValue('vatBuyerType', type, { shouldValidate: true });
 
     if (type === 'INDIVIDUAL') {
-      // Pre-fill từ shipping khi quay lại INDIVIDUAL
-      const shipping = getValues('shippingAddress');
-      setValue('vatBuyerName',    shipping?.fullName    ?? '', { shouldValidate: false });
-      setValue('vatBuyerAddress', shipping?.addressLine ?? '', { shouldValidate: false });
-      // Clear company fields
       setValue('vatBuyerCompany',        undefined, { shouldValidate: false });
       setValue('vatBuyerTaxCode',        undefined, { shouldValidate: false });
       setValue('vatBuyerCompanyAddress', undefined, { shouldValidate: false });
+      setValue('vatBuyerCompanyCity', undefined, { shouldValidate: false });
+      setValue('vatBuyerCompanyWard', undefined, { shouldValidate: false });
+      setValue('vatBuyerCompanyAddressLine', undefined, { shouldValidate: false });
       setValue('vatBuyerEmail',          undefined, { shouldValidate: false });
     } else {
-      // Clear individual fields khi chuyển sang COMPANY
       setValue('vatBuyerName',    undefined, { shouldValidate: false });
       setValue('vatBuyerAddress', undefined, { shouldValidate: false });
     }
@@ -140,8 +160,7 @@ export const VatInvoiceForm = ({ register, watch, errors, setValue, getValues })
 
           {/* ── Chọn loại người mua ───────────────────────────────────── */}
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">Loại người mua</p>
-            <div className="flex gap-4">
+            <div className="flex gap-4 mb-4">
               {/* Cá nhân */}
               <label
                 className={cn(
@@ -240,14 +259,31 @@ export const VatInvoiceForm = ({ register, watch, errors, setValue, getValues })
                 />
               </FormField>
 
-              <FormField label="Địa chỉ công ty" required error={errors.vatBuyerCompanyAddress}>
-                <input
-                  type="text"
-                  {...register('vatBuyerCompanyAddress')}
-                  className={inputClass(!!errors.vatBuyerCompanyAddress)}
-                  placeholder="123 Lê Lợi, Quận 1, TP.HCM"
-                />
-              </FormField>
+              <div className="space-y-3 pt-2">
+                <p className="text-sm font-medium text-foreground">Địa chỉ công ty <span className="text-destructive">*</span></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <AddressSelector
+                    cityValue={watch('vatBuyerCompanyCity') || ''}
+                    onCityChange={(val) => setValue('vatBuyerCompanyCity', val, { shouldValidate: false })}
+                    cityError={!watch('vatBuyerCompanyCity') && errors.vatBuyerCompanyAddress ? 'Thiếu Tỉnh/Thành' : undefined}
+                    wardValue={watch('vatBuyerCompanyWard') || ''}
+                    onWardChange={(val) => setValue('vatBuyerCompanyWard', val, { shouldValidate: false })}
+                    wardError={!watch('vatBuyerCompanyWard') && errors.vatBuyerCompanyAddress ? 'Thiếu Xã/Phường' : undefined}
+                  />
+                </div>
+                <FormField label="Tên đường/số nhà" required error={errors.vatBuyerCompanyAddressLine && !watch('vatBuyerCompanyAddressLine') ? { message: 'Vui lòng nhập Tên đường/số nhà' } : undefined}>
+                  <input
+                    type="text"
+                    {...register('vatBuyerCompanyAddressLine')}
+                    className={inputClass(!!errors.vatBuyerCompanyAddress && !watch('vatBuyerCompanyAddressLine'))}
+                    placeholder="123 Lê Lợi"
+                  />
+                </FormField>
+                <input type="hidden" {...register('vatBuyerCompanyAddress')} />
+                {errors.vatBuyerCompanyAddress && !watch('vatBuyerCompanyAddress') && (
+                  <p className="text-xs text-destructive font-medium mt-0.5">{errors.vatBuyerCompanyAddress.message}</p>
+                )}
+              </div>
 
               <FormField label="Email công ty (nhận hóa đơn)" required error={errors.vatBuyerEmail}>
                 <input

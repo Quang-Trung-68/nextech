@@ -17,7 +17,7 @@ const FavoriteProductCard = ({ product }) => {
     <div className="group relative bg-white border border-transparent hover:border-[#d2d2d7] hover:shadow-sm rounded-2xl transition-all duration-300 p-4 flex flex-col">
       {/* Image */}
       <Link
-        to={`/products/${id}`}
+        to={`/products/all/${id}`}
         className="relative bg-apple-gray rounded-xl overflow-hidden block w-full aspect-square mb-4"
       >
         {/* Badges */}
@@ -49,7 +49,7 @@ const FavoriteProductCard = ({ product }) => {
 
       {/* Info */}
       <div className="flex flex-col flex-1">
-        <Link to={`/products/${id}`} className="block">
+        <Link to={`/products/all/${id}`} className="block">
           <h3 className="font-semibold text-[15px] text-apple-dark tracking-tight mb-1 group-hover:text-apple-blue transition-colors line-clamp-2">
             {name}
           </h3>

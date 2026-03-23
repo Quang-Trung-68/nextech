@@ -48,7 +48,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
       <div className="flex flex-col flex-1 justify-between">
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div>
-            <Link to={`/products/${productId}`} className="font-semibold text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
+            <Link to={`/products/all/${productId}`} className="font-semibold text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
               {name}
             </Link>
             {/* Giá: gạch ngang nếu có giảm giá */}

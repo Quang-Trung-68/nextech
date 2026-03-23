@@ -1,4 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { getSlugByCategory } from '@/constants/category';
+// Removed duplicate
 import { Star, Image as ImageIcon, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +12,7 @@ import { toast } from 'sonner';
 import { FavoriteButton } from '@/features/favorites';
 
 export function ProductCard({ product }) {
-  const { id, name, price, rating, stock, images } = product;
+  const { id, name, price, rating, stock, images, category } = product;
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -43,7 +45,7 @@ export function ProductCard({ product }) {
 
   return (
     <Card className="overflow-hidden group flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border-slate-200 dark:border-slate-800">
-      <Link to={`/products/${id}`} className="flex-1 flex flex-col relative">
+      <Link to={`/products/${getSlugByCategory(category)}/${id}`} className="flex-1 flex flex-col relative">
         {/* Container hiển thị ảnh */}
         <div className="relative aspect-square w-full bg-slate-50 dark:bg-slate-900 overflow-hidden group-hover:bg-slate-100 flex items-center justify-center">
           {firstImage ? (

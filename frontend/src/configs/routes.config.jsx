@@ -67,7 +67,11 @@ const routes = [
         element: <ProductsPage />,
       },
       {
-        path: '/products/:id',
+        path: '/products/:categorySlug',
+        element: <ProductsPage />,
+      },
+      {
+        path: '/products/:categorySlug/:id',
         element: <ProductDetailPage />,
       },
       {

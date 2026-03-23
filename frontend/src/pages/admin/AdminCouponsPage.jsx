@@ -325,7 +325,9 @@ const AdminCouponsPage = () => {
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger id="coupon-type">
-                    <SelectValue placeholder="Chọn loại" />
+                    <SelectValue placeholder="Chọn loại">
+                      {field.value === 'PERCENTAGE' ? '% Phần trăm' : field.value === 'FIXED_AMOUNT' ? 'Số tiền cố định (đ)' : ''}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PERCENTAGE">% Phần trăm</SelectItem>

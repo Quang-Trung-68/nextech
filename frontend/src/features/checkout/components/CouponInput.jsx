@@ -44,16 +44,16 @@ export function CouponInput({ orderAmount, onApply, onRemove, appliedCoupon }) {
   if (appliedCoupon) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-          <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+        <div className="flex items-center gap-3 bg-green-50 border-2 border-green-200 rounded-xl px-5 py-4 shadow-sm">
+          <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-green-700">
+            <p className="text-base font-bold text-green-800">
               Áp dụng thành công — mã{' '}
-              <span className="font-mono tracking-wider">{appliedCoupon.code}</span>
+              <span className="font-mono tracking-wider bg-green-200/50 px-2 py-0.5 rounded-md text-green-900">{appliedCoupon.code}</span>
             </p>
-            <p className="text-xs text-green-600 mt-0.5">
-              Giảm{' '}
-              <span className="font-bold">
+            <p className="text-sm font-medium text-green-700 mt-1">
+              Giảm ngay{' '}
+              <span className="font-extrabold text-green-800 text-base">
                 {appliedCoupon.discountAmount.toLocaleString('vi-VN')}đ
               </span>
             </p>
@@ -61,10 +61,10 @@ export function CouponInput({ orderAmount, onApply, onRemove, appliedCoupon }) {
           <button
             type="button"
             onClick={handleRemove}
-            className="ml-auto flex-shrink-0 text-green-500 hover:text-green-700 transition"
+            className="ml-auto flex-shrink-0 p-1.5 rounded-full hover:bg-green-200/50 text-green-600 hover:text-green-800 transition-colors"
             aria-label="Hủy mã giảm giá"
           >
-            <X size={16} />
+            <X size={20} />
           </button>
         </div>
       </div>

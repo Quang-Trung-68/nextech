@@ -58,7 +58,7 @@ const SearchDialog = ({ isOpen, onClose }) => {
   const handleSelectProduct = (productId) => {
     saveRecentSearch(inputValue.trim());
     onClose();
-    navigate(`/products/${productId}`);
+    navigate(`/products/all/${productId}`);
   };
 
   const handleQuickLink = (term) => {

@@ -58,10 +58,10 @@ const Header = () => {
   }, []);
 
   const navLinks = [
-    { label: 'Điện thoại', path: '/products?category=smartphone' },
-    { label: 'Laptop', path: '/products?category=laptop' },
-    { label: 'Máy tính bảng', path: '/products?category=tablet' },
-    { label: 'Phụ kiện', path: '/products?category=accessory' },
+    { label: 'Điện thoại', path: '/products/iphone' },
+    { label: 'Laptop', path: '/products/mac' },
+    { label: 'Máy tính bảng', path: '/products/ipad' },
+    { label: 'Phụ kiện', path: '/products/accessories' },
     { label: 'Khuyến mãi', path: '/products?sale=true' },
   ];
 
@@ -168,7 +168,7 @@ const Header = () => {
                                 />
                                 <div className="flex-1 flex flex-col justify-between">
                                   <Link 
-                                    to={`/products/${item.productId}`} 
+                                    to={`/products/all/${item.productId}`} 
                                     className="text-[13px] font-semibold text-apple-dark line-clamp-2 hover:text-apple-blue transition-colors"
                                   >
                                     {item.name}

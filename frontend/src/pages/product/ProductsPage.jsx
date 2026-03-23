@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { SLUG_MAP, SLUG_LABEL_MAP, getSlugByCategory } from '@/constants/category';
 import { Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,16 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { formatVND } from '@/utils/price';
 import { useMyFavorites, FavoriteButton } from '@/features/favorites';
 import FilterDrawer from './FilterDrawer';
 
 const CATEGORIES = [
-  { id: 'smartphone', label: 'Điện thoại' },
-  { id: 'laptop', label: 'Laptop' },
-  { id: 'tablet', label: 'Máy tính bảng' },
-  { id: 'accessory', label: 'Phụ kiện' }
+  { id: 'iphone', label: 'Điện thoại' },
+  { id: 'mac', label: 'Laptop' },
+  { id: 'ipad', label: 'Máy tính bảng' },
+  { id: 'accessories', label: 'Phụ kiện' }
 ];
 const BRANDS = ['Samsung', 'Apple', 'Sony', 'Dell', 'LG'];
 const PRICE_RANGES = [
@@ -32,15 +33,10 @@ const PRICE_RANGES = [
 ];
 
 const ProductsPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
+  const { categorySlug } = useParams();
 
-  // Derive categories from URL
-  const categoryParam = searchParams.get('category');
-  const categories = categoryParam ? categoryParam.split(',') : [];
-
-  const pageLabel = categories.length === 1
-    ? CATEGORIES.find(c => c.id === categories[0])?.label
-    : null;
+  const pageLabel = categorySlug ? SLUG_LABEL_MAP[categorySlug] : null;
   usePageTitle(pageLabel || 'Sản phẩm'); // → "Điện thoại | NexTech" or "Sản phẩm | NexTech"
 
   const [brands, setBrands] = useState([]);
@@ -77,6 +73,29 @@ const ProductsPage = () => {
     );
   };
 
+  // Custom Buy Now handler
+  const handleBuyNow = (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để mua hàng');
+      return navigate('/login', { state: { from: location.pathname + location.search } });
+    }
+
+    addToCart(
+      { productId, quantity: 1 },
+      {
+        onSuccess: () => {
+          navigate('/checkout');
+        },
+        onError: (err) => {
+          toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi mua hàng');
+        }
+      }
+    );
+  };
+
   // Build Query Params
   const getQueryParams = (pageParam) => {
     let sortParam = 'newest';
@@ -84,7 +103,7 @@ const ProductsPage = () => {
     if (sort === 'Giá giảm dần') sortParam = 'price_desc';
 
     const params = { page: pageParam, limit, sort: sortParam };
-    if (categories.length > 0) params.category = categories.join(',');
+    if (categorySlug && SLUG_MAP[categorySlug]) params.category = SLUG_MAP[categorySlug];
     if (brands.length > 0) params.brand = brands.join(',');
     
     // Find absolute min and max prices from selected ranges
@@ -105,7 +124,7 @@ const ProductsPage = () => {
     fetchNextPage, 
     isFetchingNextPage 
   } = useInfiniteQuery({
-    queryKey: ['products', categories, brands, priceRanges, sort],
+    queryKey: ['products', categorySlug, brands, priceRanges, sort],
     queryFn: async ({ pageParam }) => {
       const res = await axiosInstance.get('/products', { params: getQueryParams(pageParam) });
       return res.data;
@@ -130,18 +149,12 @@ const ProductsPage = () => {
   );
 
   // Handlers
-  const handleCategoryChange = (catId) => {
-    const newCategories = categories.includes(catId) 
-      ? categories.filter(c => c !== catId) 
-      : [...categories, catId];
-    
-    const newParams = new URLSearchParams(searchParams);
-    if (newCategories.length > 0) {
-      newParams.set('category', newCategories.join(','));
+  const handleCategoryChange = (slug) => {
+    if (categorySlug === slug) {
+      navigate('/products' + location.search);
     } else {
-      newParams.delete('category');
+      navigate(`/products/${slug}` + location.search);
     }
-    setSearchParams(newParams, { replace: true });
   };
 
   const handleBrandChange = (brand) => {
@@ -155,31 +168,32 @@ const ProductsPage = () => {
   const clearFilters = () => {
     setBrands([]);
     setPriceRanges([]);
-
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete('category');
-    setSearchParams(newParams, { replace: true });
+    setSearchParams(new URLSearchParams(), { replace: true });
   };
+
+    // Redirect if invalid slug
+  if (categorySlug && !SLUG_MAP[categorySlug]) {
+    return <Navigate to="/products" replace />;
+  }
 
   const renderSidebarContent = () => (
     <div className="flex flex-col gap-8 w-full">
       {/* Danh mục */}
       <div>
         <h4 className="font-semibold text-apple-dark mb-4 text-base">Danh mục</h4>
-        <div className="flex flex-col gap-3">
-          {CATEGORIES.map(cat => (
-            <div key={cat.id} className="flex items-center space-x-3">
-              <Checkbox 
-                id={`cat-${cat.id}`}
-                checked={categories.includes(cat.id)}
-                onCheckedChange={() => handleCategoryChange(cat.id)}
-                className="border-[#d2d2d7] data-[state=checked]:bg-apple-blue data-[state=checked]:border-apple-blue"
-              />
-              <label htmlFor={`cat-${cat.id}`} className="text-sm font-medium leading-none text-apple-dark peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+        <div className="flex flex-col gap-2">
+          {CATEGORIES.map(cat => {
+            const isActive = categorySlug === cat.id;
+            return (
+              <button 
+                key={cat.id} 
+                onClick={() => handleCategoryChange(cat.id)}
+                className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-apple-blue text-white' : 'bg-[#f5f5f7] md:bg-transparent md:hover:bg-apple-gray text-apple-dark'}`}
+              >
                 {cat.label}
-              </label>
-            </div>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -236,11 +250,11 @@ const ProductsPage = () => {
       
       {/* Breadcrumb & Header Mobile */}
       <div className="flex flex-col mb-4 md:mb-8 mt-4">
-        <div className="flex items-center text-xs text-apple-secondary mb-4 space-x-1">
+        <div className="flex flex-wrap items-center text-[13px] text-apple-secondary mb-4 gap-2">
           <Link to="/" className="hover:text-apple-dark transition-colors">NexTech</Link>
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-apple-dark font-medium">
-            {categories.length === 1 ? CATEGORIES.find(c => c.id === categories[0])?.label : 'Tất cả sản phẩm'}
+          <ChevronRight className="w-3.5 h-3.5" />
+          <span className="text-apple-dark font-bold">
+            {categorySlug ? SLUG_LABEL_MAP[categorySlug] : 'Tất cả sản phẩm'}
           </span>
         </div>
       </div>
@@ -248,7 +262,7 @@ const ProductsPage = () => {
       <div className="flex flex-col md:flex-row gap-8 items-start">
         
         {/* Left Sidebar (Desktop) */}
-        <aside className="hidden md:block md:w-64 lg:w-[280px] shrink-0 sticky top-24">
+        <aside className="hidden md:block md:w-44 lg:w-[180px] shrink-0 sticky top-24">
           {renderSidebarContent()}
         </aside>
 
@@ -259,7 +273,7 @@ const ProductsPage = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div className="hidden md:block">
                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-2">
-                 {categories.length === 1 ? CATEGORIES.find(c => c.id === categories[0])?.label : 'Sản phẩm'}
+                 {categorySlug ? SLUG_LABEL_MAP[categorySlug] : 'Sản phẩm'}
                </h1>
                <p className="text-apple-secondary text-sm">
                  hiển thị {totalItems} sản phẩm
@@ -343,7 +357,7 @@ const ProductsPage = () => {
                   </div>
 
                   {/* Image */}
-                  <Link to={`/products/${product.id}`} className={`relative bg-apple-gray rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-6 group/img'}`}>
+                  <Link to={`/products/${getSlugByCategory(product.category)}/${product.id}`} className={`relative bg-apple-gray rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-6 group/img'}`}>
                     {/* Badges — xếp dọc góc trên trái */}
                     <div className="hidden md:flex absolute top-2 left-2 z-10 flex-col gap-1">
                       {product.isNewArrival && (
@@ -368,12 +382,12 @@ const ProductsPage = () => {
 
                   {/* Info */}
                   <div className="flex flex-col flex-1">
-                    <Link to={`/products/${product.id}`} className="block">
+                    <Link to={`/products/${getSlugByCategory(product.category)}/${product.id}`} className="block">
                       <h3 className="font-semibold text-sm md:text-[15px] text-apple-dark tracking-tight mb-1 md:group-hover:text-apple-blue transition-colors line-clamp-2">
                         {product.name}
                       </h3>
                       <p className="hidden md:block text-[13px] text-apple-secondary mb-1 line-clamp-1">
-                        {product.brand} • {CATEGORIES.find(c => c.id === product.category)?.label || product.category}
+                        {product.brand} • {SLUG_LABEL_MAP[Object.keys(SLUG_MAP).find(k => SLUG_MAP[k] === product.category)] || product.category}
                       </p>
                       {/* Năm ra mắt */}
                       {product.manufactureYear != null && (
@@ -402,13 +416,22 @@ const ProductsPage = () => {
                         )}
                       </div>
                       
-                      <Button 
-                        className="hidden md:flex w-full rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-none transition-all active:scale-[0.98]"
-                        onClick={(e) => handleAddToCart(e, product.id)}
-                        disabled={product.stock === 0 || isAddingToCart}
-                      >
-                        {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
-                      </Button>
+                      <div className={`hidden md:flex w-full gap-2 ${viewMode === 'list' ? 'flex-row justify-around gap-32' : 'flex-col'}`}>
+                        <Button 
+                          className={`rounded-full bg-white border border-[#d2d2d7] hover:bg-[#f5f5f7] text-apple-dark font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
+                          onClick={(e) => handleAddToCart(e, product.id)}
+                          disabled={product.stock === 0 || isAddingToCart}
+                        >
+                          {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+                        </Button>
+                        <Button 
+                          className={`rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
+                          onClick={(e) => handleBuyNow(e, product.id)}
+                          disabled={product.stock === 0 || isAddingToCart}
+                        >
+                          Mua ngay
+                        </Button>
+                      </div>
                       
                       {/* Rating under the button on md+ */}
                       <div className="hidden md:flex items-center pt-1">

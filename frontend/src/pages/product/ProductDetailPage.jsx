@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { SLUG_MAP, SLUG_LABEL_MAP } from '@/constants/category';
 import { Minus, Plus, ShoppingCart, Star, Package, ArrowLeft, ChevronRight, CreditCard } from 'lucide-react';
 import { useProduct } from '@/features/product/hooks/useProduct';
 import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
@@ -13,12 +14,6 @@ import { formatVND } from '@/utils/price';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 
-const CATEGORY_MAP = {
-  'smartphone': 'Điện thoại',
-  'laptop': 'Laptop',
-  'tablet': 'Máy tính bảng',
-  'accessory': 'Phụ kiện'
-};
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -81,6 +76,10 @@ const ProductDetailPage = () => {
 
   const { name, description, price, finalPrice, discountPercent, isNewArrival, manufactureYear, stock, category, rating, numReviews, images } = product;
   const isOutOfStock = stock === 0;
+  
+  const categorySlug = Object.keys(SLUG_MAP).find(key => SLUG_MAP[key] === category);
+  const categoryLink = categorySlug ? `/products/${categorySlug}` : '/products';
+  const categoryLabel = categorySlug ? SLUG_LABEL_MAP[categorySlug] : category;
 
   // Xử lý tăng giảm số lượng input
   const handleQuantityChange = (type) => {
@@ -146,13 +145,13 @@ const ProductDetailPage = () => {
       
       {/* Breadcrumb */}
       <div className="flex flex-wrap items-center text-[13px] text-apple-secondary mb-8 gap-2">
-        <Link to="/" className="hover:text-apple-dark transition-colors text-apple-dark font-medium">NexTech</Link>
+        <Link to="/" className="hover:text-apple-dark transition-colors">NexTech</Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <Link to={`/products?category=${category}`} className="hover:text-apple-dark transition-colors">
-          {CATEGORY_MAP[category] || category}
+        <Link to={categoryLink} className="hover:text-apple-dark transition-colors">
+          {categoryLabel}
         </Link>
         <ChevronRight className="w-3.5 h-3.5" />
-        <span className="text-apple-secondary font-medium line-clamp-1">{name}</span>
+        <span className="text-apple-dark font-bold line-clamp-1">{name}</span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-14">
@@ -164,7 +163,7 @@ const ProductDetailPage = () => {
         {/* Thông tin sản phẩm chi tiết */}
         <div className="flex flex-col space-y-6">
           <div className="space-y-2 text-muted-foreground text-sm uppercase font-semibold tracking-wider">
-             {CATEGORY_MAP[category] || category}
+             {categoryLabel}
           </div>
 
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
