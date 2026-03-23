@@ -10,6 +10,8 @@ import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 import { FavoriteButton } from '@/features/favorites';
+import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
+import SaleStockBadge from '@/components/product/SaleStockBadge';
 
 export function ProductCard({ product }) {
   const { id, name, price, rating, stock, images, category } = product;
@@ -92,10 +94,26 @@ export function ProductCard({ product }) {
             {name}
           </h3>
 
+          <div className="flex flex-row gap-2 my-1 items-center w-full">
+            <SaleCountdownBadge saleExpiresAt={product.saleExpiresAt} isSaleActive={product.isSaleActive} />
+            <SaleStockBadge saleStock={product.saleStock} saleRemaining={product.saleRemaining} isSaleActive={product.isSaleActive} />
+          </div>
+
           <div className="flex items-end justify-between w-full mt-1">
-            <span className="font-bold text-[17px] text-primary tracking-tight">
-              {formatCurrency(price)}
-            </span>
+            {product.isSaleActive ? (
+              <div className="flex flex-col">
+                <span className="font-bold text-[17px] text-red-600 tracking-tight">
+                  {formatCurrency(product.effectivePrice)}
+                </span>
+                <span className="text-sm text-gray-400 line-through">
+                  {formatCurrency(price)}
+                </span>
+              </div>
+            ) : (
+              <span className="font-bold text-[17px] text-primary tracking-tight">
+                {formatCurrency(price)}
+              </span>
+            )}
           </div>
         </div>
       </Link>

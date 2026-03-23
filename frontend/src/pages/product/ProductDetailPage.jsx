@@ -13,6 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatVND } from '@/utils/price';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
+import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
+import SaleStockBadge from '@/components/product/SaleStockBadge';
 
 
 const ProductDetailPage = () => {
@@ -74,7 +76,7 @@ const ProductDetailPage = () => {
     );
   }
 
-  const { name, description, price, finalPrice, discountPercent, isNewArrival, manufactureYear, stock, category, rating, numReviews, images } = product;
+  const { name, description, price, finalPrice, discountPercent, isNewArrival, manufactureYear, stock, category, rating, numReviews, images, saleExpiresAt, isSaleActive, saleStock, saleRemaining } = product;
   const isOutOfStock = stock === 0;
   
   const categorySlug = Object.keys(SLUG_MAP).find(key => SLUG_MAP[key] === category);
@@ -186,6 +188,13 @@ const ProductDetailPage = () => {
 
           {/* Giá và Rating layout */}
           <div className="flex flex-wrap items-start gap-4 flex-col">
+            {isSaleActive && (saleExpiresAt || saleStock) ? (
+              <div className="flex flex-row gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100 w-full">
+                <SaleCountdownBadge saleExpiresAt={saleExpiresAt} isSaleActive={isSaleActive} />
+                <SaleStockBadge saleStock={saleStock} saleRemaining={saleRemaining} isSaleActive={isSaleActive} />
+              </div>
+            ) : null}
+
             {discountPercent > 0 ? (
               <div className="flex flex-col gap-1">
                 <span className="text-lg line-through text-gray-400">

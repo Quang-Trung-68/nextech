@@ -82,6 +82,13 @@ const updateProduct = async (id, data) => {
     };
   }
 
+  // Reset flash sale fields if salePrice is explicitly cleared
+  if (payload.salePrice === null) {
+    payload.saleExpiresAt = null;
+    payload.saleStock = null;
+    payload.saleSoldCount = 0;
+  }
+
   const updated = await prisma.product.update({ where: { id }, data: payload, include: { images: true } });
   return addPriceFields(updated);
 };

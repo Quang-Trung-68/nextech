@@ -88,6 +88,12 @@ const updateProduct = async (id, data) => {
     };
   }
 
+  if (payload.salePrice === null) {
+    payload.saleExpiresAt = null;
+    payload.saleStock = null;
+    payload.saleSoldCount = 0;
+  }
+
   return prisma.product.update({ where: { id }, data: payload, include: { images: true } });
 };
 

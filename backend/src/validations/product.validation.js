@@ -1,9 +1,6 @@
 const { z } = require('zod');
 
-/**
- * Schema validate body cho POST /products (tạo mới)
- */
-const createProductSchema = z.object({
+const baseProductSchema = z.object({
   name: z.string().min(2).max(200).trim(),
 
   description: z
@@ -12,7 +9,6 @@ const createProductSchema = z.object({
     .max(2000)
     .trim(),
 
-  // z.coerce.number() để nhận cả string từ form-data
   price: z.coerce
     .number()
     .positive('Giá phải lớn hơn 0')
@@ -26,22 +22,55 @@ const createProductSchema = z.object({
 
   category: z.string().trim().min(1, 'Vui lòng chọn danh mục'),
 
-  // optional vì ảnh có thể upload riêng qua Cloudinary
   images: z
     .array(z.string().url('URL ảnh không hợp lệ'))
     .min(1, 'Cần ít nhất 1 ảnh')
     .max(5, 'Tối đa 5 ảnh')
     .optional(),
+
+  salePrice: z.coerce.number().positive().optional().nullable(),
+  saleExpiresAt: z.string().datetime().optional().nullable(),
+  saleStock: z.coerce.number().int().min(1).optional().nullable(),
 });
+
+const refineFlashSale = (data, ctx) => {
+  if (data.salePrice != null && data.price != null && data.salePrice >= data.price) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'salePrice must be strictly less than price',
+      path: ['salePrice'],
+    });
+  }
+  if (data.saleExpiresAt != null && data.salePrice == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'saleExpiresAt requires salePrice',
+      path: ['saleExpiresAt'],
+    });
+  }
+  if (data.saleStock != null && data.salePrice == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'saleStock requires salePrice',
+      path: ['saleStock'],
+    });
+  }
+};
+
+/**
+ * Schema validate body cho POST /products (tạo mới)
+ */
+const createProductSchema = baseProductSchema.superRefine(refineFlashSale);
 
 /**
  * Schema validate body cho PUT /products/:id (cập nhật, PATCH-style)
- * Tất cả field đều optional, nhưng phải có ít nhất 1 field
  */
-const updateProductSchema = createProductSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: 'Cần ít nhất 1 trường để cập nhật' }
-);
+const updateProductSchema = baseProductSchema.partial()
+  .refine(
+    (data) => Object.keys(data).length > 0,
+    { message: 'Cần ít nhất 1 trường để cập nhật' }
+  )
+  .superRefine(refineFlashSale);
 
 /**
  * Schema validate req.query cho GET /products

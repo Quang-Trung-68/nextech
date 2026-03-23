@@ -14,8 +14,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ImageUploadGrid } from "./ImageUploadGrid";
-import { AlertCircle, Tag, Sparkles, Calendar } from "lucide-react";
+import { AlertCircle, Tag, Sparkles, Calendar, ChevronDown, Clock, Hash, Trash2 } from "lucide-react";
 import { getFinalPrice, getDiscountPercent, formatVND } from "@/utils/price";
 
 const productSchema = z.object({
@@ -29,17 +31,60 @@ const productSchema = z.object({
     url: z.string(),
     publicId: z.string(),
   })).min(1, "Phải có ít nhất 1 ảnh"),
-  // Task 6 fields
+  // Task 6 fields + Flash Sale
   salePrice: z.preprocess(
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
-    z.number().positive().nullable().optional()
+    z.number().positive("Giá sale phải lớn hơn 0").nullable().optional()
+  ),
+  saleExpiresAt: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : String(v)),
+    z.string().nullable().optional()
+  ),
+  saleStock: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().int("Suất sale là số nguyên").min(1, "Số suất >= 1").nullable().optional()
   ),
   isNewArrival: z.boolean().optional(),
   manufactureYear: z.preprocess(
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
     z.number().int().min(2000).max(2100).nullable().optional()
   ),
+}).superRefine((data, ctx) => {
+  if (data.salePrice != null && data.price != null && data.salePrice >= data.price) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Giá sale phải nhỏ hơn giá gốc",
+      path: ["salePrice"]
+    });
+  }
+  if (data.saleExpiresAt != null && data.salePrice == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Cần điền giá sale trước khi đặt thời hạn",
+      path: ["saleExpiresAt"]
+    });
+  }
+  if (data.saleStock != null && data.salePrice == null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Cần điền giá sale trước khi đặt số lượng",
+      path: ["saleStock"]
+    });
+  }
+  if (data.saleExpiresAt != null) {
+    if (new Date(data.saleExpiresAt) <= new Date()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Thời hạn sale phải ở tương lai",
+        path: ["saleExpiresAt"]
+      });
+    }
+  }
 });
+
+const isoToDatetimeLocal = (isoString) => {
+  return isoString ? new Date(isoString).toISOString().slice(0, 16) : '';
+};
 
 export function ProductModal({
   isOpen,
@@ -50,6 +95,7 @@ export function ProductModal({
   serverError = null,
 }) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isFlashSaleOpen, setIsFlashSaleOpen] = useState(false);
 
   const {
     register,
@@ -57,6 +103,7 @@ export function ProductModal({
     control,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -69,6 +116,8 @@ export function ProductModal({
       category: "",
       images: [],
       salePrice: "",
+      saleExpiresAt: "",
+      saleStock: "",
       isNewArrival: true,
       manufactureYear: "",
     },
@@ -96,9 +145,14 @@ export function ProductModal({
           category: initialData.category || "",
           images: initialData.images || [],
           salePrice: initialData.salePrice != null ? initialData.salePrice : "",
+          saleExpiresAt: isoToDatetimeLocal(initialData.saleExpiresAt),
+          saleStock: initialData.saleStock != null ? initialData.saleStock : "",
           isNewArrival: initialData.isNewArrival ?? true,
           manufactureYear: initialData.manufactureYear != null ? initialData.manufactureYear : "",
         });
+        if (initialData.salePrice != null) {
+          setIsFlashSaleOpen(true);
+        }
       } else {
         reset({
           name: "",
@@ -109,9 +163,12 @@ export function ProductModal({
           category: "",
           images: [],
           salePrice: "",
+          saleExpiresAt: "",
+          saleStock: "",
           isNewArrival: true,
           manufactureYear: "",
         });
+        setIsFlashSaleOpen(false);
       }
     }
     if (!isOpen) { 
@@ -123,10 +180,18 @@ export function ProductModal({
     // Clean up empty strings to null/undefined
     const cleaned = {
       ...data,
-      salePrice: data.salePrice === "" ? null : data.salePrice,
-      manufactureYear: data.manufactureYear === "" ? null : data.manufactureYear,
+      salePrice: data.salePrice ? data.salePrice : null,
+      saleExpiresAt: data.saleExpiresAt ? new Date(data.saleExpiresAt).toISOString() : null,
+      saleStock: data.saleStock ? data.saleStock : null,
+      manufactureYear: data.manufactureYear ? data.manufactureYear : null,
     };
     onSubmit(cleaned);
+  };
+
+  const handleClearFlashSale = () => {
+    setValue('salePrice', "", { shouldValidate: true });
+    setValue('saleExpiresAt', "", { shouldValidate: true });
+    setValue('saleStock', "", { shouldValidate: true });
   };
 
   return (
@@ -203,41 +268,10 @@ export function ProductModal({
             </div>
           </div>
 
-          {/* Task 6: Sale price, isNewArrival, manufactureYear */}
-          <div className="grid grid-cols-3 gap-4 p-4 bg-amber-50/60 border border-amber-100 rounded-xl">
+          {/* Task 6: Custom fields */}
+          <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-100 rounded-xl">
             <div className="space-y-2">
-              <Label htmlFor="salePrice" className="flex items-center gap-1.5 text-amber-700">
-                <Tag className="w-3.5 h-3.5" />
-                Sale Price (VND)
-              </Label>
-              <Input
-                id="salePrice"
-                type="number"
-                min="0"
-                step="1000"
-                placeholder="Để trống = không giảm"
-                {...register("salePrice")}
-                className={`${!salePriceIsValid && watchedSalePrice ? "border-red-500" : ""}`}
-              />
-              {/* Live preview */}
-              {watchedSalePrice && watchedPrice && (
-                <div className="text-xs">
-                  {salePriceIsValid ? (
-                    previewDiscountPercent > 0 ? (
-                      <span className="text-green-600 font-semibold">
-                        ✓ Giảm {previewDiscountPercent}% → {formatVND(getFinalPrice(Number(watchedPrice), Number(watchedSalePrice)))}
-                      </span>
-                    ) : null
-                  ) : (
-                    <span className="text-red-500">✗ Giá sale phải nhỏ hơn giá gốc</span>
-                  )}
-                </div>
-              )}
-              {errors.salePrice && <p className="text-red-500 text-xs">{errors.salePrice.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="manufactureYear" className="flex items-center gap-1.5 text-amber-700">
+              <Label htmlFor="manufactureYear" className="flex items-center gap-1.5 text-slate-700">
                 <Calendar className="w-3.5 h-3.5" />
                 Năm ra mắt
               </Label>
@@ -254,7 +288,7 @@ export function ProductModal({
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-1.5 text-amber-700">
+              <Label className="flex items-center gap-1.5 text-slate-700">
                 <Sparkles className="w-3.5 h-3.5" />
                 Sản phẩm mới
               </Label>
@@ -276,6 +310,109 @@ export function ProductModal({
               </div>
             </div>
           </div>
+
+          <Separator className="my-6" />
+
+          {/* Flash Sale Section */}
+          <Collapsible open={isFlashSaleOpen} onOpenChange={setIsFlashSaleOpen} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="p-0 hover:bg-transparent hover:text-amber-600 outline-none">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 text-amber-600">
+                    <Tag className="w-5 h-5" />
+                    Flash Sale
+                    <ChevronDown className={`w-5 h-5 transition-transform ${isFlashSaleOpen ? "rotate-180" : ""}`} />
+                  </h3>
+                </Button>
+              </CollapsibleTrigger>
+              {initialData && watchedSalePrice && (
+                <Button type="button" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 h-8 px-2" onClick={handleClearFlashSale}>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Xóa Flash Sale
+                </Button>
+              )}
+            </div>
+            
+            <CollapsibleContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-amber-50/50 border border-amber-200 rounded-xl">
+                <div className="space-y-2 col-span-2 sm:col-span-1">
+                  <Label htmlFor="salePrice" className="flex items-center gap-1.5 text-amber-800">
+                    Giá sale (₫)
+                  </Label>
+                  <Input
+                    id="salePrice"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    placeholder="Để trống nếu không giảm giá"
+                    {...register("salePrice")}
+                    className={`${!salePriceIsValid && watchedSalePrice ? "border-red-500" : ""}`}
+                  />
+                  <p className="text-xs text-muted-foreground">Phải nhỏ hơn giá gốc</p>
+                  {watchedSalePrice && watchedPrice && (
+                    <div className="text-xs mt-1">
+                      {salePriceIsValid ? (
+                        previewDiscountPercent > 0 ? (
+                          <span className="text-green-600 font-semibold">
+                            ✓ Giảm {previewDiscountPercent}% → {formatVND(getFinalPrice(Number(watchedPrice), Number(watchedSalePrice)))}
+                          </span>
+                        ) : null
+                      ) : (
+                         <span className="text-red-500">✗ Giá sale phải nhỏ hơn giá gốc</span>
+                      )}
+                    </div>
+                  )}
+                  {errors.salePrice && <p className="text-red-500 text-xs">{errors.salePrice.message}</p>}
+                </div>
+
+                <div className="space-y-2 col-span-2 sm:col-span-1">
+                  <Label htmlFor="saleExpiresAt" className="flex items-center gap-1.5 text-amber-800">
+                    <Clock className="w-3.5 h-3.5" />
+                    Thời hạn sale
+                  </Label>
+                  <Input
+                    id="saleExpiresAt"
+                    type="datetime-local"
+                    disabled={!watchedSalePrice}
+                    title={!watchedSalePrice ? "Điền giá sale trước" : ""}
+                    placeholder="Để trống = không giới hạn thời gian"
+                    {...register("saleExpiresAt")}
+                    className={`disabled:opacity-50 disabled:bg-gray-100 ${errors.saleExpiresAt ? "border-red-500" : ""}`}
+                  />
+                  {errors.saleExpiresAt && <p className="text-red-500 text-xs">{errors.saleExpiresAt.message}</p>}
+                </div>
+
+                <div className="space-y-2 col-span-2 sm:col-span-1">
+                  <Label htmlFor="saleStock" className="flex items-center gap-1.5 text-amber-800">
+                    <Hash className="w-3.5 h-3.5" />
+                    Số suất giảm giá tối đa
+                  </Label>
+                  <Input
+                    id="saleStock"
+                    type="number"
+                    min="1"
+                    disabled={!watchedSalePrice}
+                    title={!watchedSalePrice ? "Điền giá sale trước" : ""}
+                    placeholder="Để trống = không giới hạn"
+                    {...register("saleStock")}
+                    className={`disabled:opacity-50 disabled:bg-gray-100 ${errors.saleStock ? "border-red-500" : ""}`}
+                  />
+                  {errors.saleStock && <p className="text-red-500 text-xs">{errors.saleStock.message}</p>}
+                </div>
+
+                {initialData && (
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label className="flex items-center gap-1.5 text-amber-800">
+                      Đã bán với giá sale
+                    </Label>
+                    <div className="h-10 flex items-center px-3 py-2 border border-gray-200 rounded-md bg-white/50 text-sm italic text-gray-600 pointer-events-none">
+                      {initialData.saleSoldCount > 0 ? `${initialData.saleSoldCount} suất` : "—"}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>

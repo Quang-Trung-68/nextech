@@ -17,6 +17,8 @@ import { useLocation } from 'react-router-dom';
 import { formatVND } from '@/utils/price';
 import { useMyFavorites, FavoriteButton } from '@/features/favorites';
 import FilterDrawer from './FilterDrawer';
+import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
+import SaleStockBadge from '@/components/product/SaleStockBadge';
 
 const CATEGORIES = [
   { id: 'iphone', label: 'Điện thoại' },
@@ -398,6 +400,10 @@ const ProductsPage = () => {
                     </Link>
 
                     <div className="mt-auto flex flex-col gap-2 md:gap-3">
+                      <div className="flex flex-row gap-2 items-center w-full">
+                        <SaleCountdownBadge saleExpiresAt={product.saleExpiresAt} isSaleActive={product.isSaleActive} />
+                        <SaleStockBadge saleStock={product.saleStock} saleRemaining={product.saleRemaining} isSaleActive={product.isSaleActive} />
+                      </div>
                       {/* Hiện thị giá */}
                       <div className="flex flex-col md:flex-row md:items-end gap-0.5 md:gap-2">
                         {product.discountPercent > 0 ? (

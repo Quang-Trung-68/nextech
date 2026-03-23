@@ -6,6 +6,7 @@ const { getFinalPrice, getDiscountPercentFromSnapshot, addPriceFields } = requir
 const { AppError, NotFoundError, ConflictError, ForbiddenError } = require('../errors/AppError');
 const { validateCoupon } = require('./coupon.service');
 const ERROR_CODES = require('../errors/errorCodes');
+const { isSaleActive } = require('../utils/saleUtils');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -87,6 +88,46 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
 
   // $transaction: tạo Order + tạo Invoice + cắt stock + xoá Cart (nếu COD)
   const order = await prisma.$transaction(async (tx) => {
+    const orderItemsData = [];
+
+    for (const item of cartItems) {
+      // STEP A
+      const product = await tx.product.findUnique({ where: { id: item.productId } });
+      if (!product) throw new NotFoundError('Product');
+
+      // STEP B
+      const saleActive = isSaleActive(product);
+      const effectivePrice = saleActive ? product.salePrice : product.price;
+
+      // STEP C
+      if (saleActive && product.saleStock != null) {
+        const updated = await tx.product.updateMany({
+          where: {
+            id: product.id,
+            saleSoldCount: { lt: product.saleStock }
+          },
+          data: { saleSoldCount: { increment: item.quantity } }
+        });
+
+        if (updated.count === 0) {
+          throw new ConflictError('Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.', 'SALE_SOLD_OUT');
+        }
+      }
+
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: { decrement: item.quantity } },
+      });
+
+      // STEP D
+      orderItemsData.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: effectivePrice,
+        originalPrice: parseFloat(product.price),
+      });
+    }
+
     const createdOrder = await tx.order.create({
       data: {
         userId,
@@ -105,26 +146,11 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
         vatBuyerTaxCode: orderData?.vatBuyerTaxCode,
         vatBuyerCompanyAddress: orderData?.vatBuyerCompanyAddress,
         orderItems: {
-          create: cartItems.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            // price = finalPrice (giá thực khách trả, có thể là salePrice)
-            price: item.finalPrice,
-            // originalPrice = snapshot giá gốc tại thời điểm mua
-            originalPrice: parseFloat(item.price),
-          })),
+          create: orderItemsData,
         },
       },
       include: ORDER_DETAIL_INCLUDE,
     });
-
-    // Cắt stock
-    for (const item of cartItems) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      });
-    }
 
     // Xóa cart items nếu là COD
     if (paymentMethod === 'COD') {

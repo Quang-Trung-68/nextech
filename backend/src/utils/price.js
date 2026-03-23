@@ -44,15 +44,33 @@ function getDiscountPercentFromSnapshot(price, originalPrice) {
   return Math.round((1 - p / o) * 100);
 }
 
+const { isSaleActive } = require('./saleUtils');
+
 /**
  * Thêm computed fields finalPrice và discountPercent vào một product object.
  * @param {object} product
  * @returns {object}
  */
 function addPriceFields(product) {
-  const finalPrice = getFinalPrice(product.price, product.salePrice);
-  const discountPercent = getDiscountPercent(product.price, product.salePrice);
-  return { ...product, finalPrice, discountPercent };
+  const saleActive = isSaleActive(product);
+  const p = parseFloat(product.price);
+  const s = product.salePrice != null ? parseFloat(product.salePrice) : null;
+
+  const effectivePrice = saleActive ? s : p;
+  const discountPercent = (saleActive && s != null && s < p && p > 0) ? Math.round((1 - s / p) * 100) : 0;
+  
+  const saleRemaining = product.saleStock != null
+    ? Math.max(0, product.saleStock - product.saleSoldCount)
+    : null;
+
+  return { 
+    ...product, 
+    finalPrice: effectivePrice, 
+    discountPercent,
+    effectivePrice,
+    saleRemaining,
+    isSaleActive: saleActive
+  };
 }
 
 module.exports = {

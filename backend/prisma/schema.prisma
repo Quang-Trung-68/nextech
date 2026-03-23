@@ -114,6 +114,9 @@ model Product {
   isNewArrival    Boolean        @default(true)
   manufactureYear Int?
   salePrice       Decimal?       @db.Decimal(15, 2)
+  saleExpiresAt   DateTime?
+  saleStock       Int?
+  saleSoldCount   Int            @default(0)
   cartItems       CartItem[]
   favorites       Favorite[]
   orderItems      OrderItem[]

@@ -25,7 +25,8 @@ const adminProductQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 });
 
-const adminCreateProductSchema = z.object({
+// Base object (plain ZodObject — no .superRefine so .partial() works on it)
+const adminProductBaseSchema = z.object({
   name: z.string().min(2).max(200).trim(),
   description: z.string().min(10, 'Mô tả tối thiểu 10 ký tự').max(2000).trim(),
   price: z.coerce.number().positive('Giá phải lớn hơn 0').max(1_000_000_000),
@@ -36,10 +37,18 @@ const adminCreateProductSchema = z.object({
     url: z.string().url('URL ảnh không hợp lệ'),
     publicId: z.string().min(1)
   })).min(1, 'Cần ít nhất 1 ảnh').max(5),
-  // Task 6: New fields
+  // Sale fields
   salePrice: z.preprocess(
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
     z.number().positive().max(999_000_000).nullable().optional()
+  ),
+  saleExpiresAt: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : String(v)),
+    z.string().nullable().optional()
+  ),
+  saleStock: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
+    z.number().int().min(1).nullable().optional()
   ),
   isNewArrival: z.boolean().optional(),
   manufactureYear: z.preprocess(
@@ -48,10 +57,28 @@ const adminCreateProductSchema = z.object({
   ),
 });
 
-const adminUpdateProductSchema = adminCreateProductSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: 'Cần ít nhất 1 trường để cập nhật' }
-);
+const flashSaleRefine = (data, ctx) => {
+  if (data.salePrice != null && data.price != null && data.salePrice >= data.price) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'salePrice must be < price', path: ['salePrice'] });
+  }
+  if (data.saleExpiresAt != null && data.salePrice == null) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'saleExpiresAt requires salePrice', path: ['saleExpiresAt'] });
+  }
+  if (data.saleStock != null && data.salePrice == null) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'saleStock requires salePrice', path: ['saleStock'] });
+  }
+};
+
+const adminCreateProductSchema = adminProductBaseSchema.superRefine(flashSaleRefine);
+
+const adminUpdateProductSchema = adminProductBaseSchema.partial().superRefine((data, ctx) => {
+  if (Object.keys(data).length === 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Cần ít nhất 1 trường để cập nhật' });
+  }
+  flashSaleRefine(data, ctx);
+});
+
+
 
 const adminProductParamsSchema = z.object({
   id: z.string().cuid('ID sản phẩm không hợp lệ'),
