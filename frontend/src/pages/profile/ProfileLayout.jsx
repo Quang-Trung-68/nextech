@@ -4,7 +4,7 @@ import ProfileSidebar from '@/features/profile/components/ProfileSidebar';
 const ProfileLayout = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-apple-gray/30">
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 md:py-12">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="flex gap-6 md:gap-8 items-start">
           {/* Sidebar */}
           <ProfileSidebar />

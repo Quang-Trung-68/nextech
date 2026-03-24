@@ -10,6 +10,7 @@ export const SLUG_LABEL_MAP = {
   'mac': 'Laptop',
   'ipad': 'Máy tính bảng',
   'accessories': 'Phụ kiện',
+  'sale': 'Khuyến mãi',
 };
 
 export const getSlugByCategory = (category) => {

@@ -7,6 +7,7 @@ const { AppError, NotFoundError, ConflictError, ForbiddenError } = require('../e
 const { validateCoupon } = require('./coupon.service');
 const ERROR_CODES = require('../errors/errorCodes');
 const { isSaleActive } = require('../utils/saleUtils');
+const notificationService = require('./notification.service');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -194,6 +195,38 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
     orderWithDiscounts.user = userForMail;
   }
 
+  Promise.resolve().then(async () => {
+    try {
+      const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+      for (const admin of admins) {
+        await notificationService.createAndSend(
+          admin.id,
+          'new_order',
+          'Đơn hàng mới',
+          `Có đơn hàng mới #${order.id} vừa được đặt`,
+          { orderId: order.id }
+        );
+      }
+
+      for (const item of cartItems) {
+        const product = await prisma.product.findUnique({ where: { id: item.productId } });
+        if (product && product.stock + item.quantity > 10 && product.stock <= 10) {
+          for (const admin of admins) {
+            await notificationService.createAndSend(
+              admin.id,
+              'low_stock',
+              'Sản phẩm sắp hết hàng',
+              `"${product.name}" còn ${product.stock} sản phẩm trong kho`,
+              { productId: product.id, productName: product.name, stock: product.stock }
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[Notification Error] Failed to send new order notifications:', err);
+    }
+  });
+
   // COD: trả về luôn
   if (paymentMethod === 'COD') {
     // Fire-and-forget: gửi email xác nhận không block luồng trả response
@@ -319,6 +352,20 @@ const cancelOrder = async (orderId, userId, reason) => {
     include: ORDER_DETAIL_INCLUDE,
   });
 
+  Promise.resolve().then(async () => {
+    try {
+      await notificationService.createAndSend(
+        updatedOrder.userId,
+        'order_status_changed',
+        'Huỷ đơn thành công',
+        `Bạn đã huỷ đơn hàng #${updatedOrder.id} thành công`,
+        { orderId: updatedOrder.id, newStatus: 'CANCELLED' }
+      );
+    } catch (err) {
+      console.error('[Notification Error] Failed to send cancel notification:', err);
+    }
+  });
+
   // Fire-and-forget: gửi email thông báo hủy đơn đến người mua
   if (updatedOrder.user?.email) {
     emailJob.dispatchOrderCancelledEmail(updatedOrder.user.email, {
@@ -427,6 +474,20 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       include: ORDER_DETAIL_INCLUDE,
     });
 
+    Promise.resolve().then(async () => {
+      try {
+        await notificationService.createAndSend(
+          cancelled.userId,
+          'order_status_changed',
+          'Đơn hàng bị huỷ',
+          `Đơn hàng #${cancelled.id} của bạn đã xác nhận huỷ thành công`,
+          { orderId: cancelled.id, newStatus: 'CANCELLED' }
+        );
+      } catch (err) {
+        console.error('[Notification Error] Failed to send cancel notification:', err);
+      }
+    });
+
     // Fire-and-forget: gửi email thông báo hủy đến người mua
     if (cancelled.user?.email) {
       emailJob.dispatchOrderCancelledEmail(cancelled.user.email, {
@@ -472,6 +533,26 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
     where: { id: orderId },
     data: { status: newStatus },
     include: ORDER_DETAIL_INCLUDE,
+  });
+
+  Promise.resolve().then(async () => {
+    try {
+      await notificationService.createAndSend(
+        updatedOrder.userId,
+        'order_status_changed',
+        'Cập nhật đơn hàng',
+        `Đơn hàng #${updatedOrder.id} của bạn đã chuyển sang trạng thái: ${{
+          PENDING: 'Chờ xử lý',
+          PROCESSING: 'Đang xử lý',
+          SHIPPED: 'Đang giao',
+          DELIVERED: 'Đã giao',
+          CANCELLED: 'Đã huỷ'
+        }[newStatus] || newStatus}`,
+        { orderId: updatedOrder.id, newStatus }
+      );
+    } catch (err) {
+      console.error('[Notification Error] Failed to send order status notification:', err);
+    }
   });
 
   if (newStatus === 'PROCESSING') {
@@ -544,6 +625,55 @@ const adminGetOrderById = async (orderId) => {
   return _addOrderItemDiscounts(order);
 };
 
+// ─── User: Reviewable items của 1 đơn ────────────────────────────────────────
+
+/**
+ * GET /api/orders/:orderId/reviewable-items
+ * Trả về danh sách OrderItem của đơn đã giao, kèm hasReviewed.
+ * Frontend dùng để render nút "Viết đánh giá" hay "Đã đánh giá".
+ */
+const getReviewableItems = async (orderId, userId) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      orderItems: {
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              images: { take: 1, select: { url: true } },
+            },
+          },
+          review: { select: { id: true } },
+        },
+      },
+    },
+  });
+
+  if (!order) throw new NotFoundError('Order');
+
+  if (order.userId !== userId) {
+    throw new ForbiddenError('Bạn không có quyền xem đơn hàng này.');
+  }
+
+  if (order.status !== 'DELIVERED') {
+    throw new AppError('Chỉ có thể xem danh sách review của đơn hàng đã giao.', 400);
+  }
+
+  const items = order.orderItems.map((item) => ({
+    orderItemId: item.id,
+    productId: item.productId,
+    productName: item.product.name,
+    productImage: item.product.images?.[0]?.url ?? null,
+    quantity: item.quantity,
+    price: item.price,
+    hasReviewed: item.review !== null,
+  }));
+
+  return { items };
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -552,4 +682,5 @@ module.exports = {
   getAllOrders,
   adminGetOrderById,
   adminUpdateOrderStatus,
+  getReviewableItems,
 };

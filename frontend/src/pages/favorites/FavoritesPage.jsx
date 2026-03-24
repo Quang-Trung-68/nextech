@@ -94,7 +94,7 @@ const FavoritesPage = () => {
   const { data: favorites = [], isLoading } = useMyFavorites();
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-8 font-sans bg-white min-h-[60vh]">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 font-sans bg-white min-h-[60vh]">
       {/* Header */}
       <div className="mb-8 mt-4">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-2">

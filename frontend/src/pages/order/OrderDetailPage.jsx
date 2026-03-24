@@ -1,23 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import usePageTitle from '@/hooks/usePageTitle';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOrder, useCancelOrder } from '@/features/orders/hooks/useOrder';
 import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
 import { formatVND } from '@/utils/price';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  CheckCircle2, 
-  MapPin, 
-  Package, 
-  CreditCard, 
+import {
+  CheckCircle2,
+  MapPin,
+  Package,
+  CreditCard,
   ArrowLeft,
   Calendar,
   Phone,
   User,
-  AlertCircle
+  AlertCircle,
+  PenLine,
+  CheckCircle,
 } from 'lucide-react';
+import WriteReviewModal from '@/features/reviews/WriteReviewModal';
+import axiosInstance from '@/lib/axios';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +48,31 @@ const OrderDetailPage = () => {
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
 
   const [isCancelled, setIsCancelled] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null); // item hiện đang được review
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+
+  const currentStatus = isCancelled ? 'CANCELLED' : order?.status;
+
+  // Query reviewable items — chỉ khi order đã DELIVERED
+  const { data: reviewableData } = useQuery({
+    queryKey: ['reviewable-items', id],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/orders/${id}/reviewable-items`);
+      return data; // { success, items }
+    },
+    enabled: !!id && currentStatus === 'DELIVERED',
+    staleTime: 0,
+  });
+
+  // Map: orderItemId → hasReviewed (để lookup nhanh theo item)
+  const reviewableMap = Object.fromEntries(
+    (reviewableData?.items ?? []).map((ri) => [ri.orderItemId, ri])
+  );
+
+  const handleOpenReviewModal = (item) => {
+    setSelectedItem(item);
+    setReviewModalOpen(true);
+  };
 
   // Clear cart only once when success page runs
   useEffect(() => {
@@ -66,7 +95,7 @@ const OrderDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl mx-auto px-4 py-12 space-y-8">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-12 space-y-8">
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Skeleton className="h-[400px] w-full rounded-2xl" />
       </div>
@@ -88,11 +117,10 @@ const OrderDetailPage = () => {
     );
   }
 
-  const { shippingAddress, orderItems, totalAmount, paymentMethod, status, createdAt } = order;
-  const currentStatus = isCancelled ? 'CANCELLED' : status;
+  const { shippingAddress, orderItems, totalAmount, paymentMethod, createdAt } = order;
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       
       {/* SUCCESS BANNER */}
       {isSuccessPage && (
@@ -190,6 +218,35 @@ const OrderDetailPage = () => {
                       <span className="text-xs text-apple-secondary"></span>
                       <span className="font-bold text-apple-dark">{formatVND(lineTotal)}</span>
                     </div>
+
+                    {/* Review actions — chỉ hiện khi DELIVERED */}
+                    {currentStatus === 'DELIVERED' && reviewableMap[item.id] !== undefined && (
+                      <div className="mt-3">
+                        {reviewableMap[item.id].hasReviewed ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-3 py-1">
+                            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                            Đã đánh giá
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 rounded-full text-xs font-medium px-4 border-blue-200 text-apple-blue hover:bg-blue-50"
+                            onClick={() =>
+                              handleOpenReviewModal({
+                                orderItemId: item.id,
+                                productId: item.productId,
+                                productName: item.product?.name,
+                                productImage: item.product?.images?.[0]?.url ?? null,
+                              })
+                            }
+                          >
+                            <PenLine className="w-3.5 h-3.5 mr-1.5" />
+                            Viết đánh giá
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -302,6 +359,14 @@ const OrderDetailPage = () => {
         </div>
 
       </div>
+
+      {/* WriteReviewModal — 1 instance duy nhất, controlled bởi selectedItem */}
+      <WriteReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        item={selectedItem}
+        orderId={id}
+      />
     </div>
   );
 };

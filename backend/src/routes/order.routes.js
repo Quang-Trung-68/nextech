@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/order.controller');
-const { protect, restrictTo } = require('../middleware/auth');
+const { protect, requireEmailVerified, restrictTo } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
 const {
   createOrderSchema,
@@ -43,6 +43,14 @@ router.patch(
   validate(orderParamsSchema, 'params'),
   validate(cancelOrderSchema),
   orderController.cancelOrder
+);
+
+// GET /api/orders/:orderId/reviewable-items — Danh sách item có thể review
+router.get(
+  '/:orderId/reviewable-items',
+  protect,
+  requireEmailVerified,
+  orderController.reviewableItems
 );
 
 // ─── Admin Routes ─────────────────────────────────────────────────────────────

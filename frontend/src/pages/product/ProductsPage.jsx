@@ -173,8 +173,8 @@ const ProductsPage = () => {
     setSearchParams(new URLSearchParams(), { replace: true });
   };
 
-    // Redirect if invalid slug
-  if (categorySlug && !SLUG_MAP[categorySlug]) {
+  // Redirect if invalid slug
+  if (categorySlug && !SLUG_MAP[categorySlug] && categorySlug !== 'sale') {
     return <Navigate to="/products" replace />;
   }
 

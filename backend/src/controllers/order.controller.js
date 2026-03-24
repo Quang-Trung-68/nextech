@@ -99,6 +99,19 @@ const adminUpdateOrderStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/orders/:orderId/reviewable-items
+ * Trả về danh sách OrderItem kèm hasReviewed của đơn đã giao.
+ */
+const reviewableItems = async (req, res, next) => {
+  try {
+    const result = await orderService.getReviewableItems(req.params.orderId, req.user.id);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -107,4 +120,5 @@ module.exports = {
   adminGetAllOrders,
   adminGetOrderById,
   adminUpdateOrderStatus,
+  reviewableItems,
 };

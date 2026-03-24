@@ -182,7 +182,7 @@ const CheckoutPageForm = () => {
   if (!isSuccess && (!cartItems || cartItems.length === 0)) return null;
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="flex items-center space-x-2 text-apple-secondary mb-6 text-xs md:text-sm font-medium">
         <span className="text-apple-dark shrink-0">1. Giỏ hàng</span>
         <span className="text-[#d2d2d7] shrink-0">—</span>

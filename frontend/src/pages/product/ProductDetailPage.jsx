@@ -15,6 +15,7 @@ import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
 import SaleStockBadge from '@/components/product/SaleStockBadge';
+import ProductReviews from '@/features/reviews/ProductReviews';
 
 
 const ProductDetailPage = () => {
@@ -35,7 +36,7 @@ const ProductDetailPage = () => {
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="container py-8 max-w-6xl mx-auto px-4">
+      <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {/* Gallery Skeleton */}
           <div className="space-y-4">
@@ -143,7 +144,7 @@ const ProductDetailPage = () => {
   };
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto px-4 md:px-6 pb-40 md:pb-8">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 pb-40 md:pb-8">
       
       {/* Breadcrumb */}
       <div className="flex flex-wrap items-center text-[13px] text-apple-secondary mb-8 gap-2">
@@ -337,6 +338,12 @@ const ProductDetailPage = () => {
         </div>
 
       </div>
+
+      {/* ─── Reviews Section ──────────────────────────────────────────────── */}
+      <div className="mt-14 pt-10 border-t border-[#f5f5f7]">
+        <ProductReviews productId={id} />
+      </div>
+
     </div>
   );
 };

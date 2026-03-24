@@ -8,6 +8,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import SearchDialog from '../common/SearchDialog';
 import MobileDrawer from './MobileDrawer';
 import { useMyFavorites } from '@/features/favorites';
+import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -62,13 +63,21 @@ const Header = () => {
     { label: 'Laptop', path: '/products/mac' },
     { label: 'Máy tính bảng', path: '/products/ipad' },
     { label: 'Phụ kiện', path: '/products/accessories' },
-    { label: 'Khuyến mãi', path: '/products?sale=true' },
+    { label: 'Khuyến mãi', path: '/products/sale' },
   ];
+
+  const getIsActive = (link) => {
+    if (location.pathname === link.path) return true;
+    if (link.path !== '/') {
+      return location.pathname.startsWith(link.path + '/');
+    }
+    return false;
+  };
 
   return (
     <>
       <header 
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 font-sans backdrop-blur-md bg-white/80 border-b border-[#d2d2d7]"
+        className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300 font-sans backdrop-blur-md bg-white/80 border-b border-[#d2d2d7]"
       >
         <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <nav className="flex flex-row items-center justify-between h-16">
@@ -82,15 +91,28 @@ const Header = () => {
             
             {/* Middle: Desktop Menu */}
             <div className="hidden md:flex items-center justify-center space-x-8">
-              {navLinks.map((link) => (
-                <Link 
-                  key={link.label}
-                  to={link.path} 
-                  className="text-apple-dark text-[15px] tracking-[0.01em] font-medium hover:text-apple-blue transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = getIsActive(link);
+
+                return (
+                  <Link
+                    key={link.label}
+                    to={link.path}
+                    className={`relative inline-block text-[15px] tracking-[0.01em] transition-colors ${
+                      isActive ? 'text-apple-blue' : 'text-apple-dark hover:text-apple-blue'
+                    }`}
+                  >
+                    {/* Span ẩn luôn giữ kích thước font-bold → không bị layout shift */}
+                    <span className="invisible font-bold block h-0 overflow-hidden select-none" aria-hidden="true">
+                      {link.label}
+                    </span>
+                    {/* Text thật đặt absolute, không ảnh hưởng width */}
+                    <span className={`absolute inset-0 flex items-center justify-center ${isActive ? 'font-bold' : 'font-medium'}`}>
+                      {link.label}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
             
             {/* Right: Icons */}
@@ -108,10 +130,12 @@ const Header = () => {
                   {/* Heart */}
                   <Link 
                     to="/favorites" 
-                    className="hidden md:block hover:text-apple-blue transition-colors relative focus:outline-none"
+                    className="hidden md:block hover:text-apple-blue transition-colors relative focus:outline-none cursor-pointer"
                   >
                     <Heart size={22} strokeWidth={1.5} />
                   </Link>
+
+                  <NotificationDropdown />
                   
                   {/* Cart */}
                   <div 
@@ -132,7 +156,7 @@ const Header = () => {
                     
                     {/* Mini Cart Dropdown */}
                     {isCartOpen && (
-                      <div className="absolute right-0 top-full mt-2 bg-white border border-[#d2d2d7] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-5 w-[340px] z-50 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="absolute right-0 top-full mt-2 bg-white border border-[#d2d2d7] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-5 w-[340px] z-[110] animate-in fade-in zoom-in-95 duration-200">
                         <div className="mb-4 flex flex-row items-center justify-between">
                           <div>
                             <h4 className="font-semibold text-apple-dark">Giỏ hàng của bạn</h4>
@@ -261,7 +285,7 @@ const Header = () => {
                     
                     {/* Click Dropdown */}
                     {isUserMenuOpen && (
-                      <div className="absolute right-0 top-full mt-2 z-50">
+                      <div className="absolute right-0 top-full mt-2 z-[110]">
                          <div className="bg-white border border-[#d2d2d7] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-[260px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                             
                             {/* User Info Header */}

@@ -1,0 +1,15 @@
+{
+  "debug": true,
+  "port": 6001,
+  "appManager.array.apps": [
+    {
+      "id": "nextech-app",
+      "key": "nextech-key",
+      "secret": "nextech-secret",
+      "maxConnections": 100,
+      "enableClientMessages": false,
+      "enabled": true,
+      "webhooks": []
+    }
+  ]
+}

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAdminOrders, useUpdateOrderStatus } from '@/features/admin/hooks/useAdmin';
@@ -27,8 +28,22 @@ const AdminOrdersPage = () => {
   const debouncedSearch = useDebounce(searchInput, 500);
 
   // States for Order Detail Modal
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryOrderId = searchParams.get('orderId');
+
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (queryOrderId) {
+      setSelectedOrderId(queryOrderId);
+      setIsModalOpen(true);
+      
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('orderId');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [queryOrderId, searchParams, setSearchParams]);
 
   const params = useMemo(
     () => ({ ...filterState, search: debouncedSearch, page: 1 }),
@@ -88,13 +103,13 @@ const AdminOrdersPage = () => {
           onValueChange={(value) => setFilterState((prev) => ({ ...prev, paymentStatus: value !== 'all' ? value : '', page: 1 }))}
         >
           <SelectTrigger className="w-[130px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
-            <SelectValue placeholder="Payment (all)" />
+            <SelectValue placeholder="Thanh toán (tất cả)" />
           </SelectTrigger>
           <SelectContent onClick={e => e.stopPropagation()}>
-            <SelectItem value="all">Payment (all)</SelectItem>
-            <SelectItem value="UNPAID">Unpaid</SelectItem>
-            <SelectItem value="PAID">Paid</SelectItem>
-            <SelectItem value="REFUNDED">Refunded</SelectItem>
+            <SelectItem value="all">Thanh toán (tất cả)</SelectItem>
+            <SelectItem value="UNPAID">Chưa thanh toán</SelectItem>
+            <SelectItem value="PAID">Đã thanh toán</SelectItem>
+            <SelectItem value="REFUNDED">Đã hoàn tiền</SelectItem>
           </SelectContent>
         </Select>
       ),
@@ -110,15 +125,15 @@ const AdminOrdersPage = () => {
           onValueChange={(value) => setFilterState((prev) => ({ ...prev, status: value !== 'all' ? value : '', page: 1 }))}
         >
           <SelectTrigger className="w-[120px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
-            <SelectValue placeholder="Status (all)" />
+            <SelectValue placeholder="Trạng thái (tất cả)" />
           </SelectTrigger>
           <SelectContent onClick={e => e.stopPropagation()}>
-            <SelectItem value="all">Status (all)</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="PROCESSING">Processing</SelectItem>
-            <SelectItem value="SHIPPED">Shipped</SelectItem>
-            <SelectItem value="DELIVERED">Delivered</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            <SelectItem value="all">Trạng thái (tất cả)</SelectItem>
+            <SelectItem value="PENDING">Chờ xử lý</SelectItem>
+            <SelectItem value="PROCESSING">Đang xử lý</SelectItem>
+            <SelectItem value="SHIPPED">Đang giao</SelectItem>
+            <SelectItem value="DELIVERED">Đã giao</SelectItem>
+            <SelectItem value="CANCELLED">Đã hủy</SelectItem>
           </SelectContent>
         </Select>
       ),
@@ -134,17 +149,17 @@ const AdminOrdersPage = () => {
           <div className="flex gap-2 text-xs" onClick={e => e.stopPropagation()}>
             {status === 'PENDING' && (
               <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'PROCESSING')} disabled={isUpdating}>
-                Mark Processing
+                Chuyển: Đang xử lý
               </Button>
             )}
             {status === 'PROCESSING' && (
               <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'SHIPPED')} disabled={isUpdating}>
-                Mark Shipped
+                Chuyển: Đang giao
               </Button>
             )}
             {status === 'SHIPPED' && (
               <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'DELIVERED')} disabled={isUpdating}>
-                Mark Delivered
+                Chuyển: Đã giao
               </Button>
             )}
           </div>

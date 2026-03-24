@@ -1,0 +1,199 @@
+import { useEffect, useRef, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Bell, ShoppingCart, CreditCard, Package, AlertTriangle, CheckCheck } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { useNotifications } from '@/hooks/useNotifications';
+import useAuthStore from '@/stores/useAuthStore';
+import usePageTitle from '@/hooks/usePageTitle';
+
+const getIconForType = (type) => {
+  switch (type) {
+    case 'new_order':            return <ShoppingCart className="h-5 w-5 text-apple-blue" />;
+    case 'order_status_changed': return <Package className="h-5 w-5 text-green-500" />;
+    case 'payment_result':       return <CreditCard className="h-5 w-5 text-purple-500" />;
+    case 'low_stock':            return <AlertTriangle className="h-5 w-5 text-orange-400" />;
+    default:                     return <Bell className="h-5 w-5 text-apple-secondary" />;
+  }
+};
+
+const getActionUrl = (notification) => {
+  const { type, data } = notification;
+  switch (type) {
+    case 'order_status_changed':
+    case 'payment_result':
+      return `/orders/${data?.orderId}`;
+    case 'new_order':
+      return `/admin/orders?orderId=${data?.orderId}`;
+    case 'low_stock':
+      return `/admin/products?productId=${data?.productId}`;
+    default:
+      return '#';
+  }
+};
+
+const SkeletonItem = () => (
+  <div className="flex gap-3 px-6 py-4 border-b border-[#f5f5f7] animate-pulse">
+    <div className="w-11 h-11 rounded-full bg-[#e8e8ed] flex-shrink-0 mt-0.5" />
+    <div className="flex-1 min-w-0 space-y-2 pt-1">
+      <div className="h-3.5 bg-[#e8e8ed] rounded w-3/4" />
+      <div className="h-3 bg-[#e8e8ed] rounded w-full" />
+      <div className="h-3 bg-[#e8e8ed] rounded w-1/2" />
+    </div>
+  </div>
+);
+
+const NotificationsPage = () => {
+  usePageTitle('Thông báo');
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const {
+    unreadCount,
+    notifications,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    markOneAsRead,
+    markAllAsRead,
+  } = useNotifications(user);
+
+  const observer = useRef();
+  const lastElementRef = useCallback(
+    (node) => {
+      if (isLoading || isFetchingNextPage) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]
+  );
+
+  const handleNotificationClick = (notification) => {
+    if (!notification.isRead) markOneAsRead(notification.id);
+    navigate(getActionUrl(notification));
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 font-sans bg-white min-h-screen">
+      {/* Page header */}
+      <div className="mb-8 mt-4 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-1">
+            Thông báo
+          </h1>
+          {!isLoading && notifications.length > 0 && (
+            <p className="text-apple-secondary text-sm">
+              {unreadCount > 0 ? `${unreadCount} chưa đọc` : 'Tất cả đã đọc'}
+            </p>
+          )}
+        </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={() => markAllAsRead()}
+            className="flex items-center gap-2 text-sm text-apple-blue hover:text-apple-blue/80 font-semibold transition-colors bg-blue-50 px-4 py-2 rounded-full mt-1"
+          >
+            <CheckCheck size={16} />
+            Đánh dấu tất cả đã đọc
+          </button>
+        )}
+      </div>
+
+      {/* Content card */}
+      <div className="rounded-3xl border border-[#d2d2d7] shadow-sm overflow-hidden bg-white">
+        {/* Loading skeleton */}
+        {isLoading && (
+          <div>
+            {Array.from({ length: 5 }).map((_, i) => <SkeletonItem key={i} />)}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && notifications.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-20 h-20 rounded-full bg-[#f5f5f7] flex items-center justify-center mb-5">
+              <Bell size={36} className="text-[#d2d2d7]" strokeWidth={1.5} />
+            </div>
+            <p className="text-xl font-semibold text-apple-dark mb-2">
+              Không có thông báo nào
+            </p>
+            <p className="text-apple-secondary text-sm max-w-xs mb-8">
+              Các thông báo về đơn hàng và hoạt động sẽ hiển thị tại đây.
+            </p>
+            <Link
+              to="/products"
+              className="px-6 py-3 rounded-full bg-apple-blue text-white font-semibold text-sm hover:bg-apple-blue/90 transition-colors"
+            >
+              Khám phá sản phẩm
+            </Link>
+          </div>
+        )}
+
+        {/* Notifications list */}
+        {!isLoading && notifications.length > 0 && (
+          <div className="divide-y divide-[#f5f5f7]">
+            {notifications.map((notif, index) => {
+              const isLast = index === notifications.length - 1;
+              return (
+                <div
+                  key={notif.id}
+                  ref={isLast ? lastElementRef : null}
+                  onClick={() => handleNotificationClick(notif)}
+                  className={`flex gap-4 px-6 py-4 cursor-pointer hover:bg-[#f5f5f7] transition-colors ${
+                    !notif.isRead ? 'bg-blue-50/30' : 'bg-white'
+                  }`}
+                >
+                  {/* Icon */}
+                  <div className="relative flex-shrink-0 mt-0.5">
+                    <div className="w-11 h-11 rounded-full bg-[#f5f5f7] flex items-center justify-center shadow-sm">
+                      {getIconForType(notif.type)}
+                    </div>
+                    {!notif.isRead && (
+                      <span className="absolute -top-[2px] -right-[2px] w-3 h-3 bg-apple-blue rounded-full border-2 border-white" />
+                    )}
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[14px] leading-snug tracking-tight ${
+                      !notif.isRead ? 'font-semibold text-apple-dark' : 'font-medium text-apple-dark'
+                    }`}>
+                      {notif.title}
+                    </p>
+                    <p className="text-[13px] text-apple-secondary mt-0.5 leading-relaxed">
+                      {notif.message}
+                    </p>
+                    <p className="text-[11.5px] text-[#aeaeb2] mt-2 font-medium">
+                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: vi })}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Loading more skeleton */}
+            {isFetchingNextPage && (
+              <>
+                <SkeletonItem />
+                <SkeletonItem />
+              </>
+            )}
+
+            {/* End of list */}
+            {!hasNextPage && notifications.length > 0 && (
+              <div className="text-center py-5 text-sm text-apple-secondary bg-[#fafafa]">
+                Bạn đã xem hết thông báo
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default NotificationsPage;

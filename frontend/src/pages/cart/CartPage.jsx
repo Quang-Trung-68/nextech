@@ -52,7 +52,7 @@ const CartPage = () => {
   }
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto px-4 md:px-6">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-apple-dark tracking-tight mb-2">Giỏ hàng của bạn</h1>
         <p className="text-muted-foreground">

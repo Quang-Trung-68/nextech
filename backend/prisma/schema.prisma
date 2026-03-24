@@ -30,6 +30,7 @@ model User {
   reviews                Review[]
   revokedTokens          RevokedToken[]
   couponUsages           CouponUsage[]
+  notifications          Notification[]
 
   @@map("users")
 }
@@ -170,29 +171,31 @@ model Order {
 }
 
 model OrderItem {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
   orderId       String
   productId     String
   quantity      Int
-  price         Decimal @db.Decimal(15, 2)
-  originalPrice Decimal @default(0) @db.Decimal(15, 2)
-  order         Order   @relation(fields: [orderId], references: [id])
-  product       Product @relation(fields: [productId], references: [id])
+  price         Decimal  @db.Decimal(15, 2)
+  originalPrice Decimal  @default(0) @db.Decimal(15, 2)
+  order         Order    @relation(fields: [orderId], references: [id])
+  product       Product  @relation(fields: [productId], references: [id])
+  review        Review?
 
   @@map("order_item")
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  userId    String
-  productId String
-  rating    Int
-  comment   String
-  createdAt DateTime @default(now())
-  product   Product  @relation(fields: [productId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  id          String    @id @default(cuid())
+  userId      String
+  productId   String
+  orderItemId String    @unique
+  rating      Int
+  comment     String?
+  createdAt   DateTime  @default(now())
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  product     Product   @relation(fields: [productId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 
-  @@unique([userId, productId])
   @@map("reviews")
 }
 
@@ -376,4 +379,19 @@ model ShopSettings {
   email       String?
   vatRate     Decimal  @default(0.10) @db.Decimal(4, 3)
   updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "order_status_changed" | "payment_result" | "new_order" | "low_stock"
+  title     String
+  message   String
+  data      Json?    // { orderId, productId, productName, newStatus, ... }
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }

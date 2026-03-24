@@ -1,6 +1,22 @@
 import { Badge } from '@/components/ui/badge';
 
 export function StatusBadge({ status }) {
+  const STATUS_VI = {
+    PENDING: 'Chờ xử lý',
+    PROCESSING: 'Đang xử lý',
+    SHIPPED: 'Đang giao',
+    DELIVERED: 'Đã giao',
+    PAID: 'Đã thanh toán',
+    COMPLETED: 'Hoàn thành',
+    ACTIVE: 'Hoạt động',
+    CANCELLED: 'Đã huỷ',
+    FAILED: 'Thất bại',
+    BANNED: 'Bị cấm',
+    REFUNDED: 'Đã hoàn tiền',
+  };
+
+  const statusText = STATUS_VI[status?.toUpperCase()] || status?.toLowerCase();
+
   const getStatusStyle = (s) => {
     switch (s?.toUpperCase()) {
       case 'PENDING':
@@ -27,7 +43,7 @@ export function StatusBadge({ status }) {
 
   return (
     <Badge variant="outline" className={`capitalize font-medium ${getStatusStyle(status)}`}>
-      {status?.toLowerCase()}
+      {statusText}
     </Badge>
   );
 }

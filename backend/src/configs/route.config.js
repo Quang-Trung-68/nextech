@@ -37,6 +37,7 @@ const apiRoutes = [
   { prefix: '/api/products',     router: require('../routes/product.routes') },
   { prefix: '/api/cart',         router: require('../routes/cart.routes') },
   { prefix: '/api/orders',       router: require('../routes/order.routes') },
+  { prefix: '/api/reviews',      router: require('../routes/review.routes') },
   { prefix: '/api/admin/orders', router: require('../routes/admin.order.routes') },
   { prefix: '/api/admin/invoices', router: require('../routes/invoice.routes') },
   { prefix: '/api/admin/settings', router: require('../routes/settings.routes') },
@@ -44,6 +45,7 @@ const apiRoutes = [
   { prefix: '/api/payments',     router: require('../routes/payment.routes') }, // GET intent/status
   { prefix: '/api/favorites',    router: require('../routes/favorite.routes') },
   { prefix: '/api/coupons',      router: require('../routes/coupon.routes') },
+  { prefix: '/api/notifications',router: require('../routes/notification.routes') },
 ];
 
 module.exports = { specialRoutes, apiRoutes };
