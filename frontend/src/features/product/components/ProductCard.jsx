@@ -3,7 +3,7 @@ import { getSlugByCategory } from '@/constants/category';
 // Removed duplicate
 import { Star, Image as ImageIcon, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
@@ -46,15 +46,15 @@ export function ProductCard({ product }) {
   };
 
   return (
-    <Card className="overflow-hidden group flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border-slate-200 dark:border-slate-800">
+    <Card className="overflow-hidden group flex flex-col h-full bg-white rounded-3xl border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
       <Link to={`/products/${getSlugByCategory(category)}/${id}`} className="flex-1 flex flex-col relative">
         {/* Container hiển thị ảnh */}
-        <div className="relative aspect-square w-full bg-slate-50 dark:bg-slate-900 overflow-hidden group-hover:bg-slate-100 flex items-center justify-center">
+        <div className="relative aspect-square w-full bg-white p-5 flex items-center justify-center">
           {firstImage ? (
             <img
               src={firstImage}
               alt={name}
-              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
+              className="object-contain w-full h-full"
               loading="lazy"
             />
           ) : (
@@ -64,57 +64,64 @@ export function ProductCard({ product }) {
             </div>
           )}
 
-          {/* Bán chạy Badge overlay — góc trên bên phải */}
-          {product.isBestseller && (
-            <div className="absolute top-2 right-2 z-10">
-              <span className="bg-orange-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
-                Bán chạy
-              </span>
-            </div>
-          )}
 
-          {/* Badge Sắp hết — đẩy sang trái để không đè FavoriteButton */}
-          {stock <= 10 && stock > 0 && (
-            <Badge
-              variant="secondary"
-              className="absolute top-2 left-2 bg-amber-500 hover:bg-amber-600 text-white border-0 z-10"
-            >
-              Sắp hết
-            </Badge>
-          )}
-
-          {stock === 0 && (
-            <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-20">
-              <Badge variant="destructive" className="px-3 py-1 text-sm font-semibold uppercase tracking-wider backdrop-blur-md">
-                Hết hàng
-              </Badge>
+          {product.isSaleActive && product.saleExpiresAt && (
+            <div className="absolute bottom-2 right-2 z-10 flex">
+              <SaleCountdownBadge saleExpiresAt={product.saleExpiresAt} isSaleActive={product.isSaleActive} />
             </div>
           )}
         </div>
 
         {/* Nội dung card text */}
-        <div className="p-4 pb-0 flex flex-col flex-1 gap-2">
-          <h3 className="font-semibold text-foreground text-[15px] line-clamp-2 leading-[1.4] flex-1 hover:text-apple-blue transition-colors" title={name}>
+        <div className="px-4 pb-2 flex flex-col flex-1 gap-1 mt-2">
+          <div className="flex flex-row flex-wrap items-center justify-start gap-2">
+            {product.isSaleActive && price > product.effectivePrice && (
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold bg-red-500 text-white">
+                -{Math.round(((price - product.effectivePrice) / price) * 100)}%
+              </span>
+            )}
+            {product.isNewArrival && (
+              <span className="text-xs text-[#BF4800]">
+                MỚI
+              </span>
+            )}
+            {product.isBestseller && (
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border border-orange-400 text-orange-500">
+                BÁN CHẠY
+              </span>
+            )}
+            {stock <= 10 && stock > 0 && (
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-500 text-white">
+                Sắp hết
+              </span>
+            )}
+            {stock === 0 && (
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-destructive text-destructive-foreground">
+                Hết hàng
+              </span>
+            )}
+          </div>
+
+          <h3 className="font-semibold text-foreground text-[14px] line-clamp-2 leading-[1.4] flex-1 hover:text-apple-blue transition-colors" title={name}>
             {name}
           </h3>
 
           <div className="flex flex-row gap-2 my-1 items-center w-full">
-            <SaleCountdownBadge saleExpiresAt={product.saleExpiresAt} isSaleActive={product.isSaleActive} />
             <SaleStockBadge saleStock={product.saleStock} saleRemaining={product.saleRemaining} isSaleActive={product.isSaleActive} />
           </div>
 
           <div className="flex items-end justify-between w-full mt-1">
             {product.isSaleActive ? (
               <div className="flex flex-col">
-                <span className="font-bold text-[17px] text-red-600 tracking-tight">
+                <span className="font-bold text-[16px] text-red-600 tracking-tight">
                   {formatCurrency(product.effectivePrice)}
                 </span>
-                <span className="text-sm text-gray-400 line-through">
+                <span className="text-[13px] text-gray-400 line-through">
                   {formatCurrency(price)}
                 </span>
               </div>
             ) : (
-              <span className="font-bold text-[17px] text-primary tracking-tight">
+              <span className="font-bold text-[16px] text-primary tracking-tight">
                 {formatCurrency(price)}
               </span>
             )}
@@ -123,11 +130,11 @@ export function ProductCard({ product }) {
       </Link>
       
       {/* Container nút (Nằm ngoài thẻ Link để tránh lỗi HTML Button lồng trong Thẻ A hoặc bị route đè) */}
-      <div className="p-4 pt-3 mt-auto flex flex-col gap-3">
+      <div className="px-4 pb-4 pt-2 mt-auto flex flex-col gap-3">
         {/* Add to cart Button */}
         <Button 
             size="sm" 
-            className="w-full h-10 font-semibold text-sm active:scale-[0.98] transition-all bg-[#0066cc] hover:bg-[#005bb5] text-white rounded-lg"
+            className="w-full h-9 font-semibold text-[13px] active:scale-[0.98] transition-all bg-[#0066cc] hover:bg-[#005bb5] text-white rounded-lg"
             onClick={handleAddToCart}
             disabled={stock === 0 || isAddingToCart}
           >
@@ -136,7 +143,7 @@ export function ProductCard({ product }) {
         
         {/* Rating & Favorite */}
         <div className="flex justify-between items-center pt-1">
-          <div className="flex items-center gap-1.5 text-sm font-semibold">
+          <div className="flex items-center gap-1.5 text-[13px] font-semibold">
              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
              <span>{rating > 0 ? rating.toFixed(1) : "0"}</span>
           </div>

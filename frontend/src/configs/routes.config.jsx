@@ -21,6 +21,9 @@ import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ProductsPage from '@/pages/product/ProductsPage';
 
+// ─── Nhóm 1 Public — Support ─────────────────────────────────────────────────
+const SupportPage = lazy(() => import('@/pages/support/SupportPage'));
+
 // ─── Nhóm 1 Public — Auth extra (lazy) ───────────────────────────────────────
 const ForgotPasswordPage  = lazy(() => import('@/pages/auth/ForgotPasswordPage'));
 const ResetPasswordPage   = lazy(() => import('@/pages/auth/ResetPasswordPage'));
@@ -74,6 +77,10 @@ const routes = [
       {
         path: '/products/:categorySlug/:id',
         element: <ProductDetailPage />,
+      },
+      {
+        path: '/support',
+        element: <SupportPage />,
       },
       {
         path: '/login',

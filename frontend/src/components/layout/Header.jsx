@@ -63,6 +63,7 @@ const Header = () => {
     { label: 'Laptop', path: '/products/mac' },
     { label: 'Máy tính bảng', path: '/products/ipad' },
     { label: 'Phụ kiện', path: '/products/accessories' },
+    { label: 'Hỗ trợ', path: '/support' },
   ];
 
   const getIsActive = (link) => {

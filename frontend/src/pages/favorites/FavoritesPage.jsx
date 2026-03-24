@@ -14,17 +14,17 @@ const FavoriteProductCard = ({ product }) => {
   const displayPrice = finalPrice ?? price;
 
   return (
-    <div className="group relative bg-white border border-transparent hover:border-[#d2d2d7] hover:shadow-sm rounded-2xl transition-all duration-300 p-4 flex flex-col">
+    <div className="group relative bg-white border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-[1.02] rounded-[24px] transition-all duration-300 p-5 flex flex-col">
       {/* Image */}
       <Link
         to={`/products/all/${id}`}
-        className="relative bg-apple-gray rounded-xl overflow-hidden block w-full aspect-square mb-4"
+        className="relative bg-white p-6 rounded-xl overflow-hidden block w-full aspect-square mb-4"
       >
         {/* Badges */}
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
           {product.isNewArrival && (
-            <span className="bg-green-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
-              Mới
+            <span className="text-[#BF4800] text-[11px] font-semibold uppercase tracking-widest pl-1 pt-1">
+              MỚI
             </span>
           )}
           {discountPercent > 0 && (
@@ -46,7 +46,7 @@ const FavoriteProductCard = ({ product }) => {
         <img
           src={firstImage}
           alt={name}
-          className="object-cover w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+          className="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
       </Link>

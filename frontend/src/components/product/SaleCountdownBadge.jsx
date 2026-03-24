@@ -12,14 +12,14 @@ export default function SaleCountdownBadge({ saleExpiresAt, isSaleActive }) {
 
   if (totalMs > 24 * 60 * 60 * 1000) {
     return (
-      <span className="flex-1 justify-center inline-flex items-center rounded-full px-2 py-1 text-[13px] font-bold bg-orange-100 text-orange-700 border border-orange-300 text-center">
+      <span className="flex-1 justify-center inline-flex items-center rounded-full px-1 py-1 text-[13px] font-bold bg-orange-100 text-orange-700 border border-orange-300 text-center">
         Còn {days} ngày
       </span>
     );
   }
 
   return (
-    <span className="flex-1 justify-center inline-flex items-center rounded-full px-2 py-1 text-[13px] font-bold bg-red-100 text-red-700 border border-red-300 text-center">
+    <span className="flex-1 justify-center inline-flex items-center rounded-full px-1 py-1 text-[13px] font-bold bg-red-100 text-red-700 border border-red-300 text-center">
       <span className="font-mono">{hours}:{minutes}:{seconds}</span>
     </span>
   );

@@ -14,7 +14,7 @@ export function ProductGrid({ data, isLoading, isFetchingNextPage, hasNextPage, 
   // Biến loading chính cho lần fetch trang đầu tiên
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         {Array.from({ length: 20 }).map((_, i) => (
           <ProductCardSkeleton key={`skeleton-${i}`} />
         ))}
@@ -33,8 +33,13 @@ export function ProductGrid({ data, isLoading, isFetchingNextPage, hasNextPage, 
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+    <section className="bg-[#F5F5F7] py-12 px-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <h2 className="text-3xl md:text-4xl tracking-tight mb-8">
+          <span className="font-semibold text-black">Accessories.</span>{' '}
+          <span className="font-normal text-[#6E6E73]">Essentials that pair perfectly.</span>
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
         {data.pages.map((page, i) => (
           <Fragment key={i}>
             {page.products.map((product) => (
@@ -73,6 +78,7 @@ export function ProductGrid({ data, isLoading, isFetchingNextPage, hasNextPage, 
           Tất cả sản phẩm đã được hiển thị
         </div>
       )}
-    </div>
+      </div>
+    </section>
   );
 }

@@ -334,24 +334,15 @@ const ProductsPage = () => {
           ) : (
             <div className={`grid gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4'}`}>
               {products.map(product => (
-                <div key={product.id} className={`group relative bg-white border border-[#f5f5f7] md:border-transparent md:hover:border-[#d2d2d7] md:hover:shadow-lg rounded-xl md:rounded-2xl transition-all duration-300 p-3 md:p-4 flex ${viewMode === 'list' ? 'flex-row gap-4 md:gap-6 items-center' : 'flex-col'}`}>
+                <div key={product.id} className={`group relative bg-white border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] md:hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] md:hover:scale-[1.02] rounded-2xl md:rounded-[24px] transition-all duration-300 p-3 md:p-5 flex ${viewMode === 'list' ? 'flex-row gap-4 md:gap-6 items-center' : 'flex-col'}`}>
                   
-                  {/* Badge Bán chạy (thay vị trí cũ của FavoriteButton) */}
-                  {product.isBestseller && (
-                    <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
-                      <span className="bg-orange-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
-                        Bán chạy
-                      </span>
-                    </div>
-                  )}
-
                   {/* Image */}
-                  <Link to={`/products/${getSlugByCategory(product.category)}/${product.id}`} className={`relative bg-apple-gray rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-6 group/img'}`}>
+                  <Link to={`/products/${getSlugByCategory(product.category)}/${product.id}`} className={`relative bg-white p-4 md:p-6 rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-4 group/img'}`}>
                     {/* Badges — xếp dọc góc trên trái */}
-                    <div className="hidden md:flex absolute top-2 left-2 z-10 flex-col gap-1">
+                    <div className="hidden md:flex absolute top-2 left-2 z-10 flex-col gap-1 items-start">
                       {product.isNewArrival && (
-                        <span className="bg-green-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
-                          Mới
+                        <span className="text-[#BF4800] text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
+                          MỚI
                         </span>
                       )}
                       {product.discountPercent > 0 && (
@@ -360,13 +351,29 @@ const ProductsPage = () => {
                         </span>
                       )}
                     </div>
+
+                    {/* Badge Bán chạy góc trên cùng bên phải */}
+                    {product.isBestseller && (
+                      <div className="absolute top-2 right-0 z-10 flex items-center justify-center">
+                        <span className="bg-orange-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
+                          Bán chạy
+                        </span>
+                      </div>
+                    )}
                     
                     <img 
                       src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=400'} 
                       alt={product.name}
-                      className={`object-cover w-full h-full mix-blend-multiply transition-transform duration-500 ${viewMode === 'list' ? 'md:group-hover:scale-105' : 'md:group-hover/img:scale-105'}`}
+                      className={`object-contain w-full h-full mix-blend-multiply transition-transform duration-500 ${viewMode === 'list' ? 'md:group-hover:scale-105' : 'md:group-hover/img:scale-105'}`}
                       loading="lazy"
                     />
+
+                    {/* Sale Countdown ở góc dưới bên phải ảnh */}
+                    {product.isSaleActive && product.saleExpiresAt && (
+                      <div className="absolute bottom-0 right-0 z-10 flex">
+                        <SaleCountdownBadge saleExpiresAt={product.saleExpiresAt} isSaleActive={product.isSaleActive} />
+                      </div>
+                    )}
                   </Link>
 
                   {/* Info */}
@@ -388,7 +395,6 @@ const ProductsPage = () => {
 
                     <div className="mt-auto flex flex-col gap-2 md:gap-3">
                       <div className="flex flex-row gap-2 items-center w-full">
-                        <SaleCountdownBadge saleExpiresAt={product.saleExpiresAt} isSaleActive={product.isSaleActive} />
                         <SaleStockBadge saleStock={product.saleStock} saleRemaining={product.saleRemaining} isSaleActive={product.isSaleActive} />
                       </div>
                       {/* Hiện thị giá */}
