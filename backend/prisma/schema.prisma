@@ -112,6 +112,7 @@ model Product {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   brand           String?
+  isBestseller    Boolean        @default(false)
   isNewArrival    Boolean        @default(true)
   manufactureYear Int?
   salePrice       Decimal?       @db.Decimal(15, 2)

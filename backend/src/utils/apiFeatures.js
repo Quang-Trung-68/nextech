@@ -1,3 +1,5 @@
+const prisma = require('./prisma');
+
 class ApiFeatures {
   constructor(queryParams) {
     this.queryParams = queryParams;
@@ -40,6 +42,45 @@ class ApiFeatures {
         this.queryString.price.lte = parseFloat(this.queryParams.maxPrice);
       }
     }
+
+    if (this.queryParams.highlight) {
+      const parts = this.queryParams.highlight.split(',').map((p) => p.trim());
+      const orConditions = [];
+
+      if (parts.includes('new-arrival')) {
+        orConditions.push({ isNewArrival: true });
+      }
+      if (parts.includes('on-sale')) {
+        orConditions.push({
+          salePrice: { not: null },
+          AND: [
+            {
+              OR: [
+                { saleExpiresAt: null },
+                { saleExpiresAt: { gt: new Date() } }
+              ]
+            },
+            {
+              OR: [
+                { saleStock: null },
+                { saleSoldCount: { lt: prisma.product.fields.saleStock } }
+              ]
+            }
+          ]
+        });
+      }
+      if (parts.includes('bestseller')) {
+        orConditions.push({ isBestseller: true });
+      }
+      if (parts.includes('top-rated')) {
+        orConditions.push({ rating: { gte: 4.5 } });
+      }
+
+      if (orConditions.length > 0) {
+        this.queryString.OR = orConditions;
+      }
+    }
+
     return this;
   }
 

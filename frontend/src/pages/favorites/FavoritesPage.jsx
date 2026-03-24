@@ -34,10 +34,14 @@ const FavoriteProductCard = ({ product }) => {
           )}
         </div>
 
-        {/* FavoriteButton overlay — top-right */}
-        <div className="absolute top-2 right-2 z-10">
-          <FavoriteButton product={{ ...product, isFavorited: true }} size="sm" />
-        </div>
+        {/* Bán chạy Badge overlay (thay thế vị trí cũ của FavoriteButton) */}
+        {product.isBestseller && (
+          <div className="absolute top-2 right-2 z-10">
+            <span className="bg-orange-500 text-white font-bold px-2.5 py-0.5 rounded shadow-sm text-[11px] uppercase tracking-wider">
+              Bán chạy
+            </span>
+          </div>
+        )}
 
         <img
           src={firstImage}
@@ -58,21 +62,26 @@ const FavoriteProductCard = ({ product }) => {
           )}
         </Link>
 
-        <div className="mt-auto flex items-end gap-2">
-          {discountPercent > 0 ? (
-            <>
-              <span className="text-sm line-through text-gray-400">
-                {price?.toLocaleString('vi-VN')}đ
-              </span>
-              <span className="font-semibold text-red-500 text-base">
+        <div className="mt-auto flex items-end justify-between gap-2">
+          <div className="flex items-end gap-2">
+            {discountPercent > 0 ? (
+              <>
+                <span className="text-sm line-through text-gray-400">
+                  {price?.toLocaleString('vi-VN')}đ
+                </span>
+                <span className="font-semibold text-red-500 text-base">
+                  {displayPrice?.toLocaleString('vi-VN')}đ
+                </span>
+              </>
+            ) : (
+              <span className="font-semibold text-base text-apple-dark">
                 {displayPrice?.toLocaleString('vi-VN')}đ
               </span>
-            </>
-          ) : (
-            <span className="font-semibold text-base text-apple-dark">
-              {displayPrice?.toLocaleString('vi-VN')}đ
-            </span>
-          )}
+            )}
+          </div>
+          <div className="relative z-10">
+            <FavoriteButton product={{ ...product, isFavorited: true }} size="sm" />
+          </div>
         </div>
       </div>
     </div>

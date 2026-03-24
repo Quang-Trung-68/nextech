@@ -31,6 +31,9 @@ const baseProductSchema = z.object({
   salePrice: z.coerce.number().positive().optional().nullable(),
   saleExpiresAt: z.string().datetime().optional().nullable(),
   saleStock: z.coerce.number().int().min(1).optional().nullable(),
+  isNewArrival: z.boolean().optional(),
+  isBestseller: z.boolean().optional(),
+  manufactureYear: z.coerce.number().int().min(2000).max(2100).optional().nullable(),
 });
 
 const refineFlashSale = (data, ctx) => {
@@ -86,6 +89,19 @@ const productQuerySchema = z
       .default('newest'),
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(12),
+    highlight: z
+      .string()
+      .trim()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true;
+          const allowed = ['new-arrival', 'on-sale', 'bestseller', 'top-rated'];
+          const parts = val.split(',');
+          return parts.every((p) => allowed.includes(p.trim()));
+        },
+        { message: 'Giá trị highlight không hợp lệ' }
+      ),
   })
   .refine(
     (data) =>

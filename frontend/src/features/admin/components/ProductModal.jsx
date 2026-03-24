@@ -45,6 +45,7 @@ const productSchema = z.object({
     z.number().int("Suất sale là số nguyên").min(1, "Số suất >= 1").nullable().optional()
   ),
   isNewArrival: z.boolean().optional(),
+  isBestseller: z.boolean().optional(),
   manufactureYear: z.preprocess(
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
     z.number().int().min(2000).max(2100).nullable().optional()
@@ -119,6 +120,7 @@ export function ProductModal({
       saleExpiresAt: "",
       saleStock: "",
       isNewArrival: true,
+      isBestseller: false,
       manufactureYear: "",
     },
   });
@@ -148,6 +150,7 @@ export function ProductModal({
           saleExpiresAt: isoToDatetimeLocal(initialData.saleExpiresAt),
           saleStock: initialData.saleStock != null ? initialData.saleStock : "",
           isNewArrival: initialData.isNewArrival ?? true,
+          isBestseller: initialData.isBestseller ?? false,
           manufactureYear: initialData.manufactureYear != null ? initialData.manufactureYear : "",
         });
         if (initialData.salePrice != null) {
@@ -166,6 +169,7 @@ export function ProductModal({
           saleExpiresAt: "",
           saleStock: "",
           isNewArrival: true,
+          isBestseller: false,
           manufactureYear: "",
         });
         setIsFlashSaleOpen(false);
@@ -306,6 +310,29 @@ export function ProductModal({
                 />
                 <span className="text-sm text-muted-foreground">
                   {watch("isNewArrival") ? "Hiển thị badge Mới" : "Không hiển thị badge"}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-slate-700">
+                <Tag className="w-3.5 h-3.5" />
+                Bán chạy
+              </Label>
+              <div className="flex items-center gap-3 pt-2">
+                <Controller
+                  name="isBestseller"
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      id="isBestseller"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  )}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {watch("isBestseller") ? "Hiển thị badge Bán chạy" : "Không hiển thị badge"}
                 </span>
               </div>
             </div>

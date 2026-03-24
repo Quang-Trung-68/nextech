@@ -51,6 +51,7 @@ const adminProductBaseSchema = z.object({
     z.number().int().min(1).nullable().optional()
   ),
   isNewArrival: z.boolean().optional(),
+  isBestseller: z.boolean().optional(),
   manufactureYear: z.preprocess(
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
     z.number().int().min(2000).max(2100).nullable().optional()

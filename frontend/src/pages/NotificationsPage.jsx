@@ -8,12 +8,13 @@ import useAuthStore from '@/stores/useAuthStore';
 import usePageTitle from '@/hooks/usePageTitle';
 
 const getIconForType = (type) => {
+  const base = 'h-[22px] w-[22px]';
   switch (type) {
-    case 'new_order':            return <ShoppingCart className="h-5 w-5 text-apple-blue" />;
-    case 'order_status_changed': return <Package className="h-5 w-5 text-green-500" />;
-    case 'payment_result':       return <CreditCard className="h-5 w-5 text-purple-500" />;
-    case 'low_stock':            return <AlertTriangle className="h-5 w-5 text-orange-400" />;
-    default:                     return <Bell className="h-5 w-5 text-apple-secondary" />;
+    case 'new_order':            return <ShoppingCart className={`${base} text-apple-blue`} />;
+    case 'order_status_changed': return <Package className={`${base} text-green-500`} />;
+    case 'payment_result':       return <CreditCard className={`${base} text-purple-500`} />;
+    case 'low_stock':            return <AlertTriangle className={`${base} text-orange-400`} />;
+    default:                     return <Bell className={`${base} text-apple-secondary`} />;
   }
 };
 
@@ -33,9 +34,9 @@ const getActionUrl = (notification) => {
 };
 
 const SkeletonItem = () => (
-  <div className="flex gap-3 px-6 py-4 border-b border-[#f5f5f7] animate-pulse">
-    <div className="w-11 h-11 rounded-full bg-[#e8e8ed] flex-shrink-0 mt-0.5" />
-    <div className="flex-1 min-w-0 space-y-2 pt-1">
+  <div className="flex gap-4 px-6 py-5 border-b border-[#f5f5f7] animate-pulse">
+    <div className="w-12 h-12 rounded-full bg-[#e8e8ed] flex-shrink-0 mt-0.5" />
+    <div className="flex-1 min-w-0 space-y-2.5 pt-1">
       <div className="h-3.5 bg-[#e8e8ed] rounded w-3/4" />
       <div className="h-3 bg-[#e8e8ed] rounded w-full" />
       <div className="h-3 bg-[#e8e8ed] rounded w-1/2" />
@@ -143,13 +144,13 @@ const NotificationsPage = () => {
                   key={notif.id}
                   ref={isLast ? lastElementRef : null}
                   onClick={() => handleNotificationClick(notif)}
-                  className={`flex gap-4 px-6 py-4 cursor-pointer hover:bg-[#f5f5f7] transition-colors ${
+                  className={`flex gap-5 px-6 py-5 cursor-pointer hover:bg-[#f5f5f7] transition-colors ${
                     !notif.isRead ? 'bg-blue-50/30' : 'bg-white'
                   }`}
                 >
                   {/* Icon */}
                   <div className="relative flex-shrink-0 mt-0.5">
-                    <div className="w-11 h-11 rounded-full bg-[#f5f5f7] flex items-center justify-center shadow-sm">
+                    <div className="w-12 h-12 rounded-full bg-[#f5f5f7] flex items-center justify-center shadow-sm">
                       {getIconForType(notif.type)}
                     </div>
                     {!notif.isRead && (
@@ -158,16 +159,16 @@ const NotificationsPage = () => {
                   </div>
 
                   {/* Text */}
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-[14px] leading-snug tracking-tight ${
-                      !notif.isRead ? 'font-semibold text-apple-dark' : 'font-medium text-apple-dark'
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <p className={`text-[15.5px] leading-snug tracking-tight ${
+                      !notif.isRead ? 'font-bold text-apple-dark' : 'font-semibold text-apple-dark'
                     }`}>
                       {notif.title}
                     </p>
-                    <p className="text-[13px] text-apple-secondary mt-0.5 leading-relaxed">
+                    <p className="text-[14.5px] text-gray-700 font-medium mt-1 leading-relaxed">
                       {notif.message}
                     </p>
-                    <p className="text-[11.5px] text-[#aeaeb2] mt-2 font-medium">
+                    <p className="text-[13px] text-gray-500 mt-2 font-bold tracking-tight">
                       {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: vi })}
                     </p>
                   </div>

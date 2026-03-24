@@ -20,13 +20,13 @@ import FilterDrawer from './FilterDrawer';
 import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
 import SaleStockBadge from '@/components/product/SaleStockBadge';
 
-const CATEGORIES = [
-  { id: 'iphone', label: 'Điện thoại' },
-  { id: 'mac', label: 'Laptop' },
-  { id: 'ipad', label: 'Máy tính bảng' },
-  { id: 'accessories', label: 'Phụ kiện' }
+const HIGHLIGHTS = [
+  { id: 'new-arrival', label: 'Hàng mới về' },
+  { id: 'on-sale', label: 'Đang giảm giá' },
+  { id: 'bestseller', label: 'Bán chạy' },
+  { id: 'top-rated', label: 'Được đánh giá cao' }
 ];
-const BRANDS = ['Samsung', 'Apple', 'Sony', 'Dell', 'LG'];
+
 const PRICE_RANGES = [
   { id: 'under-5', label: 'Dưới 5tr', min: 0, max: 4999999 },
   { id: '5-15', label: '5 – 15tr', min: 5000000, max: 15000000 },
@@ -35,13 +35,14 @@ const PRICE_RANGES = [
 ];
 
 const ProductsPage = () => {
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { categorySlug } = useParams();
+
+  const highlightParam = searchParams.get('highlight');
+  const highlights = highlightParam ? highlightParam.split(',') : [];
 
   const pageLabel = categorySlug ? SLUG_LABEL_MAP[categorySlug] : null;
   usePageTitle(pageLabel || 'Sản phẩm'); // → "Điện thoại | NexTech" or "Sản phẩm | NexTech"
-
-  const [brands, setBrands] = useState([]);
   const [priceRanges, setPriceRanges] = useState([]);
   const [sort, setSort] = useState('Mới nhất'); // Nổi bật, Mới nhất, Giá tăng dần, Giá giảm dần
   const [viewMode, setViewMode] = useState('grid');
@@ -106,7 +107,7 @@ const ProductsPage = () => {
 
     const params = { page: pageParam, limit, sort: sortParam };
     if (categorySlug && SLUG_MAP[categorySlug]) params.category = SLUG_MAP[categorySlug];
-    if (brands.length > 0) params.brand = brands.join(',');
+    if (highlightParam) params.highlight = highlightParam;
     
     // Find absolute min and max prices from selected ranges
     if (priceRanges.length > 0) {
@@ -126,7 +127,7 @@ const ProductsPage = () => {
     fetchNextPage, 
     isFetchingNextPage 
   } = useInfiniteQuery({
-    queryKey: ['products', categorySlug, brands, priceRanges, sort],
+    queryKey: ['products', categorySlug, highlightParam, priceRanges, sort],
     queryFn: async ({ pageParam }) => {
       const res = await axiosInstance.get('/products', { params: getQueryParams(pageParam) });
       return res.data;
@@ -151,16 +152,20 @@ const ProductsPage = () => {
   );
 
   // Handlers
-  const handleCategoryChange = (slug) => {
-    if (categorySlug === slug) {
-      navigate('/products' + location.search);
+  const handleHighlightChange = (highlightId) => {
+    let newHighlights = [...highlights];
+    if (newHighlights.includes(highlightId)) {
+      newHighlights = newHighlights.filter(h => h !== highlightId);
     } else {
-      navigate(`/products/${slug}` + location.search);
+      newHighlights.push(highlightId);
     }
-  };
-
-  const handleBrandChange = (brand) => {
-    setBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
+    
+    if (newHighlights.length > 0) {
+      searchParams.set('highlight', newHighlights.join(','));
+    } else {
+      searchParams.delete('highlight');
+    }
+    setSearchParams(searchParams, { replace: true });
   };
 
   const handlePriceChange = (priceId) => {
@@ -168,51 +173,32 @@ const ProductsPage = () => {
   };
 
   const clearFilters = () => {
-    setBrands([]);
     setPriceRanges([]);
-    setSearchParams(new URLSearchParams(), { replace: true });
+    searchParams.delete('highlight');
+    setSearchParams(searchParams, { replace: true });
   };
 
   // Redirect if invalid slug
-  if (categorySlug && !SLUG_MAP[categorySlug] && categorySlug !== 'sale') {
+  if (categorySlug && !SLUG_MAP[categorySlug]) {
     return <Navigate to="/products" replace />;
   }
 
   const renderSidebarContent = () => (
     <div className="flex flex-col gap-8 w-full">
-      {/* Danh mục */}
+      {/* Đặc điểm nổi bật */}
       <div>
-        <h4 className="font-semibold text-apple-dark mb-4 text-base">Danh mục</h4>
-        <div className="flex flex-col gap-2">
-          {CATEGORIES.map(cat => {
-            const isActive = categorySlug === cat.id;
-            return (
-              <button 
-                key={cat.id} 
-                onClick={() => handleCategoryChange(cat.id)}
-                className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-apple-blue text-white' : 'bg-[#f5f5f7] md:bg-transparent md:hover:bg-apple-gray text-apple-dark'}`}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Thương hiệu */}
-      <div>
-        <h4 className="font-semibold text-apple-dark mb-4 text-base">Thương hiệu</h4>
+        <h4 className="font-semibold text-apple-dark mb-4 text-base">Đặc điểm nổi bật</h4>
         <div className="flex flex-col gap-3">
-          {BRANDS.map(brand => (
-            <div key={brand} className="flex items-center space-x-3">
+          {HIGHLIGHTS.map(highlight => (
+            <div key={highlight.id} className="flex items-center space-x-3">
               <Checkbox 
-                id={`brand-${brand}`}
-                checked={brands.includes(brand)}
-                onCheckedChange={() => handleBrandChange(brand)}
+                id={`highlight-${highlight.id}`}
+                checked={highlights.includes(highlight.id)}
+                onCheckedChange={() => handleHighlightChange(highlight.id)}
                 className="border-[#d2d2d7] data-[state=checked]:bg-apple-blue data-[state=checked]:border-apple-blue"
               />
-              <label htmlFor={`brand-${brand}`} className="text-sm font-medium leading-none text-apple-dark cursor-pointer">
-                {brand}
+              <label htmlFor={`highlight-${highlight.id}`} className="text-sm font-medium leading-none text-apple-dark cursor-pointer">
+                {highlight.label}
               </label>
             </div>
           ))}
@@ -350,13 +336,14 @@ const ProductsPage = () => {
               {products.map(product => (
                 <div key={product.id} className={`group relative bg-white border border-[#f5f5f7] md:border-transparent md:hover:border-[#d2d2d7] md:hover:shadow-lg rounded-xl md:rounded-2xl transition-all duration-300 p-3 md:p-4 flex ${viewMode === 'list' ? 'flex-row gap-4 md:gap-6 items-center' : 'flex-col'}`}>
                   
-                  {/* FavoriteButton overlay */}
-                  <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
-                    <FavoriteButton
-                      product={{ ...product, isFavorited: favoritedIds.has(product.id) }}
-                      size="sm"
-                    />
-                  </div>
+                  {/* Badge Bán chạy (thay vị trí cũ của FavoriteButton) */}
+                  {product.isBestseller && (
+                    <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
+                      <span className="bg-orange-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
+                        Bán chạy
+                      </span>
+                    </div>
+                  )}
 
                   {/* Image */}
                   <Link to={`/products/${getSlugByCategory(product.category)}/${product.id}`} className={`relative bg-apple-gray rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-6 group/img'}`}>
@@ -439,11 +426,17 @@ const ProductsPage = () => {
                         </Button>
                       </div>
                       
-                      {/* Rating under the button on md+ */}
-                      <div className="hidden md:flex items-center pt-1">
+                      {/* Rating & Favorite under the button on md+ */}
+                      <div className="hidden md:flex items-center justify-between pt-1">
                         <div className="flex items-center gap-1.5 text-sm font-semibold text-apple-dark">
                            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                            <span>{(product.rating || 0) > 0 ? (product.rating).toFixed(1) : "Chưa có"}</span>
+                        </div>
+                        <div className="relative z-10">
+                          <FavoriteButton
+                            product={{ ...product, isFavorited: favoritedIds.has(product.id) }}
+                            size="sm"
+                          />
                         </div>
                       </div>
                     </div>

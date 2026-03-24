@@ -87,6 +87,21 @@ const updateProduct = async (id, data) => {
     payload.saleExpiresAt = null;
     payload.saleStock = null;
     payload.saleSoldCount = 0;
+  } else if (payload.salePrice !== undefined) {
+    // Nếu cập nhật thông tin sale mới (giá, số lượng, hoặc thời gian), ta reset số lượng đã bán
+    const existingPrice = existing.salePrice ? parseFloat(existing.salePrice) : null;
+    const newPrice = payload.salePrice ? parseFloat(payload.salePrice) : null;
+    
+    const existingDate = existing.saleExpiresAt ? existing.saleExpiresAt.toISOString() : null;
+    const newDate = payload.saleExpiresAt ? new Date(payload.saleExpiresAt).toISOString() : null;
+    
+    if (
+      newPrice !== existingPrice ||
+      newDate !== existingDate ||
+      payload.saleStock !== existing.saleStock
+    ) {
+      payload.saleSoldCount = 0;
+    }
   }
 
   const updated = await prisma.product.update({ where: { id }, data: payload, include: { images: true } });

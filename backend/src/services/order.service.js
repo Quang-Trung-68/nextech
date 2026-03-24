@@ -197,6 +197,15 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
 
   Promise.resolve().then(async () => {
     try {
+      // Thông báo cho User vừa đặt hàng
+      await notificationService.createAndSend(
+        userId,
+        'order_status_changed', // Sử dụng event này để frontend tự bắt và điều hướng về /orders/:id
+        'Đặt hàng thành công',
+        `Cảm ơn bạn! Đơn hàng #${order.id} của bạn đã được ghi nhận và đang chờ xử lý.`,
+        { orderId: order.id, newStatus: initialStatus }
+      );
+
       const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
       for (const admin of admins) {
         await notificationService.createAndSend(

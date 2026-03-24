@@ -64,10 +64,14 @@ export function ProductCard({ product }) {
             </div>
           )}
 
-          {/* FavoriteButton overlay — góc trên bên phải */}
-          <div className="absolute top-2 right-2 z-10">
-            <FavoriteButton product={product} size="sm" />
-          </div>
+          {/* Bán chạy Badge overlay — góc trên bên phải */}
+          {product.isBestseller && (
+            <div className="absolute top-2 right-2 z-10">
+              <span className="bg-orange-500 text-white text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md shadow-sm">
+                Bán chạy
+              </span>
+            </div>
+          )}
 
           {/* Badge Sắp hết — đẩy sang trái để không đè FavoriteButton */}
           {stock <= 10 && stock > 0 && (
@@ -130,11 +134,14 @@ export function ProductCard({ product }) {
             {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
         </Button>
         
-        {/* Rating */}
-        <div className="flex items-center pt-1">
+        {/* Rating & Favorite */}
+        <div className="flex justify-between items-center pt-1">
           <div className="flex items-center gap-1.5 text-sm font-semibold">
              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
              <span>{rating > 0 ? rating.toFixed(1) : "0"}</span>
+          </div>
+          <div className="relative z-10">
+            <FavoriteButton product={product} size="sm" />
           </div>
         </div>
       </div>
