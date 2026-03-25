@@ -3,31 +3,33 @@ const serverConfig = require('../configs/server.config');
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const ACCESS_COOKIE_NAME = 'access_token';
 
+// In production, frontend (nextech.io.vn) and backend API (api.nextech.io.vn)
+// are on different subdomains. Cross-site cookies REQUIRE:
+//   sameSite: 'none' + secure: true
+// In development (same origin via Vite proxy), 'lax' is safe enough.
+const getSameSite = () => (serverConfig.isDev ? 'lax' : 'none');
+
 /**
  * Set the access token as a secure HttpOnly cookie.
- * @param {import('express').Response} res
- * @param {string} token
- * @param {Date} expiresAt
  */
 const setAccessTokenCookie = (res, token, expiresAt) => {
   res.cookie(ACCESS_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: serverConfig.nodeEnv === 'production',
-    sameSite: 'strict',
+    secure: serverConfig.nodeEnv === 'production', // HTTPS only in prod
+    sameSite: getSameSite(),
     expires: expiresAt,
-    path: '/api', // Gửi kèm access token cho tất cả API bắt đầu bằng /api
+    path: '/api',
   });
 };
 
 /**
  * Clear the access token cookie.
- * @param {import('express').Response} res
  */
 const clearAccessTokenCookie = (res) => {
   res.cookie(ACCESS_COOKIE_NAME, '', {
     httpOnly: true,
     secure: serverConfig.nodeEnv === 'production',
-    sameSite: 'strict',
+    sameSite: getSameSite(),
     expires: new Date(0),
     path: '/api',
   });
@@ -35,30 +37,26 @@ const clearAccessTokenCookie = (res) => {
 
 /**
  * Set the refresh token as a secure HttpOnly cookie.
- * @param {import('express').Response} res
- * @param {string} token
- * @param {Date} expiresAt
  */
 const setRefreshTokenCookie = (res, token, expiresAt) => {
   res.cookie(REFRESH_COOKIE_NAME, token, {
-    httpOnly: true,                                      // JS client cannot read
-    secure: serverConfig.nodeEnv === 'production',            // HTTPS only in prod
-    sameSite: 'strict',                                  // CSRF protection
-    expires: expiresAt,                                  // Exact expiry time
-    path: '/api/auth',                                   // Only sent on /api/auth routes
+    httpOnly: true,
+    secure: serverConfig.nodeEnv === 'production',
+    sameSite: getSameSite(),
+    expires: expiresAt,
+    path: '/api/auth',
   });
 };
 
 /**
  * Clear the refresh token cookie by expiring it immediately.
- * @param {import('express').Response} res
  */
 const clearRefreshTokenCookie = (res) => {
   res.cookie(REFRESH_COOKIE_NAME, '', {
     httpOnly: true,
     secure: serverConfig.nodeEnv === 'production',
-    sameSite: 'strict',
-    expires: new Date(0),  // Epoch — forces browser to delete the cookie
+    sameSite: getSameSite(),
+    expires: new Date(0),
     path: '/api/auth',
   });
 };
