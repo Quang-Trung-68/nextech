@@ -12,8 +12,10 @@ RUN npm ci
 # Copy source code and Prisma schema
 COPY . .
 
-# Generate Prisma client (requires prisma CLI from devDeps)
-RUN npx prisma generate
+# Generate Prisma client
+# prisma.config.ts calls env("DATABASE_URL") at import time — pass a dummy URL
+# so it doesn't throw. prisma generate only reads the schema, never the real DB.
+RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
 
 # Remove dev dependencies, keep only production
 RUN npm prune --production
