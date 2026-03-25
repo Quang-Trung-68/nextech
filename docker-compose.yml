@@ -97,6 +97,10 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
+        VITE_SOKETI_APP_KEY: ${VITE_SOKETI_APP_KEY}
+        VITE_SOKETI_HOST: ${VITE_SOKETI_HOST}
+        VITE_SOKETI_PORT: ${VITE_SOKETI_PORT}
+        VITE_SOKETI_FORCE_TLS: ${VITE_SOKETI_FORCE_TLS}
     container_name: nextech_frontend
     restart: unless-stopped
     depends_on:
