@@ -17,6 +17,8 @@ app.use(cors({
   credentials: true
 }));
 
+app.options('*', cors())
+
 // ⚠️ Special routes TRƯỚC express.json() (vd: Stripe webhook cần raw body)
 // ⚠️ QUAN TRỌNG: Webhook mount TRƯỚC express.json()
 // express.raw() giúp giữ body dưới dạng Buffer — Stripe cần raw body để verify signature
