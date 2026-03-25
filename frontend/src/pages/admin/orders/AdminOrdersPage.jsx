@@ -46,9 +46,13 @@ const AdminOrdersPage = () => {
   }, [queryOrderId, searchParams, setSearchParams]);
 
   const params = useMemo(
-    () => ({ ...filterState, search: debouncedSearch, page: 1 }),
+    () => ({ ...filterState, search: debouncedSearch }),
     [debouncedSearch, filterState]
   );
+
+  useEffect(() => {
+    setFilterState(prev => ({ ...prev, page: 1 }));
+  }, [debouncedSearch]);
 
   const { data, isLoading } = useAdminOrders(params);
   const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();

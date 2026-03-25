@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useAdminStats, useAdminRevenue } from '@/features/admin/hooks/useAdmin';
 import { StatCard } from '@/features/admin/components/StatCard';
@@ -84,7 +85,7 @@ const AdminDashboardPage = () => {
     return total / revenueData.length;
   }, [revenueData]);
 
-  if (isLoadingStats) return <div>Loading dashboard stats...</div>;
+  if (isLoadingStats) return <LoadingSkeleton />;
   if (isError) return <div className="text-red-500">Failed to load statistics.</div>;
 
   return (

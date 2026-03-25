@@ -538,9 +538,14 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
     );
   }
 
+  const updateData = { status: newStatus };
+  if (newStatus === 'DELIVERED' && order.paymentMethod === 'COD') {
+    updateData.paymentStatus = 'PAID';
+  }
+
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
-    data: { status: newStatus },
+    data: updateData,
     include: ORDER_DETAIL_INCLUDE,
   });
 

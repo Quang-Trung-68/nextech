@@ -243,8 +243,10 @@ export function useUpdateOrderStatus() {
       );
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: adminKeys.orders({}) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.orderDetail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.stats({}) });
     },
   });
 }

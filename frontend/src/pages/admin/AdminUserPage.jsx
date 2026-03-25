@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useAdminUsers, useToggleUserStatus } from '@/features/admin/hooks/useAdmin';
 import { DataTable } from '@/features/admin/components/DataTable';
@@ -18,9 +19,13 @@ const AdminUserPage = () => {
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500);
   const params = useMemo(
-    () => ({ ...filterState, search: debouncedSearch, page: 1 }),
+    () => ({ ...filterState, search: debouncedSearch }),
     [debouncedSearch, filterState]
   );
+
+  React.useEffect(() => {
+    setFilterState((prev) => ({ ...prev, page: 1 }));
+  }, [debouncedSearch]);
 
   const { data, isLoading } = useAdminUsers(params);
   const { mutate: toggleStatus, isPending: isUpdating } = useToggleUserStatus();
@@ -132,7 +137,7 @@ const AdminUserPage = () => {
       </div>
 
       {isLoading ? (
-        <div>Loading users...</div>
+        <LoadingSkeleton />
       ) : (
         <DataTable columns={columns} data={data?.users || []} />
       )}

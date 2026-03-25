@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/features/admin/hooks/useAdmin';
@@ -25,9 +26,13 @@ const AdminProductPage = () => {
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500);
   const params = useMemo(
-    () => ({ ...filterState, search: debouncedSearch, page: 1 }),
+    () => ({ ...filterState, search: debouncedSearch }),
     [debouncedSearch, filterState]
   );
+
+  React.useEffect(() => {
+    setFilterState((prev) => ({ ...prev, page: 1 }));
+  }, [debouncedSearch]);
   
   const { data, isLoading } = useAdminProducts(params);
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
@@ -187,7 +192,7 @@ const AdminProductPage = () => {
       </div>
 
       {isLoading ? (
-        <div>Loading products...</div>
+        <LoadingSkeleton />
       ) : (
         <DataTable columns={columns} data={data?.products || []} />
       )}

@@ -3,6 +3,9 @@ import usePageTitle from '@/hooks/usePageTitle';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, ShieldCheck, Clock, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+import ip17ProMaxImg from "@/resources/images/iphone-17-pro-max.jpg";
+
 const brands = [
   {
     name: 'iPhone',
@@ -399,7 +402,7 @@ const HomePage = () => {
                 Ra mắt
               </p>
               <h1 className="text-apple-black text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight md:-tracking-[0.04em] leading-tight mb-4">
-                iPhone 17 Pro
+                iPhone 17 Pro Max
               </h1>
               <p className="text-apple-dark text-xl md:text-3xl font-medium tracking-wide mb-3">
                 Titanium. A19 Pro. Camera 48MP.
@@ -424,8 +427,8 @@ const HomePage = () => {
             {/* Image side */}
             <div className="w-full md:w-1/2 relative flex justify-center lg:absolute lg:right-0 lg:h-full lg:w-1/2">
                <img
-                  src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?auto=format&fit=crop&q=80&w=1400"
-                  alt="NexPhone 15 Pro"
+                  src={ip17ProMaxImg}
+                  alt="iPhone 17 Pro Max"
                   className="w-full h-[50vh] md:h-[70vh] lg:h-screen object-cover object-center lg:absolute lg:inset-y-0 lg:right-0"
                />
             </div>
