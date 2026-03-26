@@ -348,6 +348,8 @@ model Invoice {
   updatedAt      DateTime  @updatedAt
 
   items          InvoiceItem[]
+
+  @@map("invoices")
 }
 
 model InvoiceItem {
@@ -380,6 +382,8 @@ model ShopSettings {
   email       String?
   vatRate     Decimal  @default(0.10) @db.Decimal(4, 3)
   updatedAt   DateTime @updatedAt
+
+  @@map("shop_settings")
 }
 
 model Notification {
