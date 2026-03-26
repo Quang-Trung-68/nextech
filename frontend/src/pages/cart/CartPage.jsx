@@ -52,16 +52,16 @@ const CartPage = () => {
   }
 
   return (
-    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-apple-dark tracking-tight mb-2">Giỏ hàng của bạn</h1>
-        <p className="text-muted-foreground">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12 min-h-svh flex flex-col">
+      <div className="mb-6 lg:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-apple-dark tracking-tight mb-1 sm:mb-2">Giỏ hàng của bạn</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Bạn đang có {totalItems} sản phẩm trong giỏ hàng.
         </p>
       </div>
       
-      <div className="grid lg:grid-cols-12 gap-8 items-start relative">
-        <div className="lg:col-span-8 space-y-4 pb-40 lg:pb-0">
+      <div className="flex-1 grid lg:grid-cols-12 gap-6 lg:gap-8 items-start relative pb-32 lg:pb-0">
+        <div className="lg:col-span-8 space-y-4">
           {cartItems.map((item) => (
             <CartItem 
               key={item.id} 
@@ -71,15 +71,12 @@ const CartPage = () => {
             />
           ))}
         </div>
-        
-        <div className="lg:col-span-4">
-          <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-[#d2d2d7] bg-white z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] lg:static lg:p-0 lg:border-0 lg:shadow-none lg:bg-transparent lg:z-auto">
-            <CartSummary 
-              totalItems={totalItems} 
-              totalPrice={totalPrice} 
-              onClearCart={handleClearCart} 
-            />
-          </div>
+        <div className="lg:col-span-4 lg:sticky lg:top-24">
+          <CartSummary 
+            totalItems={totalItems} 
+            totalPrice={totalPrice} 
+            onClearCart={handleClearCart} 
+          />
         </div>
       </div>
     </div>

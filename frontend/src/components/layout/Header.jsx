@@ -116,11 +116,11 @@ const Header = () => {
             </div>
             
             {/* Right: Icons */}
-            <div className="flex-1 flex justify-end items-center space-x-6 text-apple-dark">
+            <div className="flex-1 flex justify-end items-center space-x-3 sm:space-x-4 md:space-x-6 text-apple-dark">
               {/* Search */}
               <button 
                 onClick={() => setIsSearchOpen(!isSearchOpen)} 
-                className="hidden md:block hover:text-apple-blue transition-colors relative focus:outline-none"
+                className="hover:text-apple-blue transition-colors relative focus:outline-none"
               >
                 <Search size={22} strokeWidth={1.5} />
               </button>
@@ -139,7 +139,7 @@ const Header = () => {
                   
                   {/* Cart */}
                   <div 
-                    className="relative"
+                    className="relative hidden md:block"
                     ref={cartRef}
                   >
                     <button 
@@ -271,7 +271,13 @@ const Header = () => {
                   {/* User */}
                   <div className="relative hidden md:block" ref={userMenuRef}>
                     <button 
-                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      onClick={() => {
+                        if (window.innerWidth < 768) {
+                          navigate('/profile');
+                        } else {
+                          setIsUserMenuOpen(!isUserMenuOpen);
+                        }
+                      }}
                       className="hover:text-apple-blue transition-colors flex items-center focus:outline-none"
                     >
                       {user?.avatar ? (

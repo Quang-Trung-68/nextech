@@ -8,9 +8,9 @@ const FilterDrawer = ({
   return (
     <div className="md:hidden w-full">
       <Sheet>
-        <SheetTrigger className="inline-flex items-center justify-center w-full h-10 rounded-lg border border-[#d2d2d7] bg-white hover:bg-apple-gray transition-colors focus:outline-none focus:ring-2 focus:ring-apple-blue gap-2 font-medium text-sm text-apple-dark">
-          <SlidersHorizontal className="w-4 h-4" />
-          Bộ lọc
+        <SheetTrigger className="flex items-center justify-center w-full h-11 rounded-xl border border-[#d2d2d7] bg-white hover:bg-slate-50 transition-colors focus:outline-none focus:ring-1 focus:ring-apple-blue gap-2 text-[15px] font-medium text-apple-dark shadow-sm">
+          <SlidersHorizontal className="w-[18px] h-[18px] text-apple-dark" />
+          <span>Bộ lọc</span>
         </SheetTrigger>
         <SheetContent side="bottom" className="w-full h-[85vh] rounded-t-2xl overflow-y-auto p-6 fixed bottom-0 left-0 right-0">
           <SheetHeader className="mb-6 p-0 text-left">

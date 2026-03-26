@@ -130,14 +130,14 @@ const ProfileSidebar = () => {
       </aside>
 
       {/* ── Mobile Bottom Tab Bar ──────────────────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-[#e5e5ea] flex items-stretch">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-[#d2d2d7] flex items-stretch pb-[env(safe-area-inset-bottom)] h-[calc(56px+env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors ${
+              `flex-1 flex flex-col items-center justify-center gap-1 min-h-[56px] text-[10px] font-medium transition-colors ${
                 isActive ? 'text-apple-blue' : 'text-apple-secondary'
               }`
             }
@@ -155,7 +155,7 @@ const ProfileSidebar = () => {
         ))}
         <button
           onClick={handleLogout}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium text-red-400 transition-colors"
+          className="flex-1 flex flex-col items-center justify-center gap-1 min-h-[56px] text-[10px] font-medium text-red-500 hover:text-red-600 transition-colors"
         >
           <LogOut className="w-5 h-5" />
           <span>Thoát</span>

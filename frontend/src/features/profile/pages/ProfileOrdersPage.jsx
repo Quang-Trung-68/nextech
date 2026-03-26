@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Package, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Package, ChevronLeft, ChevronRight, Search, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useProfileOrders } from '@/features/profile/hooks/useProfileOrders';
 import OrderCard from '@/features/profile/components/OrderCard';
@@ -149,7 +150,21 @@ const ProfileOrdersPage = () => {
                   return (
                     <TableRow key={order.id} className="hover:bg-gray-50/50 transition-colors">
                       <TableCell className="font-mono text-xs font-semibold text-apple-dark pb-3 pt-3">
-                        #{order.id.slice(-6).toUpperCase()}
+                        <div className="flex items-center gap-1.5">
+                          <span>#{order.id.slice(-6).toUpperCase()}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(order.id.toUpperCase());
+                              toast.success('Đã copy mã đơn hàng');
+                            }}
+                            className="text-apple-secondary hover:text-apple-blue hover:bg-apple-gray p-1 rounded transition-colors"
+                            title="Copy mã"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm text-apple-secondary pb-3 pt-3">
                         {new Date(order.createdAt).toLocaleDateString('vi-VN')}

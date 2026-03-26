@@ -1,4 +1,4 @@
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams, Link } from 'react-router-dom';
 import usePageTitle from '@/hooks/usePageTitle';
 import { ShoppingBag, AlertCircle } from 'lucide-react';
 import useAuthStore from '@/stores/useAuthStore';
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import LoginForm from '@/features/auth/components/LoginForm';
+import PageBackButton from '@/components/common/PageBackButton';
 
 // Google "G" SVG icon (official brand colours, no external dependency)
 const GoogleIcon = () => (
@@ -66,8 +67,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6 md:py-12">
+    <div className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-6 md:py-12">
       <div className="w-full max-w-md space-y-6">
+        <PageBackButton className="mb-2 lg:hidden" />
         {/* ── Logo / App name ─────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
@@ -106,6 +108,12 @@ const LoginPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <LoginForm />
+
+            <div className="flex justify-center -mt-1">
+              <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+                Quên mật khẩu?
+              </Link>
+            </div>
 
             {/* ── Divider ───────────────────────────────────────────────── */}
             <div className="relative flex items-center gap-3">

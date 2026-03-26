@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Headphones, X, MessageSquare, Phone, MessageCircle } from 'lucide-react';
 
 const SubButton = ({ icon, tooltip, label, href, bgColor, delay, onClick, isOpen }) => {
@@ -45,6 +46,14 @@ export default function SupportWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [showHint, setShowHint] = useState(() => !sessionStorage.getItem('support_hint_shown'));
   const widgetRef = useRef(null);
+  const location = useLocation();
+  
+  const hasBottomNav = typeof window !== 'undefined' && window.innerWidth < 768 && 
+    (location.pathname === '/' || location.pathname === '/products' || location.pathname.startsWith('/profile'));
+  
+  const bottomOffsetClass = hasBottomNav 
+    ? "bottom-[calc(80px+env(safe-area-inset-bottom))]" 
+    : "bottom-[calc(20px+env(safe-area-inset-bottom))] md:bottom-5";
 
   useEffect(() => {
     if (!showHint) return;
@@ -94,7 +103,7 @@ export default function SupportWidget() {
   return (
     <div
       ref={widgetRef}
-      className="fixed bottom-5 right-5 z-50 flex flex-col items-center gap-3 pointer-events-none"
+      className={`fixed right-5 z-50 flex flex-col items-center gap-3 pointer-events-none transition-all duration-300 ${bottomOffsetClass}`}
       role="complementary"
       aria-label="Hỗ trợ khách hàng"
     >

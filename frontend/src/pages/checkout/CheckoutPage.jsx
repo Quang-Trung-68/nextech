@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PageBackButton from '@/components/common/PageBackButton';
 import usePageTitle from '@/hooks/usePageTitle';
 import useAuthStore from '@/stores/useAuthStore';
 import { useCart } from '@/features/cart/hooks/useCart';
@@ -182,7 +183,8 @@ const CheckoutPageForm = () => {
   if (!isSuccess && (!cartItems || cartItems.length === 0)) return null;
 
   return (
-    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12 min-h-svh flex flex-col">
+      <PageBackButton className="mb-4 lg:hidden" />
       <div className="flex items-center space-x-2 text-apple-secondary mb-6 text-xs md:text-sm font-medium">
         <span className="text-apple-dark shrink-0">1. Giỏ hàng</span>
         <span className="text-[#d2d2d7] shrink-0">—</span>

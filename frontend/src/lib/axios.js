@@ -7,6 +7,12 @@ const axiosInstance = axios.create({
   withCredentials: true, // Bắt buộc để gửi kèm cookie (refreshToken)
 });
 
+// Axios public không có interceptor auto-refresh
+export const axiosPublic = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true, 
+});
+
 // isRefreshing: Cờ đánh dấu xem có một request refresh token nào đang diễn ra không
 let isRefreshing = false;
 // failedQueue: Hàng đợi lưu các request bị lỗi 401 khi isRefreshing = true

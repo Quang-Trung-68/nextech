@@ -59,10 +59,16 @@ const NotificationDropdown = () => {
   const displayNotifications = notifications.slice(0, 10);
 
   return (
-    <div className="relative hidden md:flex" ref={dropdownRef}>
+    <div className="relative flex" ref={dropdownRef}>
       {/* Trigger button */}
       <button
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (window.innerWidth < 768) {
+            navigate('/notifications');
+          } else {
+            setIsOpen((prev) => !prev);
+          }
+        }}
         className="hover:text-apple-blue transition-colors relative flex items-center py-2 focus:outline-none"
       >
         <Bell size={22} strokeWidth={1.5} />

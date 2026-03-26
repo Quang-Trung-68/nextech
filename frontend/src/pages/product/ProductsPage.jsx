@@ -258,7 +258,7 @@ const ProductsPage = () => {
         <div className="flex-1 w-full flex flex-col min-w-0">
           
           {/* Top Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-8 gap-4 sticky top-[3.5rem] md:static z-20 bg-white/95 backdrop-blur-md md:bg-transparent py-2 md:py-0">
             <div className="hidden md:block">
                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-2">
                  {categorySlug ? SLUG_LABEL_MAP[categorySlug] : 'Sản phẩm'}
@@ -268,22 +268,22 @@ const ProductsPage = () => {
                </p>
             </div>
 
-            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+            <div className="flex flex-row md:flex-row items-center gap-2 md:gap-3 w-full md:w-auto mt-0">
               
-              <div className="md:hidden w-full">
+              <div className="md:hidden flex-1 min-w-[120px]">
                 <FilterDrawer renderSidebarContent={renderSidebarContent} />
               </div>
 
               {/* Sort Select on Mobile, Segmented on Desktop */}
-              <div className="md:hidden w-full mt-2">
+              <div className="md:hidden flex-1 min-w-[120px]">
                 <Select value={sort} onValueChange={setSort}>
-                  <SelectTrigger className="w-full h-10 rounded-lg border-[#d2d2d7] text-sm focus:ring-1 focus:ring-apple-blue bg-apple-gray flex justify-between">
+                  <SelectTrigger className="w-full !h-11 rounded-xl border border-[#d2d2d7] bg-white px-4 text-[15px] font-medium text-apple-dark shadow-sm focus:ring-1 focus:ring-apple-blue flex items-center justify-between transition-colors hover:bg-slate-50 [&>span]:truncate">
                     <SelectValue placeholder="Sắp xếp" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mới nhất">Mới nhất</SelectItem>
-                    <SelectItem value="Giá tăng dần">Giá tăng dần</SelectItem>
-                    <SelectItem value="Giá giảm dần">Giá giảm dần</SelectItem>
+                  <SelectContent className="rounded-2xl border-[#d2d2d7] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-1.5 min-w-[160px]">
+                    <SelectItem value="Mới nhất" className="py-3 pl-3 pr-8 text-[15px] font-medium cursor-pointer rounded-xl hover:bg-slate-50">Mới nhất</SelectItem>
+                    <SelectItem value="Giá tăng dần" className="py-3 pl-3 pr-8 text-[15px] font-medium cursor-pointer rounded-xl hover:bg-slate-50">Giá tăng dần</SelectItem>
+                    <SelectItem value="Giá giảm dần" className="py-3 pl-3 pr-8 text-[15px] font-medium cursor-pointer rounded-xl hover:bg-slate-50">Giá giảm dần</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -332,7 +332,7 @@ const ProductsPage = () => {
                <p className="text-apple-secondary">Hãy thử thay đổi điều kiện lọc của bạn.</p>
             </div>
           ) : (
-            <div className={`grid gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4'}`}>
+            <div className={`grid gap-3 sm:gap-4 md:gap-6 lg:gap-8 ${viewMode === 'list' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
               {products.map(product => (
                 <div key={product.id} className={`group relative bg-white border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] md:hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] md:hover:scale-[1.02] rounded-2xl md:rounded-[24px] transition-all duration-300 p-3 md:p-5 flex ${viewMode === 'list' ? 'flex-row gap-4 md:gap-6 items-center' : 'flex-col'}`}>
                   

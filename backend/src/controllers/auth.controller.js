@@ -159,7 +159,7 @@ const verifyEmail = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    await authService.changePassword(req.user, currentPassword, newPassword);
+    await authService.changePassword(req.user, currentPassword, newPassword, _getMeta(req));
     res.status(200).json({
       success: true,
       message: 'Password successfully changed. Please log in again.',
@@ -181,8 +181,7 @@ const forgotPassword = async (req, res, next) => {
     await authService.forgotPassword(email);
     // Always respond with 200 regardless of whether the email exists
     res.status(200).json({
-      success: true,
-      message: 'If the email exists in our system, you will receive password reset instructions.',
+      message: 'If the email exists, you will receive a reset link.',
     });
   } catch (error) {
     next(error);
@@ -196,10 +195,9 @@ const forgotPassword = async (req, res, next) => {
 const resetPassword = async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
-    await authService.resetPassword(token, newPassword);
+    await authService.resetPassword(token, newPassword, _getMeta(req));
     res.status(200).json({
-      success: true,
-      message: 'Password has been reset successfully. Please log in with your new password.',
+      message: 'Password reset successful',
     });
   } catch (error) {
     next(error);

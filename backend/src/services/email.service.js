@@ -39,8 +39,20 @@ const EmailService = {
     });
   },
 
-  async sendPasswordChangedEmail(to, { name }) {
-    const html = await _renderTemplate('passwordChanged', { name });
+  async sendPasswordChangedEmail(to, { name, meta }) {
+    const ua = meta?.userAgent || '';
+    let device = 'Không xác định';
+    if (ua.includes('Windows')) device = 'Windows';
+    else if (ua.includes('Mac OS')) device = 'Mac OS';
+    else if (ua.includes('Linux')) device = 'Linux';
+    else if (ua.includes('Android')) device = 'Android';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) device = 'iOS';
+
+    const location = meta?.ipAddress || 'Không xác định';
+    const { format } = require('date-fns');
+    const time = format(new Date(), 'HH:mm dd/MM/yyyy');
+
+    const html = await _renderTemplate('passwordChanged', { name, device, location, time });
     await transporter.sendMail({
       from: FROM(),
       to,
@@ -50,11 +62,11 @@ const EmailService = {
   },
 
   async sendPasswordResetEmail(to, { name, resetUrl }) {
-    const html = await _renderTemplate('resetPassword', { name, resetUrl });
+    const html = await _renderTemplate('forgotPassword', { name, resetLink: resetUrl });
     await transporter.sendMail({
       from: FROM(),
       to,
-      subject: `[${APP()}] Đặt lại mật khẩu`,
+      subject: `[${APP()}] Đặt lại mật khẩu NexTech`,
       html,
     });
   },

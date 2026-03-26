@@ -3,7 +3,8 @@ import usePageTitle from '@/hooks/usePageTitle';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ShoppingBag, Mail, CheckCircle2, Loader2 } from 'lucide-react';
+import { ShoppingBag, Mail, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { z } from 'zod';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
@@ -12,30 +13,51 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { forgotPasswordSchema } from '@/schemas/auth.schema';
-import { useForgotPassword } from '@/features/auth/hooks/useAuth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { forgotPassword } from '@/api/auth.api';
+import PageBackButton from '@/components/common/PageBackButton';
+
+const formSchema = z.object({
+  email: z.string().email('Email không hợp lệ'),
+});
 
 const ForgotPasswordPage = () => {
   usePageTitle('Quên mật khẩu');
-  const [submitted, setSubmitted] = useState(false);
-  const { mutate: forgotPassword, isPending } = useForgotPassword();
+  
+  const [status, setStatus] = useState('form'); // 'form' | 'success'
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const form = useForm({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: { email: '' },
   });
 
-  const onSubmit = (values) => {
-    forgotPassword(values, {
-      onSuccess: () => setSubmitted(true),
-      onError: () => setSubmitted(true), // Always treat as success (anti-enumeration)
-    });
+  const onSubmit = async (values) => {
+    setLoading(true);
+    setServerError('');
+    try {
+      await forgotPassword(values.email);
+      // Dù API trả về gì cũng chuyển sang success (để không bị dò rỉ email)
+      setStatus('success');
+    } catch (error) {
+      // Chỉ check lỗi network
+      if (!error.response) {
+        setServerError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng của bạn.');
+      } else {
+        // Dù lỗi server (400, 404, 500), vẫn chuyển sang success (trừ khi có yeu cầu khac, 
+        // nhưng theo spec thì 200 hoặc server error -> success để anti-enum)
+        setStatus('success');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
+    <div className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
-        {/* ── Logo ─────────────────────────────────────────────────────────── */}
+        <PageBackButton className="mb-2 lg:hidden" />
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
             <ShoppingBag className="h-6 w-6" />
@@ -48,39 +70,35 @@ const ForgotPasswordPage = () => {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Quên mật khẩu</CardTitle>
             <CardDescription>
-              Nhập email đã đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu nếu email tồn tại.
+              Nhập email đã đăng ký. Hệ thống sẽ gửi link đặt lại mật khẩu.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* ── Submitted state (static message — anti-enumeration) ────── */}
-            {submitted ? (
+            {serverError && status === 'form' && (
+              <Alert variant="destructive" className="mb-5">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
+
+            {status === 'success' ? (
               <div className="space-y-6">
                 <div className="flex flex-col items-center gap-4 py-4 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700">
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
                   </div>
-                  <div className="space-y-1">
-                    <p className="font-semibold text-foreground">Yêu cầu đã được gửi</p>
+                  <div className="space-y-2">
+                    <p className="font-semibold text-foreground">Kiểm tra email của bạn</p>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Nếu email <strong>{form.getValues('email')}</strong> tồn tại trong hệ thống,
-                      chúng tôi đã gửi hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (kể cả thư mục Spam).
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Link có hiệu lực trong <strong>1 giờ</strong>.
+                      Nếu email tồn tại trong hệ thống, bạn sẽ nhận được link đặt lại mật khẩu trong vài phút.
                     </p>
                   </div>
                 </div>
-                <Button
-                  id="btn-back-to-login-after-forgot"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => { setSubmitted(false); form.reset(); }}
-                >
-                  Gửi lại với email khác
+                <Button asChild variant="outline" className="w-full h-12 text-base font-semibold">
+                  <Link to="/login">Quay lại đăng nhập</Link>
                 </Button>
               </div>
             ) : (
-              /* ── Form ──────────────────────────────────────────────────── */
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                   <FormField
@@ -93,10 +111,9 @@ const ForgotPasswordPage = () => {
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                              id="input-forgot-email"
                               type="email"
                               placeholder="email@example.com"
-                              className="pl-9"
+                              className="pl-9 h-12 text-base"
                               autoComplete="email"
                               {...field}
                             />
@@ -107,13 +124,8 @@ const ForgotPasswordPage = () => {
                     )}
                   />
 
-                  <Button
-                    id="btn-submit-forgot-password"
-                    type="submit"
-                    className="w-full"
-                    disabled={isPending}
-                  >
-                    {isPending ? (
+                  <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>
+                    {loading ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Đang xử lý...</>
                     ) : (
                       'Gửi link đặt lại mật khẩu'
@@ -123,13 +135,14 @@ const ForgotPasswordPage = () => {
               </Form>
             )}
 
-            {/* ── Back to login ─────────────────────────────────────────── */}
-            <p className="mt-5 text-center text-sm text-muted-foreground">
-              Nhớ mật khẩu rồi?{' '}
-              <Link to="/login" className="font-medium text-primary hover:underline">
-                Đăng nhập
-              </Link>
-            </p>
+            {status !== 'success' && (
+              <p className="mt-5 text-center text-sm text-muted-foreground">
+                Quay lại{' '}
+                <Link to="/login" className="font-medium text-primary hover:underline">
+                  Đăng nhập
+                </Link>
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

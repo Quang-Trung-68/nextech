@@ -54,7 +54,7 @@ function Combobox({ value, options, onChange, placeholder, disabled, error }) {
         type="button"
         disabled={disabled}
         onClick={() => setOpen(!open)}
-        className={`flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background md:text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
+        className={`flex h-12 w-full items-center justify-between whitespace-nowrap rounded-md border bg-transparent px-3 py-2 text-base shadow-sm ring-offset-background md:text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
           error ? 'border-destructive' : 'border-input'
         }`}
       >
@@ -70,7 +70,7 @@ function Combobox({ value, options, onChange, placeholder, disabled, error }) {
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
               autoFocus
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full rounded-md bg-transparent py-3 text-base md:text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Tìm kiếm..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}

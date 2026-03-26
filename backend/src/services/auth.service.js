@@ -249,8 +249,9 @@ const verifyEmail = async (rawToken) => {
  * Sends a "password changed" notification email.
  * @param {object} user         — from req.user
  * @param {string} newPassword  — plain text (validated by Zod before reaching here)
+ * @param {object} meta         — meta data { ipAddress, userAgent }
  */
-const changePassword = async (user, currentPassword, newPassword) => {
+const changePassword = async (user, currentPassword, newPassword, meta) => {
   // Guard: OAuth-only accounts have no password — use "set password" flow instead
   if (!user.password) {
     throw new AppError(
@@ -281,7 +282,7 @@ const changePassword = async (user, currentPassword, newPassword) => {
   ]);
 
   // Fire-and-forget notification
-  emailJob.dispatchPasswordChangedEmail(user.email, { name: user.name });
+  emailJob.dispatchPasswordChangedEmail(user.email, { name: user.name, meta });
 };
 
 // ─── Forgot / Reset Password ──────────────────────────────────────────────────
@@ -298,8 +299,10 @@ const forgotPassword = async (email) => {
   // Silently return — do not reveal whether the email exists
   if (!user) return;
 
-  const { rawToken, hashedToken } = generateToken();
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  const crypto = require('crypto');
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 
   // Delete any previous reset token for this user, then create the new one
   await prisma.$transaction([
@@ -309,6 +312,7 @@ const forgotPassword = async (email) => {
         userId: user.id,
         token: hashedToken,
         expiresAt,
+        used: false,
       },
     }),
   ]);
@@ -319,49 +323,53 @@ const forgotPassword = async (email) => {
 
 /**
  * Complete the password reset using the token from the email link.
- * On success:
- *  1. Marks the reset token as used
- *  2. Updates the user's password
- *  3. Revokes all active refresh tokens
- *  4. Sends a "password changed" notification email
  * @param {string} rawToken   — from request body
  * @param {string} newPassword — validated plain text password
+ * @param {object} meta        — meta data { ipAddress, userAgent }
  */
-const resetPassword = async (rawToken, newPassword) => {
-  const hashed = hashToken(rawToken);
+const resetPassword = async (rawToken, newPassword, meta) => {
+  const crypto = require('crypto');
+  const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
 
   const tokenRecord = await prisma.passwordResetToken.findUnique({
-    where: { token: hashed },
+    where: { token: hashedToken },
     include: { user: true },
   });
 
-  if (!tokenRecord || tokenRecord.used) {
-    throw new AppError('Password reset token is invalid or already used.', 400, ERROR_CODES.AUTH.TOKEN_INVALID);
+  if (!tokenRecord) {
+    throw new AppError('Invalid token', 400, ERROR_CODES.AUTH.TOKEN_INVALID);
+  }
+
+  if (tokenRecord.used) {
+    throw new AppError('Token has already been used', 400, ERROR_CODES.AUTH.TOKEN_INVALID);
   }
 
   if (tokenRecord.expiresAt < new Date()) {
-    throw new AppError('Password reset token has expired. Please request again.', 400, ERROR_CODES.AUTH.TOKEN_EXPIRED);
+    throw new AppError('Token has expired', 400, ERROR_CODES.AUTH.TOKEN_EXPIRED);
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   await prisma.$transaction([
-    // 1. Mark token as used
-    prisma.passwordResetToken.update({
-      where: { id: tokenRecord.id },
-      data: { used: true },
-    }),
-    // 2. Update password
+    // a. Update User: { password: hashedPassword }
     prisma.user.update({
       where: { id: tokenRecord.userId },
       data: { password: hashedPassword },
     }),
-    // 3. Revoke all active refresh tokens
+    // b. Update PasswordResetToken: { used: true }
+    prisma.passwordResetToken.update({
+      where: { id: tokenRecord.id },
+      data: { used: true },
+    }),
+    // c. DeleteMany RefreshToken của userId này
     prisma.refreshToken.deleteMany({ where: { userId: tokenRecord.userId } }),
   ]);
 
   // Fire-and-forget notification
-  emailJob.dispatchPasswordChangedEmail(tokenRecord.user.email, { name: tokenRecord.user.name });
+  emailJob.dispatchPasswordChangedEmail(tokenRecord.user.email, { 
+    name: tokenRecord.user.name, 
+    meta 
+  });
 };
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────

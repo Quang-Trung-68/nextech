@@ -255,10 +255,20 @@ const ProductDetailPage = () => {
 
           <hr className="bg-border my-2" />
 
-          {/* Description Markdown text (or simple text) */}
-          <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+          {/* Description text */}
+          <div className="hidden md:block text-muted-foreground leading-relaxed whitespace-pre-wrap">
             {description}
           </div>
+          <details className="md:hidden group pb-4">
+            <summary className="flex items-center justify-between text-apple-dark font-semibold cursor-pointer list-none py-2 text-base bg-white select-none">
+              <span>Mô tả sản phẩm</span>
+              <Plus className="w-5 h-5 text-apple-secondary group-open:hidden" />
+              <Minus className="w-5 h-5 text-apple-blue hidden group-open:block" />
+            </summary>
+            <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap pt-3 text-sm animate-in slide-in-from-top-2">
+              {description}
+            </div>
+          </details>
 
           {/* Action Row Add To Cart */}
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-[#d2d2d7] z-50 md:static md:p-0 md:bg-transparent md:border-0 md:backdrop-blur-none md:pt-6 space-y-3 md:space-y-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] md:shadow-none">

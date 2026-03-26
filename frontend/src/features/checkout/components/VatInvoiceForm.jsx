@@ -21,7 +21,7 @@ const FormField = ({ label, required, error, children }) => (
 
 const inputClass = (hasError) =>
   cn(
-    'flex h-10 w-full rounded-md border bg-white px-3 py-2 text-sm placeholder:text-muted-foreground',
+    'flex h-12 w-full rounded-md border bg-white px-3 py-2 text-base md:text-sm placeholder:text-muted-foreground',
     'focus:outline-none focus:ring-2 focus:ring-apple-blue transition-shadow',
     hasError ? 'border-destructive focus:ring-destructive' : 'border-input'
   );

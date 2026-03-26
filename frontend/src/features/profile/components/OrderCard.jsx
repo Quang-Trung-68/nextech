@@ -161,14 +161,8 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
               {/* Cancel button — only for PENDING */}
               {currentStatus === 'PENDING' && (
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 rounded-full text-sm font-medium text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600"
-                    >
-                      Huỷ đơn hàng
-                    </Button>
+                  <AlertDialogTrigger className="h-9 px-4 rounded-full text-sm font-medium text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600 transition-colors inline-flex items-center justify-center">
+                    Huỷ đơn hàng
                   </AlertDialogTrigger>
                   <AlertDialogContent className="rounded-3xl">
                     <AlertDialogHeader>

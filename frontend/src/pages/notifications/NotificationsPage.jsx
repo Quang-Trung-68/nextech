@@ -6,6 +6,7 @@ import { vi } from 'date-fns/locale';
 import { useNotifications } from '@/hooks/useNotifications';
 import useAuthStore from '@/stores/useAuthStore';
 import usePageTitle from '@/hooks/usePageTitle';
+import PageBackButton from '@/components/common/PageBackButton';
 
 const getIconForType = (type) => {
   const base = 'h-[22px] w-[22px]';
@@ -82,8 +83,9 @@ const NotificationsPage = () => {
   return (
     <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 font-sans bg-white min-h-screen">
       {/* Page header */}
-      <div className="mb-8 mt-4 flex items-start justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
+          <PageBackButton className="mb-4" />
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-1">
             Thông báo
           </h1>
@@ -96,9 +98,9 @@ const NotificationsPage = () => {
         {unreadCount > 0 && (
           <button
             onClick={() => markAllAsRead()}
-            className="flex items-center gap-2 text-sm text-apple-blue hover:text-apple-blue/80 font-semibold transition-colors bg-blue-50 px-4 py-2 rounded-full mt-1"
+            className="flex items-center justify-center gap-2 text-[15px] sm:text-sm text-apple-blue hover:text-apple-blue/80 font-bold sm:font-semibold transition-colors bg-blue-50 px-6 py-2 rounded-full mt-1 min-h-[44px] sm:w-auto self-start shadow-sm"
           >
-            <CheckCheck size={16} />
+            <CheckCheck size={18} />
             Đánh dấu tất cả đã đọc
           </button>
         )}
@@ -127,7 +129,7 @@ const NotificationsPage = () => {
             </p>
             <Link
               to="/products"
-              className="px-6 py-3 rounded-full bg-apple-blue text-white font-semibold text-sm hover:bg-apple-blue/90 transition-colors"
+              className="px-8 py-3 rounded-full bg-apple-blue text-white font-bold text-[15px] sm:text-sm hover:bg-apple-blue/90 transition-colors min-h-[44px] inline-flex items-center justify-center shadow-md active:scale-95"
             >
               Khám phá sản phẩm
             </Link>

@@ -30,7 +30,7 @@ export default function SupportHero({ searchQuery, onSearch }) {
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
             placeholder="Tìm kiếm câu hỏi..."
-            className="w-full h-[52px] pl-11 pr-5 rounded-[14px] border border-[#d2d2d7] bg-white text-[15px] text-[#1d1d1f] shadow-sm outline-none placeholder:text-[#86868b] transition-all duration-200 focus:border-[#0071e3] focus:shadow-[0_0_0_4px_rgba(0,113,227,0.15)]"
+            className="w-full h-[52px] pl-11 pr-5 rounded-[14px] border border-[#d2d2d7] bg-white text-base text-[#1d1d1f] shadow-sm outline-none placeholder:text-[#86868b] transition-all duration-200 focus:border-[#0071e3] focus:shadow-[0_0_0_4px_rgba(0,113,227,0.15)]"
           />
         </div>
       </div>

@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import RegisterForm from '@/features/auth/components/RegisterForm';
+import PageBackButton from '@/components/common/PageBackButton';
 
 const RegisterPage = () => {
   usePageTitle('Đăng ký');
@@ -21,8 +22,9 @@ const RegisterPage = () => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-6 md:py-12">
+    <div className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-4 py-6 md:py-12">
       <div className="w-full max-w-md space-y-6">
+        <PageBackButton className="mb-2 lg:hidden" />
         {/* ── Logo / App name ─────────────────────────────────────────── */}
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">

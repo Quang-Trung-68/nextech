@@ -19,6 +19,7 @@ import {
   AlertCircle,
   PenLine,
   CheckCircle,
+  Copy,
 } from 'lucide-react';
 import WriteReviewModal from '@/features/reviews/WriteReviewModal';
 import axiosInstance from '@/lib/axios';
@@ -93,6 +94,11 @@ const OrderDetailPage = () => {
     });
   };
 
+  const handleCopyOrderId = () => {
+    navigator.clipboard.writeText(id.toUpperCase());
+    toast.success('Đã sao chép mã đơn hàng');
+  };
+
   if (isLoading) {
     return (
       <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-12 space-y-8">
@@ -132,7 +138,7 @@ const OrderDetailPage = () => {
             Cảm ơn bạn đã đặt hàng!
           </h1>
           <p className="text-apple-secondary text-base lg:text-lg w-full max-w-xl mb-8 leading-relaxed">
-            Đơn hàng <span className="font-bold text-apple-dark font-mono tracking-tight">#{id.toUpperCase()}</span> của bạn đã được tiếp nhận và xử lý. 
+            Đơn hàng <span className="font-bold text-apple-dark font-mono tracking-tight hidden sm:inline">#{id.toUpperCase()}</span><span className="font-bold text-apple-dark font-mono tracking-tight sm:hidden">#{id.substring(0, 8).toUpperCase()}...</span> của bạn đã được tiếp nhận và xử lý. 
             Chúng tôi sẽ cập nhật trạng thái đơn hàng qua email cho bạn.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -150,12 +156,19 @@ const OrderDetailPage = () => {
       {!isSuccessPage && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full -ml-2 text-muted-foreground w-8 h-8">
-                <ArrowLeft className="w-4 h-4" />
+            <div className="flex items-center gap-1 sm:gap-3 mb-2">
+              <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full -ml-2 text-muted-foreground min-w-[44px] min-h-[44px]">
+                <ArrowLeft className="w-5 h-5" />
               </Button>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-apple-dark tracking-tight shrink-0 font-mono">
-                Đơn hàng #{id.toUpperCase()}
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-apple-dark tracking-tight shrink-0 font-mono flex items-center gap-2">
+                Đơn hàng <span className="hidden sm:inline">#{id.toUpperCase()}</span><span className="sm:hidden">#{id.substring(0, 8).toUpperCase()}...</span>
+                <button 
+                  onClick={handleCopyOrderId} 
+                  className="p-1.5 text-apple-secondary hover:text-apple-blue hover:bg-blue-50 rounded-md transition-colors" 
+                  title="Sao chép mã"
+                >
+                  <Copy size={20} />
+                </button>
               </h1>
             </div>
             <div className="flex items-center text-sm text-apple-secondary ml-10 gap-4">
@@ -231,7 +244,7 @@ const OrderDetailPage = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-full text-xs font-medium px-4 border-blue-200 text-apple-blue hover:bg-blue-50"
+                            className="min-h-[44px] rounded-full text-sm font-medium px-4 border-blue-200 text-apple-blue hover:bg-blue-50"
                             onClick={() =>
                               handleOpenReviewModal({
                                 orderItemId: item.id,
@@ -258,7 +271,7 @@ const OrderDetailPage = () => {
             <div className="mt-8 pt-8 border-t flex justify-end">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border h-9 shadow-sm px-6 text-destructive border-red-100 bg-red-50 hover:bg-red-100 hover:text-red-700 font-semibold">
+                  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border shadow-sm px-6 text-destructive border-red-100 bg-red-50 hover:bg-red-100 hover:text-red-700 font-semibold h-12 md:h-10 text-base md:text-sm">
                     Huỷ đơn hàng này
                   </button>
                 </AlertDialogTrigger>
@@ -270,11 +283,11 @@ const OrderDetailPage = () => {
                       Sẽ không thể hoàn tác sau khi xác nhận.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter className="mt-6">
-                    <AlertDialogCancel className="rounded-full px-6 font-medium border-[#d2d2d7]">Giữ lại đơn hàng</AlertDialogCancel>
+                  <AlertDialogFooter className="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-2">
+                    <AlertDialogCancel className="rounded-full px-6 font-medium border-[#d2d2d7] h-12 md:h-10 mt-0">Giữ lại đơn hàng</AlertDialogCancel>
                     <AlertDialogAction 
                       onClick={handleCancelOrder} 
-                      className="bg-destructive hover:bg-destructive/90 text-white rounded-full px-6 font-semibold"
+                      className="bg-destructive hover:bg-destructive/90 text-white rounded-full px-6 font-semibold h-12 md:h-10"
                       disabled={isCancelling}
                     >
                       {isCancelling ? 'Đang huỷ...' : 'Vâng, Huỷ đơn hàng'}

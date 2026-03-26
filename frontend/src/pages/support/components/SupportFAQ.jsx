@@ -89,10 +89,10 @@ export default function SupportFAQ({ searchQuery, activeTab, onTabChange }) {
             <button
               key={tab.key}
               onClick={() => onTabChange(tab.key)}
-              className={`px-5 py-2 rounded-full text-[14px] font-medium transition-all duration-200 ${
+              className={`px-5 min-h-[44px] rounded-full text-[14px] font-medium transition-all duration-200 inline-flex items-center justify-center ${
                 activeTab === tab.key
-                  ? 'bg-[#0071e3] text-white shadow-sm'
-                  : 'bg-white text-[#1d1d1f] border border-[#d2d2d7] hover:border-[#0071e3] hover:text-[#0071e3]'
+                  ? 'bg-apple-blue text-white shadow-sm border-transparent'
+                  : 'bg-white text-apple-dark border border-[#d2d2d7] hover:border-apple-blue hover:text-apple-blue'
               }`}
             >
               {tab.label}

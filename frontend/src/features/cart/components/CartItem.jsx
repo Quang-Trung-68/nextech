@@ -15,11 +15,19 @@ import {
 import { formatVND } from '@/utils/price';
 import { Link } from 'react-router-dom';
 
+const getOptimizedImage = (url, width) => {
+  if (!url) return '/placeholder.png';
+  if (url.includes('cloudinary.com') && !url.includes('upload/w_')) {
+    return url.replace('/upload/', `/upload/w_${width},f_auto,q_auto/`);
+  }
+  return url;
+};
+
 export function CartItem({ item, onUpdateQuantity, onRemove }) {
   const { productId, name, price, finalPrice, discountPercent, image, stock, quantity, lineTotal, subtotal } = item;
   const displayLineTotal = lineTotal ?? subtotal;
   const displayFinalPrice = finalPrice ?? price;
-  const itemImage = image || '/placeholder.png'; // Fallback image
+  const itemImage = getOptimizedImage(image, 120);
 
   const handleInputChange = (e) => {
     let val = parseInt(e.target.value);
@@ -41,65 +49,65 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 p-4 bg-white rounded-xl border border-border">
-      <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden border border-border mx-auto sm:mx-0">
-        <img src={itemImage} alt={name} className="w-full h-full object-cover" />
+    <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-white rounded-xl lg:rounded-2xl border border-border transition-all hover:border-[#d2d2d7]">
+      <div className="w-16 h-16 sm:w-24 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-border bg-white flex items-center justify-center">
+        <img 
+          src={itemImage} 
+          alt={name} 
+          className="w-full h-full object-contain p-1" 
+          loading="lazy" 
+          width={120} 
+          height={120} 
+        />
       </div>
-      <div className="flex flex-col flex-1 justify-between">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div>
-            <Link to={`/products/all/${productId}`} className="font-semibold text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
+      <div className="flex flex-col flex-1 justify-between gap-2">
+        <div className="flex justify-between items-start gap-4">
+          <div className="space-y-1">
+            <Link to={`/products/all/${productId}`} className="font-semibold text-sm sm:text-base text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
               {name}
             </Link>
-            {/* Giá: gạch ngang nếu có giảm giá */}
-            <div className="mt-1">
+            <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
               {discountPercent > 0 ? (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm line-through text-gray-400">{formatVND(price)}</span>
-                  <span className="font-bold text-lg text-red-500">{formatVND(displayFinalPrice)}</span>
-                </div>
+                <>
+                  <span className="font-bold text-sm sm:text-base text-red-500">{formatVND(displayFinalPrice)}</span>
+                  <span className="text-[11px] sm:text-sm line-through text-gray-400">{formatVND(price)}</span>
+                </>
               ) : (
-                <div className="font-bold text-lg text-primary">{formatVND(displayFinalPrice)}</div>
+                <span className="font-bold text-sm sm:text-base text-primary">{formatVND(displayFinalPrice)}</span>
               )}
             </div>
           </div>
           
-          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
-            <div className="font-bold text-apple-dark">
-              {formatVND(displayLineTotal)}
-            </div>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button type="button" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 text-destructive hover:text-destructive hover:bg-destructive/10 px-2 mt-auto">
-                  <Trash2 className="w-4 h-4 mr-1.5" /> <span className="hidden sm:inline">Xóa</span>
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Xóa sản phẩm?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Bạn có chắc chắn muốn xóa "{name}" khỏi giỏ hàng?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Hủy</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white">
-                    Xóa
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button type="button" className="inline-flex items-center justify-center shrink-0 min-h-[44px] min-w-[44px] -mt-1 -mr-1 text-muted-foreground hover:text-destructive transition-colors rounded-full rounded-tr-xl hover:bg-destructive/10 border-0 focus-visible:outline-none">
+                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Xóa sản phẩm?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Bạn có chắc chắn muốn xóa "{name}" khỏi giỏ hàng?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="min-h-[44px]">Hủy</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white min-h-[44px]">
+                  Xóa
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
-        <div className="flex items-center gap-4 mt-4">
-          <div className="flex items-center h-9 bg-muted/50 rounded-lg p-1 border">
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex items-center rounded-lg bg-muted/40 border overflow-hidden">
             {quantity <= 1 ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button type="button" className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-full w-8 text-muted-foreground hover:text-destructive shrink-0 rounded-md">
-                    <Trash2 className="w-3.5 h-3.5" />
+                  <button type="button" className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] w-11 h-11 sm:h-10 sm:w-10 shrink-0 text-muted-foreground hover:text-destructive hover:bg-accent transition-colors">
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -110,27 +118,26 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white">
+                    <AlertDialogCancel className="min-h-[44px]">Hủy</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white min-h-[44px]">
                       Xóa
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-full w-8 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
+              <button 
+                type="button"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] w-11 h-11 sm:h-10 sm:w-10 shrink-0 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 onClick={decreaseQuantity}
               >
-                <Minus className="w-3.5 h-3.5" />
-              </Button>
+                <Minus className="w-4 h-4" />
+              </button>
             )}
 
             <Input 
               type="number" 
-              className="h-full w-12 border-0 bg-transparent text-center font-semibold text-sm remove-arrow px-0 outline-none focus-visible:ring-0 shadow-none font-mono"
+              className="h-11 sm:h-10 w-12 border-0 bg-transparent text-center font-semibold text-base px-0 remove-arrow outline-none focus-visible:ring-0 shadow-none font-mono"
               value={quantity}
               onChange={handleInputChange}
               onBlur={(e) => {
@@ -142,20 +149,26 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
               max={stock}
             />
 
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-full w-8 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
+            <button 
+              type="button"
+              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] w-11 h-11 sm:h-10 sm:w-10 shrink-0 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
               onClick={increaseQuantity}
               disabled={quantity >= stock}
             >
-              <Plus className="w-3.5 h-3.5" />
-            </Button>
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
           
-          <span className="text-xs text-muted-foreground">
-            Sẵn có: {stock}
-          </span>
+          <div className="text-right">
+            <p className="font-bold text-sm sm:text-base text-apple-dark">
+              {formatVND(displayLineTotal)}
+            </p>
+            {stock <= 10 && (
+              <span className="text-[11px] sm:text-xs text-muted-foreground block mt-0.5">
+                Còn lại {stock}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

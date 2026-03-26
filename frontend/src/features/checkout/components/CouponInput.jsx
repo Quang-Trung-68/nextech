@@ -93,7 +93,7 @@ export function CouponInput({ orderAmount, onApply, onRemove, appliedCoupon }) {
             }}
             disabled={isPending}
             className={cn(
-              'pl-9 font-mono tracking-widest',
+              'h-12 text-base md:text-sm pl-9 font-mono tracking-widest',
               couponError && 'border-red-400 focus-visible:ring-red-300'
             )}
           />
@@ -104,7 +104,7 @@ export function CouponInput({ orderAmount, onApply, onRemove, appliedCoupon }) {
           size="sm"
           onClick={() => apply()}
           disabled={isPending || !inputValue.trim()}
-          className="flex-shrink-0 min-w-[88px]"
+          className="flex-shrink-0 min-w-[88px] h-12"
         >
           {isPending ? (
             <Loader2 className="w-4 h-4 animate-spin" />

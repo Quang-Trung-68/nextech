@@ -33,7 +33,7 @@ const OAuthCallbackPage   = lazy(() => import('@/pages/auth/OAuthCallbackPage'))
 // ─── Nhóm 2 Login, chưa verify được ─────────────────────────────────────────
 const VerifyEmailNoticePage = lazy(() => import('@/pages/auth/VerifyEmailNoticePage'));
 const FavoritesPage         = lazy(() => import('@/pages/favorites/FavoritesPage'));
-const NotificationsPage     = lazy(() => import('@/pages/NotificationsPage'));
+const NotificationsPage     = lazy(() => import('@/pages/notifications/NotificationsPage'));
 
 // ─── Nhóm 3 Login + Email Verified ───────────────────────────────────────────
 const CartPage             = lazy(() => import('@/pages/cart/CartPage'));

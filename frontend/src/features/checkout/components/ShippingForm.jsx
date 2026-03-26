@@ -14,7 +14,7 @@ export function ShippingForm({ register, errors, control }) {
           <Input 
             {...register('shippingAddress.fullName')} 
             placeholder="Ví dụ: Nguyễn Văn A"
-            className={errors.shippingAddress?.fullName ? "border-destructive focus-visible:ring-destructive" : ""}
+            className={errors.shippingAddress?.fullName ? "h-12 text-base md:text-sm border-destructive focus-visible:ring-destructive" : "h-12 text-base md:text-sm"}
           />
           {errors.shippingAddress?.fullName && (
             <p className="text-xs text-destructive mt-1">{errors.shippingAddress.fullName.message}</p>
@@ -28,7 +28,7 @@ export function ShippingForm({ register, errors, control }) {
             type="tel"
             {...register('shippingAddress.phone')} 
             placeholder="Ví dụ: 0912345678"
-            className={errors.shippingAddress?.phone ? "border-destructive focus-visible:ring-destructive" : ""}
+            className={errors.shippingAddress?.phone ? "h-12 text-base md:text-sm border-destructive focus-visible:ring-destructive" : "h-12 text-base md:text-sm"}
           />
           {errors.shippingAddress?.phone && (
             <p className="text-xs text-destructive mt-1">{errors.shippingAddress.phone.message}</p>
@@ -64,7 +64,7 @@ export function ShippingForm({ register, errors, control }) {
         <Input 
           {...register('shippingAddress.addressLine')} 
           placeholder="Ví dụ: 123 Lê Lợi"
-          className={errors.shippingAddress?.addressLine ? "border-destructive focus-visible:ring-destructive" : ""}
+          className={errors.shippingAddress?.addressLine ? "h-12 text-base md:text-sm border-destructive focus-visible:ring-destructive" : "h-12 text-base md:text-sm"}
         />
         {errors.shippingAddress?.addressLine && (
           <p className="text-xs text-destructive mt-1">{errors.shippingAddress.addressLine.message}</p>

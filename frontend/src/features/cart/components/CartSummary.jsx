@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { formatVND } from '@/utils/price';
 import { Link } from 'react-router-dom';
+import { ChevronDown, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,53 +16,83 @@ import {
 
 export function CartSummary({ totalItems, totalPrice, onClearCart }) {
   return (
-    <div className="w-full bg-white lg:p-6 lg:rounded-2xl lg:border lg:border-[#d2d2d7] lg:sticky lg:top-24 space-y-3 lg:space-y-6">
-      <h2 className="text-xl font-bold text-apple-dark">Tóm tắt đơn hàng</h2>
-      
-      <div className="space-y-3 text-sm">
-        <div className="flex justify-between text-muted-foreground">
-          <span>Tổng số lượng:</span>
-          <span className="font-medium text-foreground">{totalItems} sản phẩm</span>
+    <div className="w-full bg-white lg:p-6 lg:rounded-2xl lg:border lg:border-[#d2d2d7] flex flex-col">
+      {/* Mobile Collapsible */}
+      <details className="group lg:hidden" open>
+        <summary className="text-xl font-bold text-apple-dark list-none flex justify-between items-center cursor-pointer min-h-[44px]">
+          Tóm tắt đơn hàng
+          <ChevronDown className="w-5 h-5 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+        <div className="pt-4 pb-2 space-y-3 text-sm animate-in slide-in-from-top-2">
+          <div className="flex justify-between mt-1 text-muted-foreground">
+            <span>Tổng số lượng:</span>
+            <span className="font-medium text-foreground">{totalItems} sản phẩm</span>
+          </div>
+          <div className="h-px bg-border w-full" />
+          <div className="flex justify-between items-center text-apple-dark">
+            <span className="font-semibold">Tạm tính:</span>
+            <span className="text-lg font-bold text-primary">{formatVND(totalPrice)}</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground italic text-right mt-1">
+            (Phí vận chuyển tính ở bước tiếp theo)
+          </p>
         </div>
-        <div className="hidden lg:block h-px bg-border w-full" />
-        <div className="flex justify-between items-center text-apple-dark">
-          <span className="font-semibold">Tạm tính:</span>
-          <span className="text-2xl font-bold text-primary">{formatVND(totalPrice)}</span>
+      </details>
+
+      {/* Desktop static header & details */}
+      <div className="hidden lg:block space-y-6">
+        <h2 className="text-xl font-bold text-apple-dark">Tóm tắt đơn hàng</h2>
+        <div className="space-y-3 text-sm">
+          <div className="flex justify-between text-muted-foreground">
+            <span>Tổng số lượng:</span>
+            <span className="font-medium text-foreground">{totalItems} sản phẩm</span>
+          </div>
+          <div className="h-px bg-border w-full" />
+          <div className="flex justify-between items-center text-apple-dark">
+            <span className="font-semibold">Tạm tính:</span>
+            <span className="text-2xl font-bold text-primary">{formatVND(totalPrice)}</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground italic text-right mt-1">
+            (Phí vận chuyển tính ở bước tiếp theo)
+          </p>
         </div>
-        <p className="text-[11px] text-muted-foreground italic text-right mt-1">
-          (Phí vận chuyển tính ở bước tiếp theo)
-        </p>
       </div>
 
-      <div className="space-y-3 pt-2">
+      {/* Action buttons */}
+      <div className="fixed bottom-[env(safe-area-inset-bottom)] left-0 right-0 p-4 border-t border-[#d2d2d7] bg-white/95 backdrop-blur-md z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] lg:static lg:p-0 lg:border-0 lg:shadow-none lg:bg-transparent lg:z-auto lg:mt-6 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <div className="flex justify-between items-center lg:hidden mb-3">
+          <span className="text-sm font-semibold text-apple-dark">Tổng cộng:</span>
+          <span className="text-xl font-bold text-primary">{formatVND(totalPrice)}</span>
+        </div>
+
         <Button asChild className="w-full font-semibold h-12 rounded-xl bg-apple-blue hover:bg-apple-blue/90 shadow-sm text-base active:scale-[0.98] transition-all">
-          <Link to="/checkout">Tiến hành thanh toán</Link>
+          <Link to="/checkout" className="flex items-center justify-center">Tiến hành thanh toán</Link>
         </Button>
-        
-        <AlertDialog>
-          <div className="w-full flex justify-center lg:mt-4">
-            <AlertDialogTrigger asChild>
-              <button className="text-sm font-medium text-destructive hover:underline opacity-80 hover:opacity-100 transition-opacity">
-                Xóa tất cả
-              </button>
-            </AlertDialogTrigger>
-          </div>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Xóa tất cả giỏ hàng?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Bạn có chắc chắn muốn xóa toàn bộ sản phẩm trong giỏ hàng? Hành động này không thể hoàn tác.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Hủy</AlertDialogCancel>
-              <AlertDialogAction onClick={onClearCart} className="bg-destructive hover:bg-destructive/90 text-white">
-                Xóa tất cả
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
+
+      <AlertDialog>
+        <div className="w-full flex justify-center mt-6 lg:mt-4">
+          <AlertDialogTrigger asChild>
+            <button className="text-sm font-medium text-destructive hover:underline opacity-80 hover:opacity-100 transition-opacity min-h-[44px] px-4 flex items-center justify-center">
+              <Trash2 className="w-4 h-4 mr-1.5" /> Xóa tất cả giỏ hàng
+            </button>
+          </AlertDialogTrigger>
+        </div>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa tất cả giỏ hàng?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa toàn bộ sản phẩm trong giỏ hàng? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="min-h-[44px]">Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={onClearCart} className="bg-destructive hover:bg-destructive/90 text-white min-h-[44px]">
+              Xóa tất cả
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

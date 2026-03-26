@@ -1,24 +1,29 @@
-
 import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useMyFavorites, FavoriteButton } from '@/features/favorites';
+import PageBackButton from '@/components/common/PageBackButton';
+
+const getOptimizedImage = (url, width) => {
+  if (!url) return 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=400';
+  if (url.includes('cloudinary.com') && !url.includes('upload/w_')) {
+    return url.replace('/upload/', `/upload/w_${width},f_auto,q_auto/`);
+  }
+  return url;
+};
 
 const FavoriteProductCard = ({ product }) => {
   const { id, name, images, finalPrice, price, discountPercent, brand } = product;
 
-  const firstImage =
-    images?.[0]?.url ||
-    'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&q=80&w=400';
-
+  const firstImage = getOptimizedImage(images?.[0]?.url, 400);
   const displayPrice = finalPrice ?? price;
 
   return (
-    <div className="group relative bg-white border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-[1.02] rounded-[24px] transition-all duration-300 p-5 flex flex-col">
+    <div className="group relative bg-white border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-[1.02] rounded-[24px] transition-all duration-300 p-4 sm:p-5 flex flex-col h-full">
       {/* Image */}
       <Link
         to={`/products/all/${id}`}
-        className="relative bg-white p-6 rounded-xl overflow-hidden block w-full aspect-square mb-4"
+        className="relative bg-white p-4 sm:p-6 rounded-xl overflow-hidden flex items-center justify-center w-full aspect-square mb-4"
       >
         {/* Badges */}
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
@@ -34,7 +39,6 @@ const FavoriteProductCard = ({ product }) => {
           )}
         </div>
 
-        {/* Bán chạy Badge overlay (thay thế vị trí cũ của FavoriteButton) */}
         {product.isBestseller && (
           <div className="absolute top-2 right-2 z-10">
             <span className="bg-orange-500 text-white font-bold px-2.5 py-0.5 rounded shadow-sm text-[11px] uppercase tracking-wider">
@@ -52,35 +56,37 @@ const FavoriteProductCard = ({ product }) => {
       </Link>
 
       {/* Info */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 pb-1">
         <Link to={`/products/all/${id}`} className="block">
-          <h3 className="font-semibold text-[15px] text-apple-dark tracking-tight mb-1 group-hover:text-apple-blue transition-colors line-clamp-2">
+          <h3 className="font-semibold text-sm sm:text-[15px] text-apple-dark tracking-tight mb-1 group-hover:text-apple-blue transition-colors line-clamp-2">
             {name}
           </h3>
           {brand && (
-            <p className="text-[13px] text-apple-secondary mb-3 line-clamp-1">{brand}</p>
+            <p className="text-xs sm:text-[13px] text-apple-secondary mb-3 line-clamp-1">{brand}</p>
           )}
         </Link>
 
-        <div className="mt-auto flex items-end justify-between gap-2">
-          <div className="flex items-end gap-2">
+        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+          <div className="flex flex-wrap items-end gap-1.5 sm:gap-2">
             {discountPercent > 0 ? (
               <>
-                <span className="text-sm line-through text-gray-400">
+                <span className="text-xs sm:text-sm line-through text-gray-400">
                   {price?.toLocaleString('vi-VN')}đ
                 </span>
-                <span className="font-semibold text-red-500 text-base">
+                <span className="font-semibold text-red-500 text-sm sm:text-base">
                   {displayPrice?.toLocaleString('vi-VN')}đ
                 </span>
               </>
             ) : (
-              <span className="font-semibold text-base text-apple-dark">
+              <span className="font-semibold text-sm sm:text-base text-apple-dark">
                 {displayPrice?.toLocaleString('vi-VN')}đ
               </span>
             )}
           </div>
-          <div className="relative z-10">
-            <FavoriteButton product={{ ...product, isFavorited: true }} size="sm" />
+          <div className="relative z-10 -mr-2 -mb-2">
+            <div className="p-2">
+              <FavoriteButton product={{ ...product, isFavorited: true }} size="sm" />
+            </div>
           </div>
         </div>
       </div>
@@ -89,11 +95,11 @@ const FavoriteProductCard = ({ product }) => {
 };
 
 const SkeletonCard = () => (
-  <div className="rounded-2xl bg-[#f5f5f7] animate-pulse p-4 flex flex-col gap-3">
+  <div className="rounded-[24px] bg-[#f5f5f7] animate-pulse p-4 sm:p-5 flex flex-col gap-3 h-full">
     <div className="aspect-square w-full rounded-xl bg-[#e8e8ed]" />
     <div className="h-4 w-3/4 rounded-md bg-[#e8e8ed]" />
     <div className="h-4 w-1/2 rounded-md bg-[#e8e8ed]" />
-    <div className="h-5 w-1/3 rounded-md bg-[#e8e8ed]" />
+    <div className="h-5 w-1/3 rounded-md bg-[#e8e8ed] mt-auto" />
   </div>
 );
 
@@ -103,10 +109,11 @@ const FavoritesPage = () => {
   const { data: favorites = [], isLoading } = useMyFavorites();
 
   return (
-    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 font-sans bg-white min-h-[60vh]">
+    <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8 py-8 md:py-12 font-sans bg-white min-h-svh flex flex-col">
       {/* Header */}
-      <div className="mb-8 mt-4">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-2">
+      <div className="mb-6 lg:mb-8 mt-2 lg:mt-0 flex-shrink-0">
+        <PageBackButton className="mb-4 lg:hidden" />
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-apple-dark mb-1 sm:mb-2">
           Sản phẩm yêu thích
         </h1>
         {!isLoading && favorites.length > 0 && (
@@ -116,7 +123,7 @@ const FavoritesPage = () => {
 
       {/* Loading */}
       {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 flex-1">
           {Array.from({ length: 8 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -125,11 +132,11 @@ const FavoritesPage = () => {
 
       {/* Empty state */}
       {!isLoading && favorites.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-28 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
           <div className="w-20 h-20 rounded-full bg-[#f5f5f7] flex items-center justify-center mb-6">
             <Heart size={40} className="text-[#d2d2d7]" strokeWidth={1.5} />
           </div>
-          <p className="text-xl font-semibold text-apple-dark mb-2">
+          <p className="text-lg sm:text-xl font-semibold text-apple-dark mb-2">
             Bạn chưa có sản phẩm yêu thích
           </p>
           <p className="text-apple-secondary text-sm mb-8 max-w-xs">
@@ -137,7 +144,7 @@ const FavoritesPage = () => {
           </p>
           <Link
             to="/products"
-            className="px-6 py-3 rounded-full bg-apple-blue text-white font-semibold text-sm hover:bg-apple-blue/90 transition-colors"
+            className="px-6 py-3 rounded-full bg-apple-blue text-white font-semibold text-base min-h-[44px] flex items-center justify-center hover:bg-apple-blue/90 transition-colors"
           >
             Khám phá ngay
           </Link>
@@ -146,7 +153,7 @@ const FavoritesPage = () => {
 
       {/* Product grid */}
       {!isLoading && favorites.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 flex-1">
           {favorites.map((product) => (
             <FavoriteProductCard key={product.id} product={product} />
           ))}

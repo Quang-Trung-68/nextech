@@ -25,10 +25,10 @@ const MobileDrawer = ({ isOpen, onClose, navLinks, isAuthenticated, clearAuth })
   return (
     <>
       <div 
-        className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 z-[9999] backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="fixed top-0 right-0 h-full w-4/5 max-w-sm bg-white z-50 shadow-2xl flex flex-col pt-6 pb-6 px-6 animate-in slide-in-from-right overflow-y-auto">
+      <div className="fixed top-0 right-0 h-full w-4/5 max-w-sm bg-white z-[9999] shadow-2xl flex flex-col pt-6 pb-6 px-6 animate-in slide-in-from-right overflow-y-auto">
         <div className="flex items-center justify-between mb-8">
           <span className="text-xl font-bold tracking-tight text-apple-dark">Menu</span>
           <button 

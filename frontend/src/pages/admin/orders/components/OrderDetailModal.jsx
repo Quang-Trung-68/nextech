@@ -19,6 +19,7 @@ import {
   ShoppingCart,
   Tag,
   X,
+  Copy,
   Receipt,
   AlertTriangle,
   FilePlus,
@@ -203,8 +204,22 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground font-medium">Chi tiết đơn hàng</p>
-                    <p className="text-base font-bold font-mono tracking-wide text-foreground">
+                    <p className="text-base font-bold font-mono tracking-wide text-foreground flex items-center gap-2">
                       #ORD-{orderNum}
+                      <button
+                        type="button"
+                        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        title="Copy ID"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (orderId) {
+                            navigator.clipboard.writeText(orderId.toUpperCase());
+                            toast.success(`Đã copy mã: ${orderId.toUpperCase()}`);
+                          }
+                        }}
+                      >
+                        <Copy size={16} />
+                      </button>
                     </p>
                   </div>
                 </div>

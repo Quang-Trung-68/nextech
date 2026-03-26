@@ -61,7 +61,7 @@ export default function SupportPolicies() {
               {/* Link */}
               <a
                 href="#faq"
-                className="mt-5 text-[14px] text-[#0071e3] hover:underline"
+                className="mt-5 inline-flex items-center text-[15px] font-medium text-[#0071e3] hover:underline min-h-[44px]"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });

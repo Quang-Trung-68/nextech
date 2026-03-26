@@ -429,6 +429,8 @@ const HomePage = () => {
                <img
                   src={ip17ProMaxImg}
                   alt="iPhone 17 Pro Max"
+                  fetchPriority="high"
+                  loading="eager"
                   className="w-full h-[50vh] md:h-[70vh] lg:h-screen object-cover object-center lg:absolute lg:inset-y-0 lg:right-0"
                />
             </div>

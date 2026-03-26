@@ -113,7 +113,7 @@ export default function SupportContact() {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="Nguyễn Văn A"
-                className="h-11 w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 text-[14px] text-[#1d1d1f] outline-none placeholder:text-[#86868b] transition-all focus:border-[#0071e3] focus:bg-white focus:shadow-[0_0_0_3px_rgba(0,113,227,0.12)]"
+                className="h-12 w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 text-base text-[#1d1d1f] outline-none placeholder:text-[#86868b] transition-all focus:border-[#0071e3] focus:bg-white focus:shadow-[0_0_0_3px_rgba(0,113,227,0.12)]"
               />
             </div>
 
@@ -130,7 +130,7 @@ export default function SupportContact() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="example@email.com"
-                className="h-11 w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 text-[14px] text-[#1d1d1f] outline-none placeholder:text-[#86868b] transition-all focus:border-[#0071e3] focus:bg-white focus:shadow-[0_0_0_3px_rgba(0,113,227,0.12)]"
+                className="h-12 w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 text-base text-[#1d1d1f] outline-none placeholder:text-[#86868b] transition-all focus:border-[#0071e3] focus:bg-white focus:shadow-[0_0_0_3px_rgba(0,113,227,0.12)]"
               />
             </div>
 
@@ -145,7 +145,7 @@ export default function SupportContact() {
               >
                 <SelectTrigger
                   id="support-subject"
-                  className="h-11 w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 text-[14px] text-[#1d1d1f] outline-none transition-all focus:border-[#0071e3] focus:bg-white focus:shadow-[0_0_0_3px_rgba(0,113,227,0.12)] data-[size=default]:h-11"
+                  className="!h-12 w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 text-base text-[#1d1d1f] outline-none transition-all focus:border-[#0071e3] focus:bg-white focus:shadow-[0_0_0_3px_rgba(0,113,227,0.12)]"
                 >
                   <SelectValue placeholder="Chọn chủ đề...">
                     {form.subject
@@ -153,9 +153,9 @@ export default function SupportContact() {
                       : null}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-2xl border-[#d2d2d7] shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-1.5 min-w-[160px]">
                   {subjectOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
+                    <SelectItem key={opt.value} value={opt.value} className="py-3 px-3 text-base font-medium cursor-pointer rounded-xl hover:bg-slate-50">
                       {opt.label}
                     </SelectItem>
                   ))}
@@ -176,7 +176,7 @@ export default function SupportContact() {
                 value={form.message}
                 onChange={handleChange}
                 placeholder="Mô tả vấn đề bạn đang gặp phải..."
-                className="w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 py-3 text-[14px] text-[#1d1d1f] placeholder:text-[#86868b] transition-all focus-visible:border-[#0071e3] focus-visible:bg-white focus-visible:shadow-[0_0_0_3px_rgba(0,113,227,0.12)] focus-visible:ring-0 resize-none min-h-[108px]"
+                className="w-full rounded-xl border border-[#d2d2d7] bg-[#f5f5f7] px-4 py-3 text-base text-[#1d1d1f] placeholder:text-[#86868b] transition-all focus-visible:border-[#0071e3] focus-visible:bg-white focus-visible:shadow-[0_0_0_3px_rgba(0,113,227,0.12)] focus-visible:ring-0 resize-none min-h-[108px]"
               />
             </div>
 

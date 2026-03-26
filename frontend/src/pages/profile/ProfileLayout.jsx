@@ -10,7 +10,7 @@ const ProfileLayout = () => {
           <ProfileSidebar />
 
           {/* Main content */}
-          <main className="flex-1 min-w-0 pb-20 md:pb-0">
+          <main className="flex-1 min-w-0 pb-[calc(56px+env(safe-area-inset-bottom)+2rem)] md:pb-0">
             <Outlet />
           </main>
         </div>

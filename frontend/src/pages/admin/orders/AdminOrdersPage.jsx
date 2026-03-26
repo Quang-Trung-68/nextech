@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Copy } from 'lucide-react';
 import OrderDetailModal from './components/OrderDetailModal';
 
 const AdminOrdersPage = () => {
@@ -81,7 +82,23 @@ const AdminOrdersPage = () => {
     {
       accessorKey: 'id',
       header: 'Order ID',
-      cell: ({ row }) => <span className="text-xs font-mono">#{row.original.id.slice(-8).toUpperCase()}</span>,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+          <span className="text-xs font-mono">#{row.original.id.slice(-8).toUpperCase()}</span>
+          <button
+            type="button"
+            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Copy ID"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(row.original.id.toUpperCase());
+              toast.success('Đã copy mã: ' + row.original.id.toUpperCase());
+            }}
+          >
+            <Copy size={14} />
+          </button>
+        </div>
+      ),
     },
     {
       accessorKey: 'user.name',
