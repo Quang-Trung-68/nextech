@@ -1,143 +1,323 @@
-# NexTech E-commerce Project
+# NexTech - Modern E-commerce Platform 🚀
 
-Dự án NexTech là một ứng dụng thương mại điện tử (e-commerce) đầy đủ chức năng, bao gồm cả Frontend (FE) và Backend (BE). Dự án được thiết kế với kiến trúc hiện đại, khả năng mở rộng tốt và tích hợp các công cụ thanh toán, quản lý hình ảnh chuyên nghiệp.
+Welcome to **NexTech**, an open-source all-in-one e-commerce solution. NexTech is designed with a high-end interface (Apple-inspired UX), a robust processing system, high scalability, and a modern deployment process using Docker.
 
-## 🚀 Công nghệ sử dụng
-
-### Frontend (FE)
-- **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
-- **Data Fetching**: [TanStack Query v5 (React Query)](https://tanstack.com/query/latest)
-- **Form Handling**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
-- **UI Components**: [Radix UI](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/), [Shadcn UI](https://ui.shadcn.com/)
-- **Routing**: [React Router v7](https://reactrouter.com/)
-- **Internationalization**: [i18next](https://www.i18next.com/) (Hỗ trợ đa ngôn ngữ)
-- **Payment**: [Stripe React](https://stripe.com/docs/stripe-js/react)
-
-### Backend (BE)
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js](https://expressjs.com/)
-- **Database ORM**: [Prisma](https://www.prisma.io/)
-- **Authentication**: JWT (JSON Web Token), Passport.js (Google & Facebook OAuth)
-- **File Storage**: Cloudinary (qua Multer)
-- **Payment Gateway**: Stripe API
-- **Email Service**: Nodemailer
-- **Validation**: Zod & Express Validator
-- **Cron Jobs**: Node-cron (Dùng cho các tác vụ định kỳ)
+[![Frontend](https://img.shields.io/badge/Frontend-React%2019-blue.svg)](./frontend)
+[![Backend](https://img.shields.io/badge/Backend-Nodejs-green.svg)](./backend)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL-blue.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED.svg)](https://www.docker.com/)
 
 ---
 
-## 📁 Cấu trúc thư mục
+## 🔗 Project Links
+- **Live Demo:** [https://nextech.io.vn](https://nextech.io.vn)
+- **Main Repo:** `https://github.com/Quang-Trung-68/ecommerce`
 
-### 1. Root Directory
+---
+
+## 🏗️ System Architecture
+
+The project is organized in a micro-services model (monorepo), communicating via REST API and WebSockets:
+
+| Service | Tech | Role |
+|---|---|---|
+| **Frontend** | React 19 (Vite) + Nginx | User interface, Mobile-first, SEO |
+| **Backend** | Node.js (Express) | Business logic, Payments, Auth |
+| **Database** | PostgreSQL (Prisma) | Relational data storage |
+| **Real-time** | Soketi | WebSocket server for live notifications |
+| **Reverse Proxy** | Nginx | Traffic routing, SSL (HTTPS), Security |
+
+---
+
+## 📊 Key Features
+
+1. **Shopping Experience:** Intelligent searching and filtering, persistent cart, and Stripe/COD payments.
+2. **Flash Sale Engine:** Automatic countdown and real-time inventory management for promotion periods.
+3. **Digital Invoices:** Automatically generate and send professional PDF invoices upon order success.
+4. **Admin Dashboard:** Manage products, orders, customers, and VAT/Tax configurations.
+5. **Marketing & Loyalty:** Discount code (Coupon) system, email verification codes.
+6. **Multi-language & Dark Mode:** Vietnamese/English switching and automatic Dark mode support.
+
+---
+
+## 🐳 Quick Start — Run Everything with Docker (Recommended)
+
+> **This is the fastest way to get the entire stack running locally with a single command.**
+> Requires: [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker Engine + Docker Compose v2.
+
+### Step 1: Clone the repository
+
+```bash
+git clone https://github.com/Quang-Trung-68/ecommerce.git
+cd ecommerce
+```
+
+### Step 2: Create the environment file
+
+Copy the local environment template and fill in your credentials:
+
+```bash
+cp .env.deploy.template .env
+```
+
+Open `.env` and fill in **all required values** (marked with `<your-...>`):
+
+| Variable | Description |
+|---|---|
+| `POSTGRES_PASSWORD` | Any strong password for the local DB |
+| `DATABASE_URL` | Must use the same password as above |
+| `ACCESS_TOKEN_SECRET` / `REFRESH_TOKEN_SECRET` / `COOKIE_SECRET` | Any long random strings |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | From [Stripe Dashboard](https://dashboard.stripe.com/) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | From [Stripe Dashboard](https://dashboard.stripe.com/) |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | From [Cloudinary Console](https://cloudinary.com/console) |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Gmail + [App Password](https://myaccount.google.com/apppasswords) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From [Google Cloud Console](https://console.cloud.google.com/) (OAuth 2.0) |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | From [Meta Developers](https://developers.facebook.com/) |
+
+> **Soketi variables** (`SOKETI_APP_ID`, `SOKETI_APP_KEY`, `SOKETI_APP_SECRET`, `VITE_SOKETI_*`) are pre-filled with safe defaults in the template — you do **not** need to change them for local development.
+
+For local development, update these URLs in your `.env`:
+
+```dotenv
+# Override these for local Docker usage
+NODE_ENV=development
+CLIENT_URL=http://localhost
+FRONTEND_URL=http://localhost
+VITE_API_URL=http://localhost/api
+VITE_SOKETI_HOST=localhost
+VITE_SOKETI_PORT=6001
+VITE_SOKETI_FORCE_TLS=false
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
+FACEBOOK_CALLBACK_URL=http://localhost:3000/api/auth/facebook/callback
+```
+
+### Step 3: Build and start all services
+
+```bash
+docker compose up --build
+```
+
+> On the first run, Docker will pull images, build the app (~3–5 minutes), and automatically run database migrations.
+
+To run in the background (detached mode):
+
+```bash
+docker compose up --build -d
+```
+
+### Step 4: Access the application
+
+| Service | URL |
+|---|---|
+| 🌐 **Web App** | [http://localhost](http://localhost) |
+| ⚙️ **API** | [http://localhost/api](http://localhost/api) |
+| 🔌 **Soketi WS** | `ws://localhost:6001` |
+
+### Useful commands
+
+```bash
+# View logs for all services
+docker compose logs -f
+
+# View logs for a specific service
+docker compose logs -f backend
+
+# Stop all services
+docker compose down
+
+# Stop and remove all data (database volumes)
+docker compose down -v
+
+# Rebuild a specific service after code changes
+docker compose up --build backend
+```
+
+---
+
+## 💻 Local Running Guide (Manual — Development)
+
+Use this approach if you want to develop with hot-reload and don't want to rebuild Docker images on every change.
+
+### Prerequisites
+
+Ensure your machine has the following installed:
+- [Node.js](https://nodejs.org/) v18+
+- [PostgreSQL](https://www.postgresql.org/) v14+
+- [Git](https://git-scm.com/)
+- **Soketi** (WebSocket server — see below)
+
+### Step 1: Install & Run Soketi
+
+Soketi is a self-hosted, Pusher-compatible WebSocket server used for real-time notifications.
+
+**Option A — Using `npx` (no installation needed):**
+
+```bash
+npx @soketi/soketi start --config='{
+  "debug": true,
+  "appManager.driver": "array",
+  "appManager.array.apps": [{
+    "id": "nextech-app",
+    "key": "nextech-key",
+    "secret": "nextech-secret",
+    "maxConnections": 100
+  }]
+}'
+```
+
+**Option B — Global install:**
+
+```bash
+npm install -g @soketi/soketi
+soketi start --config='{"debug":true,"appManager.driver":"array","appManager.array.apps":[{"id":"nextech-app","key":"nextech-key","secret":"nextech-secret","maxConnections":100}]}'
+```
+
+Soketi will run on port **6001** by default. Keep this terminal open.
+
+> Make sure the `id`, `key`, and `secret` above match the `SOKETI_APP_*` values in your backend `.env`.
+
+### Step 2: Run the Backend
+
+```bash
+cd backend
+
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env
+# Edit .env and fill in all required values
+
+# Run database migrations
+npx prisma migrate dev
+
+# (Optional) Seed sample data
+npm run db:seed
+
+# Start the dev server
+npm run dev
+```
+
+The API will be available at: `http://localhost:3000`
+
+### Step 3: Run the Frontend
+
+Open a **new terminal**:
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Create environment file
+cp .env.example .env
+# Edit .env — set VITE_API_URL and Soketi connection parameters
+
+# Start the dev server
+npm run dev
+```
+
+The app will be available at: `http://localhost:5173`
+
+### Environment Variables for Manual Local Dev
+
+**`backend/.env` key values:**
+```dotenv
+DATABASE_URL=postgresql://user:password@localhost:5432/nextech_db?schema=public
+PORT=3000
+NODE_ENV=development
+CLIENT_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
+SOKETI_APP_ID=nextech-app
+SOKETI_APP_KEY=nextech-key
+SOKETI_APP_SECRET=nextech-secret
+SOKETI_HOST=localhost
+SOKETI_PORT=6001
+PUSHER_USE_TLS=false
+```
+
+**`frontend/.env` key values:**
+```dotenv
+VITE_API_URL=http://localhost:3000/api
+VITE_SOKETI_APP_KEY=nextech-key
+VITE_SOKETI_HOST=localhost
+VITE_SOKETI_PORT=6001
+VITE_SOKETI_FORCE_TLS=false
+```
+
+---
+
+## 🌐 VPS Deployment Guide (Production)
+
+NexTech is designed for fast deployment on VPS environments using **Docker & Docker Compose**.
+
+### 1. VPS Preparation
+
+- Install **Docker** and **Docker Compose** on your VPS.
+- Point 2 domain/subdomains to your VPS IP:
+  - `nextech.io.vn` → Frontend
+  - `api.nextech.io.vn` → Backend API + Soketi
+
+### 2. Clone & Configure
+
+```bash
+git clone https://github.com/Quang-Trung-68/ecommerce.git
+cd ecommerce
+cp .env.deploy.template .env
+```
+
+Open `.env` and fill in all values for production (DB password, API keys, domains, etc.).
+
+### 3. Initialize SSL (Let's Encrypt)
+
+Run the `init-letsencrypt.sh` script to automatically obtain free HTTPS certificates:
+
+```bash
+chmod +x init-letsencrypt.sh
+./init-letsencrypt.sh
+```
+
+### 4. Deploy All Services
+
+```bash
+docker compose up -d --build
+```
+
+Docker will build and start all 6 services (DB, Soketi, Backend, Frontend, Nginx, Certbot). Monitor status:
+
+```bash
+docker compose ps
+docker compose logs -f
+```
+
+---
+
+## 📁 Main Directory Structure
+
 ```text
 .
-├── backend/          # Chứa toàn bộ mã nguồn Backend
-├── frontend/         # Chứa toàn bộ mã nguồn Frontend
-└── README.md         # File hướng dẫn dự án (file này)
-```
-
-### 2. Backend Structure (`/backend`)
-```text
-backend/
-├── prisma/           # Cấu hình Database Schema (schema.prisma) và Migrations
-├── src/
-│   ├── assets/       # Tài liệu tĩnh (hình ảnh, fonts cho PDF)
-│   ├── configs/      # Cấu hình hệ thống (Cloudinary, Passport, Stripe, v.v.)
-│   ├── controllers/  # Xử lý logic nghiệp vụ cho từng API route
-│   ├── errors/       # Định nghĩa các lớp lỗi tùy chỉnh (Custom Errors)
-│   ├── jobs/         # Các tác vụ chạy ngầm định kỳ (Cron jobs)
-│   ├── middleware/   # Middleware xử lý Auth, Error, Upload, v.v.
-│   ├── resources/    # Chứa các tài nguyên bổ sung (ví dụ: Logo cho hóa đơn)
-│   ├── routes/       # Định nghĩa các điểm cuối API (API Endpoints)
-│   ├── services/     # Logic xử lý dữ liệu phức tạp (Email, PDF, Stripe)
-│   ├── templates/    # File mẫu EJS cho Email hoặc PDF
-│   ├── utils/        # Các hàm tiện ích dùng chung
-│   └── validations/  # Các schema kiểm tra dữ liệu đầu vào (Zod)
-├── .env              # Biến môi trường (Secret Keys, DB URL)
-├── server.js         # Điểm khởi đầu của ứng dụng Backend
-└── package.json      # Danh sách dependencies của Backend
-```
-
-### 3. Frontend Structure (`/frontend`)
-```text
-frontend/
-├── public/           # Tài sản tĩnh công khai (Logo, Favicon)
-├── src/
-│   ├── api/          # Cấu hình Axios và các hàm gọi API bằng React Query
-│   ├── assets/       # Hình ảnh, icon sử dụng trong code
-│   ├── components/   # Các UI component dùng chung (Button, Input, Modal, v.v.)
-│   ├── configs/      # Cấu hình app (i18n, router, v.v.)
-│   ├── constants/    # Các hằng số định nghĩa trong toàn thẻ app
-│   ├── features/     # Các logic theo tính năng (ví dụ: Auth, Cart, Admin)
-│   ├── hooks/        # Các Custom Hooks cho React
-│   ├── i18n/         # Cài đặt đa ngôn ngữ (Tiếng Việt/Tiếng Anh)
-│   ├── lib/          # Thư viện bên ngoài (utils cho Tailwind, v.v.)
-│   ├── pages/        # Các trang chính (Home, Products, Checkout, Admin, v.v.)
-│   ├── resources/    # Dữ liệu tĩnh cục bộ
-│   ├── schemas/      # Định nghĩa Zod schemas cho form validation
-│   ├── stores/       # Quản lý Global State (Zustand)
-│   ├── utils/        # Hàm helper xử lý chuỗi, ngày tháng, v.v.
-│   ├── App.jsx       # Component gốc của ứng dụng
-│   └── main.jsx      # Điểm entry chính của ReactDOM
-├── tailwind.config.js# Cấu hình Tailwind CSS
-└── vite.config.js    # Cấu hình công cụ build Vite
+├── backend/                # Node.js/Express API source code
+│   ├── src/                # Application source
+│   ├── Dockerfile          # Backend Docker image definition
+│   ├── docker-entrypoint.sh# DB migration + server startup script
+│   └── .env.example        # Environment variable template
+├── frontend/               # React 19 (Vite) application
+│   ├── src/                # Application source
+│   ├── Dockerfile          # Frontend Docker image (multi-stage build)
+│   └── .env.example        # Environment variable template
+├── nginx/                  # Nginx reverse proxy config (production)
+├── certbot/                # SSL certificate storage (auto-generated)
+├── docker-compose.yml      # Orchestration file for all services
+├── .env.deploy.template    # Environment variables template
+└── init-letsencrypt.sh     # SSL initialization script for VPS
 ```
 
 ---
 
-## 📊 Mô hình dữ liệu (Database Schema)
+## 📝 Contact and Contributions
 
-Hệ thống sử dụng **PostgreSQL** (hoặc tương thích) thông qua Prisma ORM với các Model chính:
-- **User**: Quản lý thông tin người dùng, vai trò (ADMIN/USER), và Auth.
-- **Product**: Thông tin sản phẩm, giá, kho hàng, flash sale.
-- **Order / OrderItem**: Quản lý đơn hàng, trạng thái thanh toán và sản phẩm trong đơn.
-- **Cart / CartItem**: Giỏ hàng của người dùng.
-- **Review**: Đánh giá và bình luận sản phẩm từ khách hàng.
-- **Coupon / CouponUsage**: Hệ thống mã giảm giá (Theo phần trăm hoặc số tiền cố định).
-- **Invoice**: Thông tin hóa đơn VAT, bao gồm thông tin Snapshot người mua/người bán.
-- **ShopSettings**: Cấu hình thông tin cửa hàng (Tên, MST, STK, v.v.).
+Built with passion to bring the best E-commerce solution. Any feedback, please create a GitHub Issue or contact via email [INSERT CONTACT EMAIL HERE].
 
 ---
-
-## ✨ Tính năng chính
-
-1.  **Hệ thống người dùng**: Đăng ký, đăng nhập (JWT), Đăng nhập bên thứ 3 (Google/Facebook), xác thực Email.
-2.  **Quản lý sản phẩm**: Hiển thị sản phẩm theo danh mục, tìm kiếm, lọc theo giá, flash sale với đồng hồ đếm ngược.
-3.  **Giỏ hàng & Thanh toán**: Thêm/sửa/xóa sản phẩm trong giỏ, áp dụng mã giảm giá, hỗ trợ thanh toán online qua Stripe hoặc COD.
-4.  **Hóa đơn điện tử**: Tự động tạo file hóa đơn PDF sau khi đơn hàng thành công, gửi hóa đơn qua email khách hàng.
-5.  **Quản trị (Admin Dashboard)**:
-    - Quản lý đơn hàng, cập nhật trạng thái đơn hàng.
-    - Quản lý sản phẩm, tồn kho, flash sale.
-    - Quản lý mã giảm giá (Coupon).
-    - Cấu hình thông tin cửa hàng (VAT, MST).
-6.  **Đa ngôn ngữ**: Hỗ trợ chuyển đổi ngôn ngữ Việt - Anh linh hoạt.
-
----
-
-## 🛠️ Hướng dẫn cài đặt
-
-### Yêu cầu hệ thống
-- Node.js (v18 trở lên)
-- PostgreSQL
-- Cloudinary Account (Để lưu ảnh)
-- Stripe Account (Nếu dùng thanh toán online)
-
-### Cài đặt Backend
-1. Di chuyển vào thư mục backend: `cd backend`
-2. Cài đặt thư viện: `npm install`
-3. Sao chép file `.env.example` thành `.env` và điền các thông số cần thiết.
-4. Đẩy schema lên database: `npx prisma migrate dev`
-5. Chạy server: `npm run dev`
-
-### Cài đặt Frontend
-1. Di chuyển vào thư mục frontend: `cd frontend`
-2. Cài đặt thư viện: `npm install`
-3. Sao chép file `.env.example` thành `.env` và điền URL của backend API.
-4. Chạy ứng dụng: `npm run dev`
-
----
-
-## 📝 Liên hệ & Đóng góp
-Dự án được phát triển nhằm mục đích cung cấp một giải pháp thương mại điện tử trọn gói. Mọi đóng góp xin vui lòng gửi Pull Request hoặc liên hệ qua email quản trị.
+NexTech - Buy more, Build better.
