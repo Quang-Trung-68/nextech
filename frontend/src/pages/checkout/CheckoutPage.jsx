@@ -161,6 +161,27 @@ const CheckoutPageForm = () => {
            queryClient.invalidateQueries({ queryKey: ['cart'] });
            navigate(`/profile/orders/${orderId}?success=true`, { replace: true });
         }
+      } else if (data.paymentMethod === 'SEPAY') {
+        const response = await createOrder(orderData);
+        if (!response.success || !response.checkoutUrl || !response.sepayFields) {
+           throw new Error(response.message || 'Lỗi thiết lập thanh toán SePay.');
+        }
+        
+        // Tạo form ẩn để POST sang thiết lập thanh toán SePay
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = response.checkoutUrl;
+        
+        Object.entries(response.sepayFields).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value;
+          form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
       } else {
         // COD
         const response = await createOrder(orderData);

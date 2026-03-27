@@ -31,6 +31,7 @@ model User {
   revokedTokens          RevokedToken[]
   couponUsages           CouponUsage[]
   notifications          Notification[]
+  posts                  Post[]
 
   @@map("users")
 }
@@ -399,4 +400,67 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+// ─── Blog ────────────────────────────────────────────────────────────────────
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  posts     Post[]
+  createdAt DateTime @default(now())
+
+  @@map("categories")
+}
+
+model Tag {
+  id    Int       @id @default(autoincrement())
+  name  String    @unique
+  slug  String    @unique
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+model Post {
+  id          Int        @id @default(autoincrement())
+  title       String
+  slug        String     @unique
+  content     String     // HTML from rich text editor
+  excerpt     String?    // Short summary, max 300 chars
+  coverImage  String?    // Cloudinary URL
+  status      PostStatus @default(DRAFT)
+  readTime    Int?       // Estimated minutes
+  publishedAt DateTime?
+
+  author     User      @relation(fields: [authorId], references: [id])
+  authorId   String
+
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+
+  tags PostTag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
+}
+
+model PostTag {
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+  tag    Tag  @relation(fields: [tagId], references: [id])
+  tagId  Int
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+enum PostStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
 }

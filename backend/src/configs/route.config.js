@@ -46,6 +46,9 @@ const apiRoutes = [
   { prefix: '/api/favorites',    router: require('../routes/favorite.routes') },
   { prefix: '/api/coupons',      router: require('../routes/coupon.routes') },
   { prefix: '/api/notifications',router: require('../routes/notification.routes') },
+  { prefix: '/api/categories',   router: require('../routes/category.routes') },
+  { prefix: '/api/tags',         router: require('../routes/tag.routes') },
+  { prefix: '/api/posts',        router: require('../routes/post.routes') },
 ];
 
 module.exports = { specialRoutes, apiRoutes };

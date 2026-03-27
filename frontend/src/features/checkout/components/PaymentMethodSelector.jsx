@@ -55,6 +55,32 @@ export function PaymentMethodSelector({ register, selectedMethod }) {
             </div>
           </div>
         </label>
+
+        {/* SEPAY Option */}
+        <label
+           className={`relative border rounded-xl p-4 flex flex-col items-start cursor-pointer transition-all ${
+             selectedMethod === 'SEPAY' 
+              ? 'border-apple-blue shadow-[0_0_0_1px_rgba(0,102,204,1)] bg-apple-blue/5' 
+              : 'border-border hover:border-muted-foreground/50'
+           }`}
+        >
+          <input 
+            type="radio" 
+            value="SEPAY" 
+            {...register('paymentMethod')} 
+            className="sr-only" 
+          />
+          <div className="flex items-center gap-3 w-full">
+            <div className={`p-2 rounded-full ${selectedMethod === 'SEPAY' ? 'bg-apple-blue/10 text-apple-blue' : 'bg-muted text-muted-foreground'}`}>
+               {/* Using Banknote icon for bank transfer */}
+               <Banknote className="w-5 h-5" />
+            </div>
+            <div>
+               <p className="font-semibold text-sm text-foreground">Chuyển khoản VietQR</p>
+               <p className="text-xs text-muted-foreground mt-0.5">Quét mã QR (SePay)</p>
+            </div>
+          </div>
+        </label>
       </div>
     </div>
   );

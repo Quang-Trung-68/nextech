@@ -20,6 +20,70 @@ import FilterDrawer from './FilterDrawer';
 import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
 import SaleStockBadge from '@/components/product/SaleStockBadge';
 
+// --- ActionButtons Component ---
+const ActionButtons = ({ product, viewMode }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
+  const [isBuying, setIsBuying] = useState(false);
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+      return navigate('/login', { state: { from: location.pathname + location.search } });
+    }
+    addToCart(
+      { productId: product.id, quantity: 1 },
+      {
+        onSuccess: () => { toast.success('Đã thêm sản phẩm vào giỏ hàng!'); },
+        onError: (err) => { toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng'); }
+      }
+    );
+  };
+
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để mua hàng');
+      return navigate('/login', { state: { from: location.pathname + location.search } });
+    }
+    setIsBuying(true);
+    addToCart(
+      { productId: product.id, quantity: 1 },
+      {
+        onSuccess: () => { navigate('/checkout'); },
+        onError: (err) => { toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi mua hàng'); },
+        onSettled: () => setIsBuying(false),
+      }
+    );
+  };
+
+  return (
+    <div className={`hidden md:flex w-full gap-2 ${viewMode === 'list' ? 'flex-row justify-around gap-32' : 'flex-col'}`}>
+      <Button 
+        className={`rounded-full bg-white border border-[#d2d2d7] hover:bg-[#f5f5f7] text-apple-dark font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
+        onClick={handleAddToCart}
+        disabled={product.stock === 0 || isAddingToCart || isBuying}
+      >
+        {isAddingToCart ? 'Đang thêm...' : product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+      </Button>
+      <Button 
+        className={`rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
+        onClick={handleBuyNow}
+        disabled={product.stock === 0 || isAddingToCart || isBuying}
+      >
+        {isBuying ? 'Đang xử lý...' : 'Mua ngay'}
+      </Button>
+    </div>
+  );
+};
+// -------------------------------
+
+
 const HIGHLIGHTS = [
   { id: 'new-arrival', label: 'Hàng mới về' },
   { id: 'on-sale', label: 'Đang giảm giá' },
@@ -51,53 +115,6 @@ const ProductsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
-  
-  // Custom Add To Cart handler
-  const handleAddToCart = (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-      return navigate('/login', { state: { from: location.pathname + location.search } });
-    }
-
-    addToCart(
-      { productId, quantity: 1 },
-      {
-        onSuccess: () => {
-          toast.success('Đã thêm sản phẩm vào giỏ hàng!');
-        },
-        onError: (err) => {
-          toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
-        }
-      }
-    );
-  };
-
-  // Custom Buy Now handler
-  const handleBuyNow = (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để mua hàng');
-      return navigate('/login', { state: { from: location.pathname + location.search } });
-    }
-
-    addToCart(
-      { productId, quantity: 1 },
-      {
-        onSuccess: () => {
-          navigate('/checkout');
-        },
-        onError: (err) => {
-          toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi mua hàng');
-        }
-      }
-    );
-  };
 
   // Build Query Params
   const getQueryParams = (pageParam) => {
@@ -415,22 +432,7 @@ const ProductsPage = () => {
                         )}
                       </div>
                       
-                      <div className={`hidden md:flex w-full gap-2 ${viewMode === 'list' ? 'flex-row justify-around gap-32' : 'flex-col'}`}>
-                        <Button 
-                          className={`rounded-full bg-white border border-[#d2d2d7] hover:bg-[#f5f5f7] text-apple-dark font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
-                          onClick={(e) => handleAddToCart(e, product.id)}
-                          disabled={product.stock === 0 || isAddingToCart}
-                        >
-                          {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
-                        </Button>
-                        <Button 
-                          className={`rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
-                          onClick={(e) => handleBuyNow(e, product.id)}
-                          disabled={product.stock === 0 || isAddingToCart}
-                        >
-                          Mua ngay
-                        </Button>
-                      </div>
+                      <ActionButtons product={product} viewMode={viewMode} />
                       
                       {/* Rating & Favorite under the button on md+ */}
                       <div className="hidden md:flex items-center justify-between pt-1">

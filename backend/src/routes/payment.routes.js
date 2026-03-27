@@ -8,6 +8,10 @@ const { protect } = require('../middleware/auth');
 // Đây là route duy nhất mount cùng với express.raw() tại server.js
 router.post('/', paymentController.handleWebhook);
 
+// POST /api/payments/sepay/webhook
+// Endpoint IPN của SePay (dùng application/json thông thường, đã được mount json handler ở server.js)
+router.post('/sepay/webhook', express.json(), paymentController.handleSepayWebhook);
+
 // GET /api/payments/intent/:orderId
 // Frontend gọi để lấy clientSecret trước khi mount Stripe Elements
 // Cần đăng nhập — chỉ trả về nếu order thuộc user đang login

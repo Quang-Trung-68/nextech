@@ -55,6 +55,7 @@ const passwordField = z
  */
 const changePasswordSchema = z
   .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: passwordField,
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })

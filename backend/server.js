@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('./src/jobs/scheduledEmailJob');
+require('./src/jobs/expirationJob');
 require('./src/configs/passport.config'); // Register OAuth strategies (side-effect import)
 const express = require('express');
 const cors = require('cors');

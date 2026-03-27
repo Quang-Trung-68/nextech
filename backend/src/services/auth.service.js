@@ -262,11 +262,17 @@ const changePassword = async (user, currentPassword, newPassword, meta) => {
   }
 
   // Verify current password before allowing change
-  if (currentPassword) {
-    const isValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isValid) {
-      throw new AppError('Current password is incorrect.', 400, ERROR_CODES.AUTH.INVALID_CREDENTIALS);
-    }
+  if (!currentPassword) {
+    throw new AppError('Current password is required.', 400, ERROR_CODES.AUTH.INVALID_CREDENTIALS);
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isValid) {
+    throw new AppError('Current password is incorrect.', 400, ERROR_CODES.AUTH.INVALID_CREDENTIALS);
+  }
+
+  if (currentPassword === newPassword) {
+    throw new AppError('New password must be different from current password.', 400, ERROR_CODES.AUTH.INVALID_CREDENTIALS);
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);

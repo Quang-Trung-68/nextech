@@ -24,6 +24,20 @@ const handleWebhook = async (req, res, next) => {
 };
 
 /**
+ * POST /api/payments/sepay/webhook
+ * IPN Hook for SePay VietQR (Server-to-Server)
+ */
+const handleSepayWebhook = async (req, res, next) => {
+  try {
+    await paymentService.handleSepayWebhookEvent(req.body);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[SePay Webhook Error]', err);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+};
+
+/**
  * GET /api/payments/intent/:orderId
  * Frontend dùng để lấy clientSecret trước khi mount Stripe Elements / Card.
  * Chỉ trả về nếu order thuộc user đang đăng nhập và chưa PAID.
@@ -59,5 +73,6 @@ module.exports = {
   handleWebhook,
   getOrderPaymentIntent,
   getOrderPaymentStatus,
+  handleSepayWebhook,
 };
 

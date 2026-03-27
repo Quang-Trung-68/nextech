@@ -197,24 +197,29 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
 
   Promise.resolve().then(async () => {
     try {
-      // Thông báo cho User vừa đặt hàng
-      await notificationService.createAndSend(
-        userId,
-        'order_status_changed', // Sử dụng event này để frontend tự bắt và điều hướng về /orders/:id
-        'Đặt hàng thành công',
-        `Cảm ơn bạn! Đơn hàng #${order.id} của bạn đã được ghi nhận và đang chờ xử lý.`,
-        { orderId: order.id, newStatus: initialStatus }
-      );
-
       const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
-      for (const admin of admins) {
+      
+      // Chỉ gửi thông báo lập tức nếu thanh toán bằng COD
+      // Với STRIPE và SEPAY, việc gửi thông báo sẽ được trigger bởi Webhook sau khi thanh toán thành công
+      if (paymentMethod === 'COD') {
+        // Thông báo cho User vừa đặt hàng
         await notificationService.createAndSend(
-          admin.id,
-          'new_order',
-          'Đơn hàng mới',
-          `Có đơn hàng mới #${order.id} vừa được đặt`,
-          { orderId: order.id }
+          userId,
+          'order_status_changed', // Sử dụng event này để frontend tự bắt và điều hướng về /orders/:id
+          'Đặt hàng thành công',
+          `Cảm ơn bạn! Đơn hàng #${order.id} của bạn đã được ghi nhận và đang chờ xử lý.`,
+          { orderId: order.id, newStatus: initialStatus }
         );
+
+        for (const admin of admins) {
+          await notificationService.createAndSend(
+            admin.id,
+            'new_order',
+            'Đơn hàng mới',
+            `Có đơn hàng mới #${order.id} vừa được đặt`,
+            { orderId: order.id }
+          );
+        }
       }
 
       for (const item of cartItems) {
@@ -241,6 +246,16 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
     // Fire-and-forget: gửi email xác nhận không block luồng trả response
     emailJob.dispatchOrderConfirmationEmail(orderWithDiscounts.user.email, { name: orderWithDiscounts.user.name, order: orderWithDiscounts });
     return { order: orderWithDiscounts };
+  }
+
+  // SEPAY (VietQR): Trả về checkoutUrl
+  if (paymentMethod === 'SEPAY') {
+    const { checkoutUrl, fields } = await paymentService.createSepayCheckout(orderWithDiscounts);
+    return {
+      order: orderWithDiscounts,
+      checkoutUrl,
+      sepayFields: fields,
+    };
   }
 
   // STRIPE currency: giá lưu trong DB là VND.
@@ -331,7 +346,16 @@ const getOrderById = async (orderId, userId, role) => {
     throw new ForbiddenError('You do not have permission to view this order');
   }
 
-  return _addOrderItemDiscounts(order);
+  const orderWithDiscounts = _addOrderItemDiscounts(order);
+
+  // Thêm SePay checkout object cho đơn hàng user chưa thanh toán
+  // Chỉ gen link thanh toán rkhhi người dùng đang xem chính là chủ đơn hàng (đề phòng admin tự ý thanh toán thay)
+  if (order.paymentMethod === 'SEPAY' && order.paymentStatus === 'UNPAID' && order.status === 'PENDING' && order.userId === userId) {
+    const { checkoutUrl, fields } = await paymentService.createSepayCheckout(orderWithDiscounts);
+    orderWithDiscounts.sepayCheckout = { checkoutUrl, sepayFields: fields };
+  }
+
+  return orderWithDiscounts;
 };
 
 // ─── User: Huỷ đơn ───────────────────────────────────────────────────────────

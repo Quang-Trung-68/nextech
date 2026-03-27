@@ -20,6 +20,7 @@ import {
   PenLine,
   CheckCircle,
   Copy,
+  Timer,
 } from 'lucide-react';
 import WriteReviewModal from '@/features/reviews/WriteReviewModal';
 import axiosInstance from '@/lib/axios';
@@ -51,6 +52,7 @@ const OrderDetailPage = () => {
   const [isCancelled, setIsCancelled] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null); // item hiện đang được review
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
 
   const currentStatus = isCancelled ? 'CANCELLED' : order?.status;
 
@@ -97,6 +99,47 @@ const OrderDetailPage = () => {
   const handleCopyOrderId = () => {
     navigator.clipboard.writeText(id.toUpperCase());
     toast.success('Đã sao chép mã đơn hàng');
+  };
+
+  useEffect(() => {
+    if (order && order.paymentMethod === 'SEPAY' && order.paymentStatus === 'UNPAID' && currentStatus === 'PENDING' && order.createdAt) {
+      const targetTime = new Date(order.createdAt).getTime() + 15 * 60 * 1000;
+      
+      const updateTimer = () => {
+        const now = Date.now();
+        const diff = targetTime - now;
+        if (diff <= 0) {
+          setTimeLeft('Hết hạn');
+        } else {
+          const m = Math.floor(diff / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          setTimeLeft(`${m} phút ${s < 10 ? '0'+s : s} giây`);
+        }
+      };
+      
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [order, currentStatus]);
+
+  const handleSepayCheckout = () => {
+    if (!order?.sepayCheckout) {
+       toast.error('Không tìm thấy thông tin thanh toán từ hệ thống.');
+       return;
+    }
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = order.sepayCheckout.checkoutUrl;
+    Object.entries(order.sepayCheckout.sepayFields).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
   };
 
   if (isLoading) {
@@ -361,11 +404,44 @@ const OrderDetailPage = () => {
               <span className="text-2xl font-black text-primary">{formatVND(totalAmount)}</span>
             </div>
 
-            <div className={`p-4 rounded-xl flex flex-col gap-1 items-center justify-center text-center ${paymentMethod === 'STRIPE' ? 'bg-blue-50/50 text-blue-700 border border-blue-100' : 'bg-green-50/50 text-green-700 border border-green-100'}`}>
+            <div className={`p-4 rounded-xl flex flex-col gap-1 items-center justify-center text-center ${
+              paymentMethod === 'STRIPE' ? 'bg-blue-50/50 text-blue-700 border border-blue-100' : 
+              paymentMethod === 'SEPAY' ? 'bg-indigo-50/50 text-indigo-700 border border-indigo-100' : 
+              'bg-green-50/50 text-green-700 border border-green-100'
+            }`}>
               <span className="text-xs uppercase font-bold tracking-wider opacity-70">Phương thức</span>
               <span className="text-sm font-semibold">
-                {paymentMethod === 'STRIPE' ? 'Thẻ Ngân Hàng' : 'Thanh toán tiền mặt (COD)'}
+                {paymentMethod === 'STRIPE' ? 'Thẻ Ngân Hàng' : 
+                 paymentMethod === 'SEPAY' ? 'Chuyển khoản VietQR' : 
+                 'Thanh toán tiền mặt (COD)'}
               </span>
+            </div>
+
+            <div className="mt-4 p-4 rounded-xl flex flex-col gap-1 items-center justify-center text-center bg-gray-50 border border-gray-100">
+               <span className="text-xs uppercase font-bold tracking-wider opacity-70">Trạng thái thanh toán</span>
+               <span className={`text-sm font-semibold ${
+                 order.paymentStatus === 'PAID' ? 'text-green-600' :
+                 order.paymentStatus === 'FAILED' ? 'text-red-600' : 'text-orange-600'
+               }`}>
+                 {order.paymentStatus === 'PAID' ? 'Đã thanh toán' :
+                  order.paymentStatus === 'FAILED' ? 'Thất bại' : 'Chưa thanh toán'}
+               </span>
+               
+               {/* Nút thanh toán lại cho SEPAY */}
+               {paymentMethod === 'SEPAY' && order.paymentStatus === 'UNPAID' && currentStatus === 'PENDING' && (
+                 <div className="mt-4 w-full border-t border-gray-200 pt-3">
+                   <p className="text-xs font-semibold text-red-500 mb-2 flex items-center justify-center gap-1">
+                     <Timer className="w-3.5 h-3.5" /> Hết hạn sau: {timeLeft || 'Đang tính...'}
+                   </p>
+                   <Button 
+                     onClick={handleSepayCheckout} 
+                     disabled={timeLeft === 'Hết hạn'} 
+                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-semibold"
+                   >
+                     Thanh toán ngay bằng QR
+                   </Button>
+                 </div>
+               )}
             </div>
           </div>
 

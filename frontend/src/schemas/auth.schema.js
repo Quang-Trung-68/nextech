@@ -52,6 +52,7 @@ const passwordField = z
 // ─── Change Password Schema ───────────────────────────────────────────────────
 export const changePasswordSchema = z
   .object({
+    currentPassword: z.string().min(1, 'Mật khẩu hiện tại không được để trống'),
     newPassword: passwordField,
     confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
   })
@@ -61,6 +62,13 @@ export const changePasswordSchema = z
         code: z.ZodIssueCode.custom,
         message: 'Mật khẩu xác nhận không khớp',
         path: ['confirmPassword'],
+      });
+    }
+    if (data.currentPassword === data.newPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Mật khẩu mới phải khác mật khẩu hiện tại',
+        path: ['newPassword'],
       });
     }
   });

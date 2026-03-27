@@ -62,6 +62,7 @@ const PasswordStrengthBar = ({ password }) => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const ChangePasswordPage = () => {
   usePageTitle('Đổi mật khẩu');
+  const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -70,7 +71,7 @@ const ChangePasswordPage = () => {
 
   const form = useForm({
     resolver: zodResolver(changePasswordSchema),
-    defaultValues: { newPassword: '', confirmPassword: '' },
+    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
   });
 
   const watchNewPassword = form.watch('newPassword');
@@ -125,6 +126,39 @@ const ChangePasswordPage = () => {
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                {/* ── Current password ─────────────────────────────────────────── */}
+                <FormField
+                  control={form.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mật khẩu hiện tại</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="input-change-current-password"
+                            type={showCurrent ? 'text' : 'password'}
+                            placeholder="Nhập mật khẩu hiện tại"
+                            className="pl-9 pr-10"
+                            autoComplete="current-password"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrent((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* ── New password ─────────────────────────────────────────── */}
                 <FormField
                   control={form.control}

@@ -23,8 +23,8 @@ const createOrderSchema = z
   .object({
     shippingAddress: shippingAddressSchema,
 
-    paymentMethod: z.enum(['COD', 'STRIPE'], {
-      errorMap: () => ({ message: 'Phương thức thanh toán không hợp lệ (COD hoặc STRIPE)' }),
+    paymentMethod: z.enum(['COD', 'STRIPE', 'SEPAY'], {
+      errorMap: () => ({ message: 'Phương thức thanh toán không hợp lệ (COD, STRIPE hoặc SEPAY)' }),
     }),
 
     couponCode: z

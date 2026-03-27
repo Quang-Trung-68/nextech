@@ -1,8 +1,10 @@
 const prisma = require('../utils/prisma');
 const stripe = require('../utils/stripe');
 const emailJob = require('../jobs/emailJob');
+const notificationService = require('./notification.service');
 const { AppError, NotFoundError, ForbiddenError } = require('../errors/AppError');
 const ERROR_CODES = require('../errors/errorCodes');
+const { SePayPgClient } = require('sepay-pg-node');
 
 const handleWebhookEvent = async (rawBody, signature) => {
   let event;
@@ -68,6 +70,33 @@ const handleWebhookEvent = async (rawBody, signature) => {
       // Fire-and-forget: không block Stripe webhook response
       emailJob.dispatchOrderConfirmationEmail(updatedOrder.user.email, { name: updatedOrder.user.name, order: updatedOrder });
       
+      // Thông báo cho User & Admin
+      Promise.resolve().then(async () => {
+        try {
+          // Thông báo cho User vừa thanh toán thành công
+          await notificationService.createAndSend(
+            updatedOrder.userId,
+            'order_status_changed',
+            'Thanh toán thành công',
+            `Cảm ơn bạn! Đơn hàng #${updatedOrder.id} đã thanh toán qua thẻ thành công.`,
+            { orderId: updatedOrder.id, newStatus: 'PROCESSING' }
+          );
+
+          const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+          for (const admin of admins) {
+            await notificationService.createAndSend(
+              admin.id,
+              'new_order',
+              'Đơn hàng đã thanh toán',
+              `Đơn hàng #${updatedOrder.id} vừa được thanh toán thành công qua thẻ`,
+              { orderId: updatedOrder.id }
+            );
+          }
+        } catch (err) {
+          console.error('[Notification Error] Failed to send payment success notification:', err);
+        }
+      });
+      
       break;
     }
 
@@ -112,6 +141,129 @@ const createPaymentIntent = async (amount, currency, metadata) => {
     amount,
     currency,
     metadata,
+  });
+};
+
+// ─── SEPAY (VietQR) ──────────────────────────────────────────────────────────
+
+const getSepayClient = () => {
+  return new SePayPgClient({
+    env: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+    merchant_id: process.env.SEPAY_MERCHANT_ID || 'sandbox_merchant',
+    secret_key: process.env.SEPAY_SECRET_KEY || 'sandbox_secret',
+  });
+};
+
+const createSepayCheckout = async (order) => {
+  const client = getSepayClient();
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  
+  // order_invoice_number length should be within SePay limit, e.g. "INV-123456"
+  // Here we use the order.id which might be cuid (25 chars). It's generally fine, or we prepend INV-
+  const invoiceNumber = `INV-${order.id}`;
+
+  const fields = client.checkout.initOneTimePaymentFields({
+    operation: 'PURCHASE',
+    payment_method: 'BANK_TRANSFER',
+    order_invoice_number: invoiceNumber,
+    order_amount: Math.round(Number(order.totalAmount)),
+    currency: 'VND', // Ensure it's VND
+    order_description: `Thanh toan don hang ${order.id}`,
+    success_url: `${frontendUrl}/profile/orders/${order.id}?success=true`,
+    error_url: `${frontendUrl}/profile/orders/${order.id}?error=true`,
+    cancel_url: `${frontendUrl}/profile/orders/${order.id}?cancel=true`,
+  });
+
+  return {
+    checkoutUrl: client.checkout.initCheckoutUrl(),
+    fields,
+  };
+};
+
+const handleSepayWebhookEvent = async (data) => {
+  console.log('[SePay Webhook] Received:', data.notification_type, data.order?.order_invoice_number);
+
+  if (data.notification_type !== 'ORDER_PAID') {
+    return;
+  }
+
+  const invoiceNumber = data.order.order_invoice_number; // e.g., INV-cuid...
+  const orderId = invoiceNumber.replace('INV-', '');
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      orderItems: {
+        include: {
+          product: { select: { id: true, name: true, price: true, images: true } }
+        }
+      },
+      user: { select: { id: true, name: true, email: true } },
+    }
+  });
+
+  if (!order) {
+    console.warn(`[SePay Webhook] Order not found for invoice ${invoiceNumber}`);
+    return;
+  }
+
+  if (order.paymentStatus === 'PAID') {
+    console.log(`[SePay Webhook] Order ${orderId} already paid`);
+    return;
+  }
+
+  const updatedOrder = await prisma.$transaction(async (tx) => {
+    const o = await tx.order.update({
+      where: { id: order.id },
+      data: {
+        paymentStatus: 'PAID',
+        status: 'PROCESSING',
+      },
+      include: {
+        orderItems: {
+          include: {
+            product: { select: { id: true, name: true, price: true, images: true } },
+          },
+        },
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    await tx.cartItem.deleteMany({
+      where: { cart: { userId: order.userId } },
+    });
+
+    return o;
+  });
+
+  console.log(`[SePay Webhook] Payment succeeded for order ${order.id}`);
+  emailJob.dispatchOrderConfirmationEmail(updatedOrder.user.email, { name: updatedOrder.user.name, order: updatedOrder });
+
+  // Thông báo cho User & Admin
+  Promise.resolve().then(async () => {
+    try {
+      // Thông báo cho User vừa thanh toán thành công
+      await notificationService.createAndSend(
+        updatedOrder.userId,
+        'order_status_changed',
+        'Thanh toán thành công',
+        `Cảm ơn bạn! Đơn hàng #${updatedOrder.id} đã thanh toán VietQR thành công.`,
+        { orderId: updatedOrder.id, newStatus: 'PROCESSING' }
+      );
+
+      const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+      for (const admin of admins) {
+        await notificationService.createAndSend(
+          admin.id,
+          'new_order',
+          'Đơn hàng đã thanh toán',
+          `Đơn hàng #${updatedOrder.id} vừa được thanh toán thành công qua VietQR`,
+          { orderId: updatedOrder.id }
+        );
+      }
+    } catch (err) {
+      console.error('[Notification Error] Failed to send sepay payment success notification:', err);
+    }
   });
 };
 
@@ -200,4 +352,6 @@ module.exports = {
   createPaymentIntent,
   getOrderPaymentIntent,
   getOrderPaymentStatus,
+  createSepayCheckout,
+  handleSepayWebhookEvent,
 };

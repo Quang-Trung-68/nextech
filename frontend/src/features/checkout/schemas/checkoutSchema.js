@@ -26,7 +26,7 @@ const shippingAddressSchema = z.object({
 export const checkoutSchema = z
   .object({
     shippingAddress: shippingAddressSchema,
-    paymentMethod: z.enum(['COD', 'STRIPE']),
+    paymentMethod: z.enum(['COD', 'STRIPE', 'SEPAY']),
 
     // VAT fields — tất cả optional ở tầng object, validation chặt ở superRefine
     vatInvoiceRequested: z.boolean().optional(),
