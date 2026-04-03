@@ -11,4 +11,15 @@ const getAllTags = catchAsync(async (req, res) => {
   res.status(200).json({ status: 'success', data: { tags } });
 });
 
-module.exports = { createTag, getAllTags };
+const deleteTag = catchAsync(async (req, res) => {
+  await tagService.deleteTag(Number(req.params.id));
+  res.status(200).json({ status: 'success', data: null });
+});
+
+const searchTags = catchAsync(async (req, res) => {
+  const limit = Number(req.query.limit) || 10;
+  const tags = await tagService.searchTags({ q: req.query.q, limit });
+  res.status(200).json({ status: 'success', data: { tags } });
+});
+
+module.exports = { createTag, getAllTags, deleteTag, searchTags };

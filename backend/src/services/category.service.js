@@ -43,4 +43,24 @@ const deleteCategory = async (id) => {
   return prisma.category.delete({ where: { id } });
 };
 
-module.exports = { createCategory, getAllCategories, deleteCategory };
+/**
+ * @param {number} id
+ * @param {{ name: string }} param1
+ */
+const updateCategory = async (id, { name }) => {
+  const category = await prisma.category.findUnique({ where: { id } });
+  if (!category) throw new NotFoundError('Category');
+
+  const duplicate = await prisma.category.findFirst({
+    where: { name, NOT: { id } },
+  });
+  if (duplicate) throw new ConflictError(`Category "${name}" already exists`, 'CATEGORY_EXISTS');
+
+  const slug = generateSlug(name);
+  return prisma.category.update({
+    where: { id },
+    data: { name, slug },
+  });
+};
+
+module.exports = { createCategory, getAllCategories, deleteCategory, updateCategory };

@@ -36,7 +36,7 @@ const listSerialsQuerySchema = z.object({
 });
 
 const lookupSerialQuerySchema = z.object({
-  q: z.string().min(1),
+  q: z.string().min(1, 'Vui lòng nhập mã serial hoặc IMEI'),
 });
 
 const supplierParamsSchema = z.object({

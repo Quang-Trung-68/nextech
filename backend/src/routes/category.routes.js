@@ -3,7 +3,11 @@ const router = express.Router();
 const categoryController = require('../controllers/category.controller');
 const { protect, restrictTo } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
-const { createCategorySchema, categoryParamsSchema } = require('../validations/post.validation');
+const {
+  createCategorySchema,
+  updateCategorySchema,
+  categoryParamsSchema,
+} = require('../validations/post.validation');
 
 // Public
 router.get('/', categoryController.getAllCategories);
@@ -15,6 +19,15 @@ router.post(
   restrictTo('ADMIN'),
   validate(createCategorySchema),
   categoryController.createCategory
+);
+
+router.patch(
+  '/:id',
+  protect,
+  restrictTo('ADMIN'),
+  validate(categoryParamsSchema, 'params'),
+  validate(updateCategorySchema),
+  categoryController.updateCategory
 );
 
 router.delete(

@@ -17,7 +17,7 @@ const upsertAttributesBodySchema = z.object({
 
 const variantUpsertRowSchema = z.object({
   attributeValueIds: z.array(z.string().cuid()).min(1),
-  price: z.coerce.number().positive(),
+  price: z.coerce.number().positive('Giá phải lớn hơn 0'),
   stock: z.coerce.number().int().min(0),
   imageUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
   salePrice: z.coerce.number().positive().optional().nullable(),

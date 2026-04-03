@@ -66,6 +66,7 @@ const Header = () => {
     { label: 'Laptop', path: '/laptop' },
     { label: 'Máy tính bảng', path: '/tablet' },
     { label: 'Phụ kiện', path: '/accessories' },
+    { label: 'Tin tức', path: '/news' },
     { label: 'Hỗ trợ', path: '/support' },
   ];
 

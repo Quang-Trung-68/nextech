@@ -70,6 +70,11 @@ const AdminSettingsPage  = lazy(() => import('@/pages/admin/AdminSettingsPage'))
 const AdminSuppliersPage = lazy(() => import('@/pages/admin/inventory/AdminSuppliersPage'));
 const AdminStockImportPage = lazy(() => import('@/pages/admin/inventory/AdminStockImportPage'));
 const AdminSerialsPage = lazy(() => import('@/pages/admin/inventory/AdminSerialsPage'));
+const NewsPage = lazy(() => import('@/pages/news/NewsPage'));
+const NewsDetailPage = lazy(() => import('@/pages/news/NewsDetailPage'));
+const AdminNewsPage = lazy(() => import('@/pages/admin/AdminNewsPage'));
+const AdminNewsFormPage = lazy(() => import('@/pages/admin/AdminNewsFormPage'));
+const AdminNewsCategoriesPage = lazy(() => import('@/pages/admin/AdminNewsCategoriesPage'));
 
 const routes = [
   {
@@ -97,6 +102,14 @@ const routes = [
       {
         path: '/support',
         element: <SupportPage />,
+      },
+      {
+        path: '/news',
+        element: <NewsPage />,
+      },
+      {
+        path: '/news/:slug',
+        element: <NewsDetailPage />,
       },
       {
         path: '/login',
@@ -242,6 +255,22 @@ const routes = [
           {
             path: 'settings',
             element: <AdminSettingsPage />,
+          },
+          {
+            path: 'news/categories',
+            element: <AdminNewsCategoriesPage />,
+          },
+          {
+            path: 'news/create',
+            element: <AdminNewsFormPage />,
+          },
+          {
+            path: 'news/:id/edit',
+            element: <AdminNewsFormPage />,
+          },
+          {
+            path: 'news',
+            element: <AdminNewsPage />,
           },
         ],
       },

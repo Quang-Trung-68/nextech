@@ -538,6 +538,8 @@ model Post {
   status      PostStatus @default(DRAFT)
   readTime    Int?       // Estimated minutes
   publishedAt DateTime?
+  scheduledAt DateTime? // When SCHEDULED — publish at this time (scheduler flips to PUBLISHED)
+  viewCount   Int        @default(0)
 
   author     User      @relation(fields: [authorId], references: [id])
   authorId   String
@@ -550,6 +552,7 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([status, scheduledAt])
   @@map("posts")
 }
 
@@ -565,9 +568,9 @@ model PostTag {
 
 enum PostStatus {
   DRAFT
-  PENDING
   PUBLISHED
-  REJECTED
+  SCHEDULED
+  ARCHIVED
 }
 
 // ─── Inventory (serial / IMEI) ───────────────────────────────────────────────

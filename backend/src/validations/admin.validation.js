@@ -62,13 +62,13 @@ const adminProductBaseSchema = z.object({
 
 const flashSaleRefine = (data, ctx) => {
   if (data.salePrice != null && data.price != null && data.salePrice >= data.price) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'salePrice must be < price', path: ['salePrice'] });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Giá khuyến mãi phải nhỏ hơn giá gốc', path: ['salePrice'] });
   }
   if (data.saleExpiresAt != null && data.salePrice == null) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'saleExpiresAt requires salePrice', path: ['saleExpiresAt'] });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Cần có giá khuyến mãi khi đặt thời hạn khuyến mãi', path: ['saleExpiresAt'] });
   }
   if (data.saleStock != null && data.salePrice == null) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'saleStock requires salePrice', path: ['saleStock'] });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Cần có giá khuyến mãi khi đặt tồn kho khuyến mãi', path: ['saleStock'] });
   }
 };
 

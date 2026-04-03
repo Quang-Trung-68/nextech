@@ -15,6 +15,16 @@ const generateSlug = (title) => {
 };
 
 /**
+ * Deterministic slug for tag upsert (no random suffix).
+ * @param {string} name
+ * @returns {string}
+ */
+const generateDeterministicTagSlug = (name) => {
+  const base = slugify(String(name || '').trim(), { lower: true, locale: 'vi', strict: true });
+  return base || 'tag';
+};
+
+/**
  * Strip all HTML tags from an HTML string.
  *
  * @param {string} html
@@ -53,4 +63,4 @@ const generateExcerpt = (htmlContent, maxLength = 300) => {
   return text.substring(0, maxLength).trimEnd() + '...';
 };
 
-module.exports = { generateSlug, calculateReadTime, generateExcerpt };
+module.exports = { generateSlug, generateDeterministicTagSlug, calculateReadTime, generateExcerpt };

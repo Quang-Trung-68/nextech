@@ -19,7 +19,7 @@ const MainLayout = () => {
       <main className={`flex-1 w-full flex flex-col pt-12 ${showBottomNav ? 'pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0' : ''}`}>
         <Outlet />
       </main>
-      <PolicyBar />
+      {location.pathname === '/' && <PolicyBar />}
       <Footer />
       {showBottomNav && <BottomNav />}
     </div>

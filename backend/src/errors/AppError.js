@@ -10,7 +10,7 @@ class AppError extends Error {
 
 class ValidationError extends AppError {
   constructor(errors) {
-    super('Validation Error', 400, 'VALIDATION_ERROR');
+    super('Dữ liệu không hợp lệ', 400, 'VALIDATION_ERROR');
     this.errors = errors;
   }
 }

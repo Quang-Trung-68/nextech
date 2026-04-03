@@ -16,4 +16,11 @@ const deleteCategory = catchAsync(async (req, res) => {
   res.status(200).json({ status: 'success', data: null });
 });
 
-module.exports = { createCategory, getAllCategories, deleteCategory };
+const updateCategory = catchAsync(async (req, res) => {
+  const category = await categoryService.updateCategory(Number(req.params.id), {
+    name: req.body.name,
+  });
+  res.status(200).json({ status: 'success', data: { category } });
+});
+
+module.exports = { createCategory, getAllCategories, deleteCategory, updateCategory };

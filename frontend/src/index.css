@@ -140,3 +140,27 @@
 .animate-headphone-shake {
   animation: headphone-shake 2s infinite ease-in-out;
 }
+
+/* Tin tức / editor: ảnh trong nội dung căn giữa, thu nhỏ (TipTap thường bọc <p><img></p>) */
+.news-rich-body img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: min(100%, 380px);
+  width: auto;
+  height: auto;
+}
+.news-rich-body p:has(> img:only-child) {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.news-rich-body figure {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: min(100%, 380px);
+}
+.news-rich-body figure img {
+  margin-left: auto;
+  margin-right: auto;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import useAuthStore from '@/stores/useAuthStore';
 import { useLogout } from '@/features/auth/hooks/useAuth';
@@ -17,6 +17,7 @@ import {
   Warehouse,
   Truck,
   Barcode,
+  Newspaper,
 } from 'lucide-react';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
 
@@ -42,6 +43,7 @@ const Avatar = ({ src, fallback, className }) => {
 const Sidebar = ({ isMobile }) => {
   const user = useAuthStore((s) => s.user);
   const { mutate: logout } = useLogout();
+  const { pathname } = useLocation();
   
   const [collapsed, setCollapsed] = useState(() => {
     return localStorage.getItem('adminSidebarCollapsed') === 'true';
@@ -60,6 +62,8 @@ const Sidebar = ({ isMobile }) => {
     { name: 'Serial / IMEI', to: '/admin/inventory/serials', icon: Barcode },
     { name: 'Người dùng', to: '/admin/users', icon: Users },
     { name: 'Mã giảm giá', to: '/admin/coupons', icon: Tag },
+    { name: 'Tin tức', to: '/admin/news', icon: Newspaper },
+    { name: 'Danh mục tin', to: '/admin/news/categories', icon: Newspaper },
     { name: 'Cài đặt', to: '/admin/settings', icon: Settings },
   ];
 
@@ -126,17 +130,24 @@ const Sidebar = ({ isMobile }) => {
           <NavLink
             key={link.to}
             to={link.to}
-            end={link.to === '/admin/overview'}
+            end={link.to === '/admin/overview' || link.to === '/admin/news/categories'}
             title={!isMobile && collapsed ? link.name : undefined}
-            className={({ isActive }) =>
-              cn(
+            className={({ isActive }) => {
+              let active = isActive;
+              if (link.to === '/admin/news') {
+                active =
+                  pathname === '/admin/news' ||
+                  pathname.startsWith('/admin/news/create') ||
+                  /^\/admin\/news\/\d+\/edit$/.test(pathname);
+              }
+              return cn(
                 'flex items-center rounded-md font-medium transition-colors',
                 !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
-                isActive
-                  ? 'bg-primary text-primary-foreground' 
+                active
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              )
-            }
+              );
+            }}
           >
             <link.icon size={20} className="flex-shrink-0" />
             {(!collapsed || isMobile) && <span className="truncate">{link.name}</span>}

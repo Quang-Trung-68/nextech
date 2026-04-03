@@ -9,7 +9,7 @@ module.exports = (err, req, res, next) => {
 
   let statusCode = 500;
   let code = ERROR_CODES.SERVER.INTERNAL_SERVER_ERROR;
-  let message = 'An unexpected error occurred';
+  let message = 'Đã xảy ra lỗi không mong muốn';
   let errors = undefined;
 
   if (err instanceof AppError) {
@@ -27,7 +27,7 @@ module.exports = (err, req, res, next) => {
   } else if (err instanceof ZodError) {
     statusCode = 400;
     code = ERROR_CODES.SERVER.VALIDATION_ERROR;
-    message = 'Validation Error';
+    message = 'Dữ liệu không hợp lệ';
     errors = err.errors.map(e => ({
       field: e.path.join('.'),
       message: e.message
