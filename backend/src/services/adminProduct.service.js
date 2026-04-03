@@ -3,6 +3,9 @@ const ApiFeatures = require('../utils/apiFeatures');
 const { addPriceFields } = require('../utils/price');
 const { AppError, NotFoundError, ConflictError } = require('../errors/AppError');
 const ERROR_CODES = require('../errors/errorCodes');
+const { generateUniqueProductSlug } = require('../utils/productSlugify');
+
+const BRAND_SELECT = { brand: { select: { id: true, name: true, slug: true, logo: true } } };
 const getProducts = async (queryParams) => {
   const features = new ApiFeatures(queryParams).search().filter().sort().paginate();
   const q = features.build();
@@ -18,7 +21,7 @@ const getProducts = async (queryParams) => {
       orderBy, 
       skip: q.skip, 
       take: q.take,
-      include: { images: true }
+      include: { images: true, ...BRAND_SELECT }
     }),
     prisma.product.count({ where: q.where }),
   ]);
@@ -59,6 +62,7 @@ const getProductById = async (id) => {
     where: { id },
     include: {
       images: true,
+      ...BRAND_SELECT,
       reviews: { include: { user: { select: { name: true } } } },
       ...VARIANT_INCLUDE,
     },
@@ -69,6 +73,9 @@ const getProductById = async (id) => {
 
 const createProduct = async (data) => {
   const payload = { ...data };
+  delete payload.brand;
+  delete payload.slug;
+  payload.slug = await generateUniqueProductSlug(prisma, payload.name);
   if (payload.hasVariants) {
     payload.stock = 0;
   }
@@ -82,7 +89,10 @@ const createProduct = async (data) => {
   } else {
     delete payload.images; // Nếu mảng rỗng thì bỏ qua field này
   }
-  return prisma.product.create({ data: payload, include: { images: true, ...VARIANT_INCLUDE } });
+  return prisma.product.create({
+    data: payload,
+    include: { images: true, ...BRAND_SELECT, ...VARIANT_INCLUDE },
+  });
 };
 
 const updateProduct = async (id, data) => {
@@ -99,6 +109,8 @@ const updateProduct = async (id, data) => {
   }
 
   const payload = { ...data };
+  delete payload.brand;
+  delete payload.slug;
   if (payload.hasVariants === true) {
     payload.stock = 0;
   }
@@ -137,7 +149,19 @@ const updateProduct = async (id, data) => {
   const updated = await prisma.product.update({
     where: { id },
     data: payload,
-    include: { images: true, ...VARIANT_INCLUDE },
+    include: { images: true, ...BRAND_SELECT, ...VARIANT_INCLUDE },
+  });
+  return addPriceFields(updated);
+};
+
+const regenerateProductSlug = async (id) => {
+  const existing = await prisma.product.findUnique({ where: { id } });
+  if (!existing) throw new NotFoundError('Product');
+  const newSlug = await generateUniqueProductSlug(prisma, existing.name, id);
+  const updated = await prisma.product.update({
+    where: { id },
+    data: { slug: newSlug },
+    include: { images: true, ...BRAND_SELECT, ...VARIANT_INCLUDE },
   });
   return addPriceFields(updated);
 };
@@ -167,4 +191,11 @@ const deleteProduct = async (id) => {
   return prisma.product.delete({ where: { id } });
 };
 
-module.exports = { getProducts, getProductById, createProduct, updateProduct, deleteProduct };
+module.exports = {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  regenerateProductSlug,
+  deleteProduct,
+};

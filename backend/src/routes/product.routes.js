@@ -9,6 +9,8 @@ const {
   updateProductSchema,
   productQuerySchema,
   productParamsSchema,
+  productSlugParamsSchema,
+  productBrandsQuerySchema,
 } = require('../validations/product.validation');
 const {
   getProductReviewsQuerySchema,
@@ -16,15 +18,18 @@ const {
 } = require('../validations/review.validation');
 
 router.get('/', validate(productQuerySchema, 'query'), productController.getProducts);
-router.get('/:id', validate(productParamsSchema, 'params'), productController.getProductById);
+router.get('/brands', validate(productBrandsQuerySchema, 'query'), productController.getBrandsByType);
+router.get('/by-slug/:slug', validate(productSlugParamsSchema, 'params'), productController.getProductBySlug);
 
-// Public: danh sách reviews của 1 sản phẩm
+// Public: danh sách reviews của 1 sản phẩm (productId = cuid)
 router.get(
   '/:productId/reviews',
   validate(productReviewsParamsSchema, 'params'),
   validate(getProductReviewsQuerySchema, 'query'),
   reviewController.getProductReviews
 );
+
+router.get('/:id', validate(productParamsSchema, 'params'), productController.getProductById);
 
 router.post('/', protect, restrictTo('ADMIN'), validate(createProductSchema), productController.createProduct);
 router.put('/:id', protect, restrictTo('ADMIN'), validate(productParamsSchema, 'params'), validate(updateProductSchema), productController.updateProduct);

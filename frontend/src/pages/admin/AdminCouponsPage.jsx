@@ -8,6 +8,7 @@ import { DataTable } from '@/features/admin/components/DataTable';
 import usePageTitle from '@/hooks/usePageTitle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { VndCurrencyInput } from '@/components/ui/vnd-currency-input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -344,7 +345,30 @@ const AdminCouponsPage = () => {
             <Label htmlFor="coupon-value">
               Giá trị * {watchType === 'PERCENTAGE' ? '(%)' : '(đồng)'}
             </Label>
-            <Input id="coupon-value" type="number" min="0.01" step="0.01" placeholder={watchType === 'PERCENTAGE' ? 'VD: 10' : 'VD: 50000'} {...register('value')} />
+            {watchType === 'PERCENTAGE' ? (
+              <Input
+                id="coupon-value"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="VD: 10"
+                {...register('value')}
+              />
+            ) : (
+              <Controller
+                name="value"
+                control={control}
+                render={({ field }) => (
+                  <VndCurrencyInput
+                    id="coupon-value"
+                    placeholder="VD: 50000"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                )}
+              />
+            )}
             <FieldError message={errors.value?.message} />
           </div>
 
@@ -352,7 +376,19 @@ const AdminCouponsPage = () => {
           {watchType === 'PERCENTAGE' && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="coupon-max-discount">Giảm tối đa (đ) — tuỳ chọn</Label>
-              <Input id="coupon-max-discount" type="number" min="1" placeholder="VD: 100000" {...register('maxDiscountAmount')} />
+              <Controller
+                name="maxDiscountAmount"
+                control={control}
+                render={({ field }) => (
+                  <VndCurrencyInput
+                    id="coupon-max-discount"
+                    placeholder="VD: 100000"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                  />
+                )}
+              />
               <FieldError message={errors.maxDiscountAmount?.message} />
             </div>
           )}
@@ -360,7 +396,19 @@ const AdminCouponsPage = () => {
           {/* minOrderAmount */}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="coupon-min-order">Đơn tối thiểu (đ) *</Label>
-            <Input id="coupon-min-order" type="number" min="0" placeholder="VD: 200000" {...register('minOrderAmount')} />
+            <Controller
+              name="minOrderAmount"
+              control={control}
+              render={({ field }) => (
+                <VndCurrencyInput
+                  id="coupon-min-order"
+                  placeholder="VD: 200000"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+              )}
+            />
             <FieldError message={errors.minOrderAmount?.message} />
           </div>
 

@@ -128,7 +128,7 @@ const NotificationsPage = () => {
               Các thông báo về đơn hàng và hoạt động sẽ hiển thị tại đây.
             </p>
             <Link
-              to="/products"
+              to="/phone"
               className="px-8 py-3 rounded-full bg-apple-blue text-white font-bold text-[15px] sm:text-sm hover:bg-apple-blue/90 transition-colors min-h-[44px] inline-flex items-center justify-center shadow-md active:scale-95"
             >
               Khám phá sản phẩm

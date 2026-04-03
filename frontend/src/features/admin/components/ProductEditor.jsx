@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { VndCurrencyInput } from "@/components/ui/vnd-currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ImageUploadGrid } from "./ImageUploadGrid";
 import { AttributeManager } from "./AttributeManager";
@@ -23,7 +32,7 @@ const productSchema = z.object({
   description: z.string().min(10, "Mô tả phải có ít nhất 10 ký tự").optional().or(z.literal('')),
   price: z.coerce.number({ invalid_type_error: "Giá phải là số" }).positive("Giá lớn hơn 0"),
   stock: z.coerce.number().int("Stock là số nguyên").min(0, "Stock >= 0"),
-  brand: z.string().min(1, "Vui lòng nhập thương hiệu"),
+  brandId: z.string().min(1, "Vui lòng chọn thương hiệu"),
   category: z.string().min(1, "Vui lòng nhập danh mục"),
   images: z.array(z.object({
     url: z.string(),
@@ -99,6 +108,16 @@ export function ProductEditor({
   const [attributeDraft, setAttributeDraft] = useState([]);
   const [variantRows, setVariantRows] = useState([]);
 
+  const { data: brands = [] } = useQuery({
+    queryKey: ["product-brands", "admin-all"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get("/products/brands");
+      return data.brands ?? [];
+    },
+    enabled: isActive,
+    staleTime: 60_000,
+  });
+
   const {
     register,
     handleSubmit,
@@ -115,7 +134,7 @@ export function ProductEditor({
       description: "",
       price: "",
       stock: "",
-      brand: "",
+      brandId: "",
       category: "",
       images: [],
       salePrice: "",
@@ -153,7 +172,7 @@ export function ProductEditor({
           description: initialData.description || "",
           price: initialData.price || "",
           stock: initialData.stock ?? "",
-          brand: initialData.brand || "",
+          brandId: initialData.brand?.id || "",
           category: initialData.category || "",
           images: initialData.images || [],
           salePrice: initialData.salePrice != null ? initialData.salePrice : "",
@@ -175,7 +194,7 @@ export function ProductEditor({
           description: "",
           price: "",
           stock: "",
-          brand: "",
+          brandId: "",
           category: "",
           images: [],
           salePrice: "",
@@ -371,12 +390,18 @@ export function ProductEditor({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="price">Price (VND) *</Label>
-              <Input
-                id="price"
-                type="number"
-                inputMode="decimal"
-                {...register("price")}
-                className={errors.price ? "border-red-500" : ""}
+              <Controller
+                name="price"
+                control={control}
+                render={({ field }) => (
+                  <VndCurrencyInput
+                    id="price"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className={errors.price ? "border-red-500" : ""}
+                  />
+                )}
               />
               {errors.price && <p className="text-red-500 text-xs">{errors.price.message}</p>}
             </div>
@@ -396,13 +421,30 @@ export function ProductEditor({
               {errors.stock && <p className="text-red-500 text-xs">{errors.stock.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="brand">Brand *</Label>
-              <Input
-                id="brand"
-                {...register("brand")}
-                className={errors.brand ? "border-red-500" : ""}
+              <Label htmlFor="brandId">Thương hiệu *</Label>
+              <Controller
+                name="brandId"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id="brandId"
+                      className={errors.brandId ? "border-red-500" : ""}
+                      aria-invalid={!!errors.brandId}
+                    >
+                      <SelectValue placeholder="Chọn hãng" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
-              {errors.brand && <p className="text-red-500 text-xs">{errors.brand.message}</p>}
+              {errors.brandId && <p className="text-red-500 text-xs">{errors.brandId.message}</p>}
             </div>
           </div>
 
@@ -523,13 +565,19 @@ export function ProductEditor({
                   <Label htmlFor="salePrice" className="flex items-center gap-1.5 text-amber-800">
                     Giá sale (₫)
                   </Label>
-                  <Input
-                    id="salePrice"
-                    type="number"
-                    inputMode="decimal"
-                    placeholder="Để trống nếu không giảm giá"
-                    {...register("salePrice")}
-                    className={`${!salePriceIsValid && watchedSalePrice ? "border-red-500" : ""}`}
+                  <Controller
+                    name="salePrice"
+                    control={control}
+                    render={({ field }) => (
+                      <VndCurrencyInput
+                        id="salePrice"
+                        placeholder="Để trống nếu không giảm giá"
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        className={`${!salePriceIsValid && watchedSalePrice ? "border-red-500" : ""}`}
+                      />
+                    )}
                   />
                   <p className="text-xs text-muted-foreground">Phải nhỏ hơn giá gốc</p>
                   {watchedSalePrice && watchedPrice && (

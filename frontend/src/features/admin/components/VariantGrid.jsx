@@ -8,6 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { VndCurrencyInput } from '@/components/ui/vnd-currency-input';
 import { Label } from '@/components/ui/label';
 
 export function cartesianProduct(arrays) {
@@ -80,11 +81,11 @@ export function VariantGrid({ attributes, rows, onChangeRows }) {
                 <TableRow>
                   <TableCell className="font-medium text-sm max-w-[220px] align-top">{label}</TableCell>
                   <TableCell className="align-top min-w-[150px]">
-                    <Input
-                      type="number"
-                      inputMode="decimal"
+                    <VndCurrencyInput
                       value={rows[i]?.price ?? ''}
-                      onChange={(e) => updateRow(i, 'price', Number(e.target.value))}
+                      onChange={(n) =>
+                        updateRow(i, 'price', n === '' ? 0 : Number(n))
+                      }
                     />
                   </TableCell>
                   <TableCell className="align-top min-w-[100px]">
@@ -108,15 +109,12 @@ export function VariantGrid({ attributes, rows, onChangeRows }) {
                     Giá sale riêng
                   </TableCell>
                   <TableCell className="py-2 align-top">
-                    <Input
-                      type="number"
-                      inputMode="decimal"
+                    <VndCurrencyInput
                       placeholder="Tùy chọn"
                       value={rows[i]?.salePrice ?? ''}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        updateRow(i, 'salePrice', v === '' ? '' : Number(v));
-                      }}
+                      onChange={(n) =>
+                        updateRow(i, 'salePrice', n === '' ? '' : Number(n))
+                      }
                     />
                   </TableCell>
                   <TableCell className="py-2 align-top" colSpan={2}>

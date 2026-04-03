@@ -22,6 +22,8 @@ const baseProductSchema = z.object({
 
   category: z.string().trim().min(1, 'Vui lòng chọn danh mục'),
 
+  brandId: z.string().cuid('brandId không hợp lệ').optional().nullable(),
+
   images: z
     .array(z.string().url('URL ảnh không hợp lệ'))
     .min(1, 'Cần ít nhất 1 ảnh')
@@ -83,6 +85,8 @@ const productQuerySchema = z
   .object({
     search: z.string().trim().optional(),
     category: z.string().trim().optional(),
+    brandSlug: z.string().trim().optional(),
+    brand: z.string().trim().optional(),
     minPrice: z.coerce.number().min(0).optional(),
     maxPrice: z.coerce.number().min(0).optional(),
     sort: z
@@ -122,9 +126,19 @@ const productParamsSchema = z.object({
   id: z.string().cuid('ID sản phẩm không hợp lệ'),
 });
 
+const productSlugParamsSchema = z.object({
+  slug: z.string().min(1, 'Slug không hợp lệ').max(300),
+});
+
+const productBrandsQuerySchema = z.object({
+  type: z.enum(['phone', 'laptop', 'tablet', 'accessories']).optional(),
+});
+
 module.exports = {
   createProductSchema,
   updateProductSchema,
   productQuerySchema,
   productParamsSchema,
+  productSlugParamsSchema,
+  productBrandsQuerySchema,
 };

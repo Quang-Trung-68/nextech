@@ -33,11 +33,11 @@ const Footer = () => {
           <div>
             <h3 className="text-xs font-semibold text-apple-black mb-3">Mua sắm & Tìm hiểu</h3>
             <ul className="text-xs text-apple-secondary leading-7">
-              <li><Link to="/products?category=smartphone" className="hover:text-apple-black transition-colors">Điện thoại</Link></li>
-              <li><Link to="/products?category=laptop" className="hover:text-apple-black transition-colors">Laptop</Link></li>
-              <li><Link to="/products?category=tablet" className="hover:text-apple-black transition-colors">Máy tính bảng</Link></li>
-              <li><Link to="/products?category=accessory" className="hover:text-apple-black transition-colors">Phụ kiện</Link></li>
-              <li><Link to="/products?sale=true" className="hover:text-apple-black transition-colors">Khuyến mãi</Link></li>
+              <li><Link to="/phone" className="hover:text-apple-black transition-colors">Điện thoại</Link></li>
+              <li><Link to="/laptop" className="hover:text-apple-black transition-colors">Laptop</Link></li>
+              <li><Link to="/tablet" className="hover:text-apple-black transition-colors">Máy tính bảng</Link></li>
+              <li><Link to="/accessories" className="hover:text-apple-black transition-colors">Phụ kiện</Link></li>
+              <li><Link to="/phone?highlight=on-sale" className="hover:text-apple-black transition-colors">Khuyến mãi</Link></li>
             </ul>
           </div>
 

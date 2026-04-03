@@ -6,6 +6,7 @@ const prisma = require('./prisma');
  */
 const CATEGORY_QUERY_ALIASES = {
   smartphone: 'Điện thoại',
+  phone: 'Điện thoại',
   laptop: 'Laptop',
   tablet: 'Máy tính bảng',
   accessory: 'Phụ kiện',
@@ -43,11 +44,16 @@ class ApiFeatures {
       }
     }
 
-    if (this.queryParams.brand) {
-      if (typeof this.queryParams.brand === 'string' && this.queryParams.brand.includes(',')) {
-        this.queryString.brand = { in: this.queryParams.brand.split(',') };
+    const brandSlugParam = this.queryParams.brandSlug || this.queryParams.brand;
+    if (brandSlugParam) {
+      const slugs =
+        typeof brandSlugParam === 'string' && brandSlugParam.includes(',')
+          ? brandSlugParam.split(',').map((s) => s.trim()).filter(Boolean)
+          : [String(brandSlugParam).trim()];
+      if (slugs.length === 1) {
+        this.queryString.brand = { slug: slugs[0] };
       } else {
-        this.queryString.brand = this.queryParams.brand;
+        this.queryString.brand = { slug: { in: slugs } };
       }
     }
 

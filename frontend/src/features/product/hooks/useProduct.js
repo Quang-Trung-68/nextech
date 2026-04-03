@@ -19,17 +19,16 @@ export function useProducts(params) {
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
-      // Backend trả { success: true, products: [...], totalCount, page, totalPages }
       const { page, totalPages } = lastPage || {};
       if (page && totalPages && page < totalPages) {
         return page + 1;
       }
-      return undefined; // Hết trang
+      return undefined;
     },
   });
 }
 
-// Lấy chi tiết 1 sản phẩm
+// Lấy chi tiết 1 sản phẩm theo id (CUID) — admin / legacy
 export function useProduct(id) {
   return useQuery({
     queryKey: ['products', 'detail', id],
@@ -37,6 +36,18 @@ export function useProduct(id) {
       const { data } = await axiosInstance.get(`/products/${id}`);
       return data;
     },
-    enabled: !!id, // Chỉ gọi API khi id tồn tại
+    enabled: !!id,
+  });
+}
+
+// Chi tiết theo slug (storefront)
+export function useProductBySlug(slug) {
+  return useQuery({
+    queryKey: ['products', 'by-slug', slug],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/products/by-slug/${encodeURIComponent(slug)}`);
+      return data;
+    },
+    enabled: !!slug,
   });
 }

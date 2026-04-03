@@ -19,7 +19,7 @@ export function BottomNav() {
     },
     {
       name: 'Sản phẩm',
-      href: '/products',
+      href: '/phone',
       icon: LayoutGrid,
     },
     {

@@ -15,6 +15,7 @@ import {
 import { formatVND } from '@/utils/price';
 import { Link } from 'react-router-dom';
 import { VariantOptionBadges } from '@/components/product/VariantOptionBadges';
+import { getSlugByCategory } from '@/constants/category';
 
 const getOptimizedImage = (url, width) => {
   if (!url) return '/placeholder.png';
@@ -27,6 +28,8 @@ const getOptimizedImage = (url, width) => {
 export function CartItem({ item, onUpdateQuantity, onRemove }) {
   const {
     productId,
+    slug,
+    category,
     variantId,
     name,
     price,
@@ -83,7 +86,10 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
       <div className="flex flex-col flex-1 justify-between gap-2">
         <div className="flex justify-between items-start gap-4">
           <div className="space-y-1">
-            <Link to={`/products/all/${productId}`} className="font-semibold text-sm sm:text-base text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
+            <Link
+              to={slug && category ? `/${getSlugByCategory(category)}/${slug}` : '#'}
+              className="font-semibold text-sm sm:text-base text-apple-dark hover:text-apple-blue transition-colors line-clamp-2"
+            >
               {name}
             </Link>
             <VariantOptionBadges options={variantOptions} className="mt-1" />

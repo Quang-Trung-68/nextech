@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
 import { useNavigate } from 'react-router-dom';
+import { getSlugByCategory } from '@/constants/category';
 import { getRecentSearches, saveRecentSearch, removeRecentSearch } from '@/utils/recentSearches';
 import { Search, X, Clock, Loader2 } from 'lucide-react';
 
@@ -55,10 +56,12 @@ const SearchDialog = ({ isOpen, onClose }) => {
     staleTime: 1000 * 30,
   });
 
-  const handleSelectProduct = (productId) => {
+  const handleSelectProduct = (product) => {
     saveRecentSearch(inputValue.trim());
     onClose();
-    navigate(`/products/all/${productId}`);
+    if (product?.slug && product?.category) {
+      navigate(`/${getSlugByCategory(product.category)}/${product.slug}`);
+    }
   };
 
   const handleQuickLink = (term) => {
@@ -88,7 +91,7 @@ const SearchDialog = ({ isOpen, onClose }) => {
             {products.map((product) => (
               <div
                 key={product.id}
-                onClick={() => handleSelectProduct(product.id)}
+                onClick={() => handleSelectProduct(product)}
                 className="flex flex-row items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 rounded-xl px-2 transition-colors"
               >
                 <img

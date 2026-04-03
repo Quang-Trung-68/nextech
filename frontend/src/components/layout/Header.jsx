@@ -11,6 +11,7 @@ import SearchDialog from '../common/SearchDialog';
 import MobileDrawer from './MobileDrawer';
 import { useMyFavorites } from '@/features/favorites';
 import NotificationDropdown from './NotificationDropdown';
+import { getSlugByCategory } from '@/constants/category';
 
 const Header = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -61,10 +62,10 @@ const Header = () => {
   }, []);
 
   const navLinks = [
-    { label: 'Điện thoại', path: '/products/iphone' },
-    { label: 'Laptop', path: '/products/mac' },
-    { label: 'Máy tính bảng', path: '/products/ipad' },
-    { label: 'Phụ kiện', path: '/products/accessories' },
+    { label: 'Điện thoại', path: '/phone' },
+    { label: 'Laptop', path: '/laptop' },
+    { label: 'Máy tính bảng', path: '/tablet' },
+    { label: 'Phụ kiện', path: '/accessories' },
     { label: 'Hỗ trợ', path: '/support' },
   ];
 
@@ -205,7 +206,7 @@ const Header = () => {
                                 />
                                 <div className="flex-1 flex flex-col justify-between min-w-0">
                                   <Link 
-                                    to={`/products/all/${item.productId}`} 
+                                    to={item.slug && item.category ? `/${getSlugByCategory(item.category)}/${item.slug}` : '#'} 
                                     className="text-[13px] font-semibold text-apple-dark line-clamp-2 hover:text-apple-blue transition-colors"
                                   >
                                     {item.name}

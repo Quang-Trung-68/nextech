@@ -2,95 +2,20 @@ import React, { useState, useMemo } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
-import { Link, useSearchParams, useParams, useNavigate, Navigate } from 'react-router-dom';
-import { SLUG_MAP, SLUG_LABEL_MAP, getSlugByCategory } from '@/constants/category';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
+import { SLUG_MAP, SLUG_LABEL_MAP, getSlugByCategory, getProductTypeFromPath } from '@/constants/category';
+import { useBrands } from '@/features/product/hooks/useBrands';
 import { Grid, List, SlidersHorizontal, ChevronRight, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
-import useAuthStore from '@/stores/useAuthStore';
-import { toast } from 'sonner';
-import { useLocation } from 'react-router-dom';
 import { formatVND } from '@/utils/price';
 import { useMyFavorites, FavoriteButton } from '@/features/favorites';
 import FilterDrawer from './FilterDrawer';
 import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
 import SaleStockBadge from '@/components/product/SaleStockBadge';
-
-// --- ActionButtons Component ---
-const ActionButtons = ({ product, viewMode }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
-  const [isBuying, setIsBuying] = useState(false);
-
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-      return navigate('/login', { state: { from: location.pathname + location.search } });
-    }
-    if (product.hasVariants) {
-      navigate(`/products/${getSlugByCategory(product.category)}/${product.id}`);
-      return;
-    }
-    addToCart(
-      { productId: product.id, quantity: 1 },
-      {
-        onSuccess: () => { toast.success('Đã thêm sản phẩm vào giỏ hàng!'); },
-        onError: (err) => { toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng'); }
-      }
-    );
-  };
-
-  const handleBuyNow = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để mua hàng');
-      return navigate('/login', { state: { from: location.pathname + location.search } });
-    }
-    if (product.hasVariants) {
-      navigate(`/products/${getSlugByCategory(product.category)}/${product.id}`);
-      return;
-    }
-    setIsBuying(true);
-    addToCart(
-      { productId: product.id, quantity: 1 },
-      {
-        onSuccess: () => { navigate('/checkout'); },
-        onError: (err) => { toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi mua hàng'); },
-        onSettled: () => setIsBuying(false),
-      }
-    );
-  };
-
-  return (
-    <div className={`hidden md:flex w-full gap-2 ${viewMode === 'list' ? 'flex-row justify-around gap-32' : 'flex-col'}`}>
-      <Button 
-        className={`rounded-full bg-white border border-[#d2d2d7] hover:bg-[#f5f5f7] text-apple-dark font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
-        onClick={handleAddToCart}
-        disabled={(!product.hasVariants && product.stock === 0) || isAddingToCart || isBuying}
-      >
-        {isAddingToCart ? 'Đang thêm...' : product.stock === 0 && !product.hasVariants ? 'Hết hàng' : 'Thêm vào giỏ'}
-      </Button>
-      <Button 
-        className={`rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
-        onClick={handleBuyNow}
-        disabled={(!product.hasVariants && product.stock === 0) || isAddingToCart || isBuying}
-      >
-        {isBuying ? 'Đang xử lý...' : 'Mua ngay'}
-      </Button>
-    </div>
-  );
-};
-// -------------------------------
-
 
 const HIGHLIGHTS = [
   { id: 'new-arrival', label: 'Hàng mới về' },
@@ -108,22 +33,21 @@ const PRICE_RANGES = [
 
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { categorySlug } = useParams();
+  const location = useLocation();
+  const productType = getProductTypeFromPath(location.pathname);
 
   const highlightParam = searchParams.get('highlight');
   const categoryQueryParam = searchParams.get('category');
+  const brandParam = searchParams.get('brand');
   const highlights = highlightParam ? highlightParam.split(',') : [];
 
-  const pageLabel = categorySlug ? SLUG_LABEL_MAP[categorySlug] : null;
-  usePageTitle(pageLabel || 'Sản phẩm'); // → "Điện thoại | NexTech" or "Sản phẩm | NexTech"
+  const pageLabel = productType ? SLUG_LABEL_MAP[productType] : null;
+  usePageTitle(pageLabel || 'Sản phẩm');
+  const { data: brandOptions = [] } = useBrands(productType);
   const [priceRanges, setPriceRanges] = useState([]);
   const [sort, setSort] = useState('Mới nhất'); // Nổi bật, Mới nhất, Giá tăng dần, Giá giảm dần
   const [viewMode, setViewMode] = useState('grid');
   const limit = 12;
-
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   // Build Query Params
   const getQueryParams = (pageParam) => {
@@ -132,12 +56,12 @@ const ProductsPage = () => {
     if (sort === 'Giá giảm dần') sortParam = 'price_desc';
 
     const params = { page: pageParam, limit, sort: sortParam };
-    if (categorySlug && SLUG_MAP[categorySlug]) {
-      params.category = SLUG_MAP[categorySlug];
+    if (productType && SLUG_MAP[productType]) {
+      params.category = SLUG_MAP[productType];
     } else if (categoryQueryParam) {
-      // ?category=smartphone — backend map sang "Điện thoại"
       params.category = categoryQueryParam;
     }
+    if (brandParam) params.brandSlug = brandParam;
     if (highlightParam) params.highlight = highlightParam;
     
     // Find absolute min and max prices from selected ranges
@@ -158,7 +82,7 @@ const ProductsPage = () => {
     fetchNextPage, 
     isFetchingNextPage 
   } = useInfiniteQuery({
-    queryKey: ['products', categorySlug, categoryQueryParam, highlightParam, priceRanges, sort],
+    queryKey: ['products', productType, categoryQueryParam, brandParam, highlightParam, priceRanges, sort],
     queryFn: async ({ pageParam }) => {
       const res = await axiosInstance.get('/products', { params: getQueryParams(pageParam) });
       return res.data;
@@ -206,16 +130,47 @@ const ProductsPage = () => {
   const clearFilters = () => {
     setPriceRanges([]);
     searchParams.delete('highlight');
+    searchParams.delete('brand');
     setSearchParams(searchParams, { replace: true });
   };
 
-  // Redirect if invalid slug
-  if (categorySlug && !SLUG_MAP[categorySlug]) {
-    return <Navigate to="/products" replace />;
-  }
+  const handleBrandToggle = (slug) => {
+    const current = brandParam ? brandParam.split(',').map((s) => s.trim()).filter(Boolean) : [];
+    let next;
+    if (current.includes(slug)) {
+      next = current.filter((s) => s !== slug);
+    } else {
+      next = [...current, slug];
+    }
+    if (next.length) searchParams.set('brand', next.join(','));
+    else searchParams.delete('brand');
+    setSearchParams(searchParams, { replace: true });
+  };
+
+  const selectedBrandSlugs = brandParam ? brandParam.split(',').map((s) => s.trim()).filter(Boolean) : [];
 
   const renderSidebarContent = () => (
     <div className="flex flex-col gap-8 w-full">
+      {productType && brandOptions.length > 0 && (
+        <div>
+          <h4 className="font-semibold text-apple-dark mb-4 text-base">Hãng</h4>
+          <div className="flex flex-col gap-3">
+            {brandOptions.map((b) => (
+              <div key={b.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={`brand-${b.slug}`}
+                  checked={selectedBrandSlugs.includes(b.slug)}
+                  onCheckedChange={() => handleBrandToggle(b.slug)}
+                  className="border-[#d2d2d7] data-[state=checked]:bg-apple-blue data-[state=checked]:border-apple-blue"
+                />
+                <label htmlFor={`brand-${b.slug}`} className="text-sm font-medium leading-none text-apple-dark cursor-pointer">
+                  {b.name}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Đặc điểm nổi bật */}
       <div>
         <h4 className="font-semibold text-apple-dark mb-4 text-base">Đặc điểm nổi bật</h4>
@@ -273,7 +228,7 @@ const ProductsPage = () => {
           <Link to="/" className="hover:text-apple-dark transition-colors">NexTech</Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-apple-dark font-bold">
-            {categorySlug ? SLUG_LABEL_MAP[categorySlug] : 'Tất cả sản phẩm'}
+            {productType ? SLUG_LABEL_MAP[productType] : 'Tất cả sản phẩm'}
           </span>
         </div>
       </div>
@@ -292,7 +247,7 @@ const ProductsPage = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-8 gap-4 sticky top-[3.5rem] md:static z-20 bg-white/95 backdrop-blur-md md:bg-transparent py-2 md:py-0">
             <div className="hidden md:block">
                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-apple-dark mb-2">
-                 {categorySlug ? SLUG_LABEL_MAP[categorySlug] : 'Sản phẩm'}
+                 {productType ? SLUG_LABEL_MAP[productType] : 'Sản phẩm'}
                </h1>
                <p className="text-apple-secondary text-sm">
                  hiển thị {totalItems} sản phẩm
@@ -368,7 +323,7 @@ const ProductsPage = () => {
                 <div key={product.id} className={`group relative bg-white border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] md:hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] md:hover:scale-[1.02] rounded-2xl md:rounded-[24px] transition-all duration-300 p-3 md:p-5 flex ${viewMode === 'list' ? 'flex-row gap-4 md:gap-6 items-center' : 'flex-col'}`}>
                   
                   {/* Image */}
-                  <Link to={`/products/${getSlugByCategory(product.category)}/${product.id}`} className={`relative bg-white p-4 md:p-6 rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-4 group/img'}`}>
+                  <Link to={`/${getSlugByCategory(product.category)}/${product.slug}`} className={`relative bg-white p-4 md:p-6 rounded-lg md:rounded-xl overflow-hidden shrink-0 flex items-center justify-center ${viewMode === 'list' ? 'w-24 h-24 md:w-40 md:h-40' : 'w-full aspect-square mb-3 md:mb-4 group/img'}`}>
                     {/* Badges — xếp dọc góc trên trái */}
                     <div className="hidden md:flex absolute top-2 left-2 z-10 flex-col gap-1 items-start">
                       {product.isNewArrival && (
@@ -409,12 +364,12 @@ const ProductsPage = () => {
 
                   {/* Info */}
                   <div className="flex flex-col flex-1">
-                    <Link to={`/products/${getSlugByCategory(product.category)}/${product.id}`} className="block">
+                    <Link to={`/${getSlugByCategory(product.category)}/${product.slug}`} className="block">
                       <h3 className="font-semibold text-sm md:text-[15px] text-apple-dark tracking-tight mb-1 md:group-hover:text-apple-blue transition-colors line-clamp-2">
                         {product.name}
                       </h3>
                       <p className="hidden md:block text-[13px] text-apple-secondary mb-1 line-clamp-1">
-                        {product.brand} • {SLUG_LABEL_MAP[Object.keys(SLUG_MAP).find(k => SLUG_MAP[k] === product.category)] || product.category}
+                        {product.brand?.name || '—'} • {SLUG_LABEL_MAP[Object.keys(SLUG_MAP).find(k => SLUG_MAP[k] === product.category)] || product.category}
                       </p>
                       {/* Năm ra mắt */}
                       {product.manufactureYear != null && (
@@ -445,10 +400,8 @@ const ProductsPage = () => {
                           </span>
                         )}
                       </div>
-                      
-                      <ActionButtons product={product} viewMode={viewMode} />
-                      
-                      {/* Rating & Favorite under the button on md+ */}
+
+                      {/* Rating & Favorite */}
                       <div className="hidden md:flex items-center justify-between pt-1">
                         <div className="flex items-center gap-1.5 text-sm font-semibold text-apple-dark">
                            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />

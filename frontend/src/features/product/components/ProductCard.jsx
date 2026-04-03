@@ -1,58 +1,22 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getSlugByCategory } from '@/constants/category';
-// Removed duplicate
-import { Star, Image as ImageIcon, ShoppingCart } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Star, Image as ImageIcon } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
-import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { useAddToCart } from '@/features/cart/hooks/useCartMutations';
-import useAuthStore from '@/stores/useAuthStore';
-import { toast } from 'sonner';
 import { FavoriteButton } from '@/features/favorites';
 import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
 import SaleStockBadge from '@/components/product/SaleStockBadge';
 
 export function ProductCard({ product }) {
-  const { id, name, price, rating, stock, images, category, hasVariants } = product;
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart();
+  const { slug, name, price, rating, stock, images, category, hasVariants } = product;
 
   // Ảnh đầu tiên (nếu có)
   const firstImage = images?.[0]?.url;
   
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-      return navigate('/login', { state: { from: location.pathname + location.search } });
-    }
-
-    if (hasVariants) {
-      navigate(`/products/${getSlugByCategory(category)}/${id}`);
-      return;
-    }
-
-    addToCart(
-      { productId: id, quantity: 1 },
-      {
-        onSuccess: () => {
-          toast.success('Đã thêm sản phẩm vào giỏ hàng!');
-        },
-        onError: (err) => {
-          toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
-        }
-      }
-    );
-  };
-
   return (
     <Card className="overflow-hidden group flex flex-col h-full bg-white rounded-3xl border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-      <Link to={`/products/${getSlugByCategory(category)}/${id}`} className="flex-1 flex flex-col relative">
+      <Link to={`/${getSlugByCategory(category)}/${slug}`} className="flex-1 flex flex-col relative">
         {/* Container hiển thị ảnh */}
         <div className="relative aspect-square w-full bg-white p-5 flex items-center justify-center">
           {firstImage ? (
@@ -138,28 +102,14 @@ export function ProductCard({ product }) {
           </div>
         </div>
       </Link>
-      
-      {/* Container nút (Nằm ngoài thẻ Link để tránh lỗi HTML Button lồng trong Thẻ A hoặc bị route đè) */}
-      <div className="px-4 pb-4 pt-2 mt-auto flex flex-col gap-3">
-        {/* Add to cart Button */}
-        <Button 
-            size="sm" 
-            className="w-full h-9 font-semibold text-[13px] active:scale-[0.98] transition-all bg-[#0066cc] hover:bg-[#005bb5] text-white rounded-lg"
-            onClick={handleAddToCart}
-            disabled={(!hasVariants && stock === 0) || isAddingToCart}
-          >
-            {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
-        </Button>
-        
-        {/* Rating & Favorite */}
-        <div className="flex justify-between items-center pt-1">
-          <div className="flex items-center gap-1.5 text-[13px] font-semibold">
-             <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-             <span>{rating > 0 ? rating.toFixed(1) : "0"}</span>
-          </div>
-          <div className="relative z-10">
-            <FavoriteButton product={product} size="sm" />
-          </div>
+
+      <div className="px-4 pb-4 pt-2 mt-auto flex justify-between items-center border-t border-black/[0.04]">
+        <div className="flex items-center gap-1.5 text-[13px] font-semibold">
+          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+          <span>{rating > 0 ? rating.toFixed(1) : "0"}</span>
+        </div>
+        <div className="relative z-10">
+          <FavoriteButton product={product} size="sm" />
         </div>
       </div>
     </Card>

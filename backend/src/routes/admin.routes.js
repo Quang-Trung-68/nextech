@@ -81,6 +81,13 @@ router.patch(
   adminController.updateProduct
 );
 
+// POST /api/admin/products/:id/regenerate-slug
+router.post(
+  '/products/:id/regenerate-slug',
+  validate(adminProductParamsSchema, 'params'),
+  adminController.regenerateProductSlug
+);
+
 // Mouting ProductImage sub-router
 const productImageRouter = require('./admin.productImage.routes');
 router.use('/products/:id/images', productImageRouter);

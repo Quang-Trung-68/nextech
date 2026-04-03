@@ -2,6 +2,38 @@ const prisma = require('../utils/prisma');
 const ApiFeatures = require('../utils/apiFeatures');
 const { addPriceFields, enrichVariantForStore } = require('../utils/price');
 const { NotFoundError } = require('../errors/AppError');
+const { generateUniqueProductSlug } = require('../utils/productSlugify');
+
+const BRAND_INCLUDE = { brand: { select: { id: true, name: true, slug: true, logo: true } } };
+
+const PRODUCT_DETAIL_INCLUDE = {
+  images: true,
+  brand: { select: { id: true, name: true, slug: true, logo: true } },
+  reviews: {
+    include: {
+      user: {
+        select: { name: true },
+      },
+    },
+  },
+  attributes: {
+    orderBy: { position: 'asc' },
+    include: { values: { orderBy: { position: 'asc' } } },
+  },
+  variants: {
+    where: { deletedAt: null },
+    orderBy: { createdAt: 'asc' },
+    include: {
+      values: {
+        include: {
+          attributeValue: {
+            include: { attribute: { select: { id: true, name: true } } },
+          },
+        },
+      },
+    },
+  },
+};
 
 const getProducts = async (queryParams) => {
   const features = new ApiFeatures(queryParams)
@@ -18,7 +50,7 @@ const getProducts = async (queryParams) => {
       orderBy: queryDetails.orderBy,
       skip: queryDetails.skip,
       take: queryDetails.take,
-      include: { images: true }
+      include: { images: true, ...BRAND_INCLUDE },
     }),
     prisma.product.count({ where: queryDetails.where }),
   ]);
@@ -36,33 +68,7 @@ const getProducts = async (queryParams) => {
 const getProductById = async (id) => {
   const product = await prisma.product.findUnique({
     where: { id },
-    include: {
-      images: true,
-      reviews: {
-        include: {
-          user: {
-            select: { name: true },
-          },
-        },
-      },
-      attributes: {
-        orderBy: { position: 'asc' },
-        include: { values: { orderBy: { position: 'asc' } } },
-      },
-      variants: {
-        where: { deletedAt: null },
-        orderBy: { createdAt: 'asc' },
-        include: {
-          values: {
-            include: {
-              attributeValue: {
-                include: { attribute: { select: { id: true, name: true } } },
-              },
-            },
-          },
-        },
-      },
-    },
+    include: PRODUCT_DETAIL_INCLUDE,
   });
 
   if (!product) {
@@ -79,8 +85,68 @@ const getProductById = async (id) => {
   return withPrices;
 };
 
+const getProductBySlug = async (slug) => {
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    include: PRODUCT_DETAIL_INCLUDE,
+  });
+
+  if (!product) {
+    throw new NotFoundError('Product');
+  }
+
+  const withPrices = addPriceFields(product);
+  if (withPrices.variants?.length) {
+    return {
+      ...withPrices,
+      variants: withPrices.variants.map((v) => enrichVariantForStore(withPrices, v)),
+    };
+  }
+  return withPrices;
+};
+
+const TYPE_TO_CATEGORY = {
+  phone: 'Điện thoại',
+  laptop: 'Laptop',
+  tablet: 'Máy tính bảng',
+  accessories: 'Phụ kiện',
+};
+
+const getBrandsByType = async (type) => {
+  if (type == null || type === '') {
+    return prisma.brand.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, slug: true, logo: true },
+    });
+  }
+
+  const categoryFilter = TYPE_TO_CATEGORY[type]
+    ? { category: TYPE_TO_CATEGORY[type] }
+    : {};
+
+  const brands = await prisma.brand.findMany({
+    where: {
+      products: {
+        some: {
+          stock: { gt: 0 },
+          ...categoryFilter,
+        },
+      },
+    },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true, slug: true, logo: true },
+  });
+
+  return brands;
+};
+
 const createProduct = async (data) => {
   const payload = { ...data };
+  delete payload.brand;
+  delete payload.slug;
+
+  payload.slug = await generateUniqueProductSlug(prisma, payload.name);
+
   if (payload.hasVariants) {
     payload.stock = 0;
   }
@@ -94,7 +160,10 @@ const createProduct = async (data) => {
   } else {
     delete payload.images;
   }
-  return prisma.product.create({ data: payload, include: { images: true } });
+  return prisma.product.create({
+    data: payload,
+    include: { images: true, ...BRAND_INCLUDE },
+  });
 };
 
 const updateProduct = async (id, data) => {
@@ -105,6 +174,13 @@ const updateProduct = async (id, data) => {
   }
 
   const payload = { ...data };
+  delete payload.brand;
+  delete payload.slug;
+
+  if (payload.name != null && payload.name !== existingProduct.name) {
+    // Slug không tự đổi khi đổi tên (SEO)
+  }
+
   if (payload.hasVariants === true) {
     payload.stock = 0;
   }
@@ -124,7 +200,11 @@ const updateProduct = async (id, data) => {
     payload.saleSoldCount = 0;
   }
 
-  return prisma.product.update({ where: { id }, data: payload, include: { images: true } });
+  return prisma.product.update({
+    where: { id },
+    data: payload,
+    include: { images: true, ...BRAND_INCLUDE },
+  });
 };
 
 const deleteProduct = async (id) => {
@@ -142,6 +222,8 @@ const deleteProduct = async (id) => {
 module.exports = {
   getProducts,
   getProductById,
+  getProductBySlug,
+  getBrandsByType,
   createProduct,
   updateProduct,
   deleteProduct,

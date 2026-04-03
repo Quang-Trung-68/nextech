@@ -33,7 +33,7 @@ const adminProductBaseSchema = z.object({
   price: z.coerce.number().positive('Giá phải lớn hơn 0').max(1_000_000_000),
   stock: z.coerce.number().int('Số lượng phải là số nguyên').min(0),
   category: z.string().trim().min(1, 'Vui lòng chọn danh mục'),
-  brand: z.string().trim().optional(),
+  brandId: z.string().cuid('brandId không hợp lệ').optional().nullable(),
   images: z.array(z.object({
     url: z.string().url('URL ảnh không hợp lệ'),
     publicId: z.string().min(1)

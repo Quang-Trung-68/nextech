@@ -5,7 +5,7 @@
  */
 
 import { lazy } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 
 // Layout & Route guards
 import MainLayout from '@/components/layout/MainLayout';
@@ -20,6 +20,15 @@ import ProductDetailPage from '@/pages/product/ProductDetailPage';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ProductsPage from '@/pages/product/ProductsPage';
+import LegacyProductDetailRedirect from '@/pages/product/LegacyProductDetailRedirect';
+
+function OldProductsCategoryRedirect() {
+  const { categorySlug } = useParams();
+  const map = { iphone: '/phone', mac: '/laptop', ipad: '/tablet', accessories: '/accessories' };
+  const to = map[categorySlug];
+  if (to) return <Navigate to={to} replace />;
+  return <Navigate to="/" replace />;
+}
 
 // ─── Nhóm 1 Public — Support ─────────────────────────────────────────────────
 const SupportPage = lazy(() => import('@/pages/support/SupportPage'));
@@ -70,18 +79,21 @@ const routes = [
         path: '/',
         element: <HomePage />,
       },
-      {
-        path: '/products',
-        element: <ProductsPage />,
-      },
-      {
-        path: '/products/:categorySlug',
-        element: <ProductsPage />,
-      },
-      {
-        path: '/products/:categorySlug/:id',
-        element: <ProductDetailPage />,
-      },
+      { path: '/phone', element: <ProductsPage /> },
+      { path: '/laptop', element: <ProductsPage /> },
+      { path: '/tablet', element: <ProductsPage /> },
+      { path: '/accessories', element: <ProductsPage /> },
+      { path: '/phone/:slug', element: <ProductDetailPage /> },
+      { path: '/laptop/:slug', element: <ProductDetailPage /> },
+      { path: '/tablet/:slug', element: <ProductDetailPage /> },
+      { path: '/accessories/:slug', element: <ProductDetailPage /> },
+      { path: '/products/iphone', element: <Navigate to="/phone" replace /> },
+      { path: '/products/mac', element: <Navigate to="/laptop" replace /> },
+      { path: '/products/ipad', element: <Navigate to="/tablet" replace /> },
+      { path: '/products/accessories', element: <Navigate to="/accessories" replace /> },
+      { path: '/products/:categorySlug/:id', element: <LegacyProductDetailRedirect /> },
+      { path: '/products/:categorySlug', element: <OldProductsCategoryRedirect /> },
+      { path: '/products', element: <Navigate to="/" replace /> },
       {
         path: '/support',
         element: <SupportPage />,

@@ -73,6 +73,15 @@ const deleteProduct = async (req, res, next) => {
   }
 };
 
+const regenerateProductSlug = async (req, res, next) => {
+  try {
+    const product = await adminProductService.regenerateProductSlug(req.params.id);
+    res.status(200).json({ success: true, product });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── Admin Users ──────────────────────────────────────────────────────────────
 
 const getUsers = async (req, res, next) => {
@@ -145,6 +154,7 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  regenerateProductSlug,
   getUsers,
   getUserById,
   toggleUserStatus,

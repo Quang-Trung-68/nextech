@@ -73,6 +73,8 @@ const _formatCart = (cart) => {
       id: item.id,
       productId: item.productId,
       variantId: item.variantId,
+      slug: product.slug,
+      category: product.category,
       name: product.name,
       /** Giá gốc sản phẩm (SP đơn) — giữ tương thích; với biến thể dùng originalUnitPrice để hiển thị */
       price: product.price,

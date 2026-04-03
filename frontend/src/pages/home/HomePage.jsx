@@ -409,13 +409,13 @@ const HomePage = () => {
               </p>
               <p className="text-apple-secondary text-lg mb-10">Từ 31.599.000đ</p>
               <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 w-full sm:w-auto">
-                <Link to="/products?category=smartphone" className="w-full sm:w-auto">
+                <Link to="/phone" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto rounded-full bg-apple-blue text-white hover:bg-apple-blue/90 px-8 py-4 md:py-6 text-base font-semibold">
-                    Mua ngay
+                    Xem ngay
                   </Button>
                 </Link>
                 <Link
-                  to="/products?category=smartphone"
+                  to="/phone"
                   className="group flex items-center text-apple-blue hover:underline text-lg font-medium transition-colors w-full sm:w-auto justify-center"
                 >
                   Tìm hiểu thêm
@@ -483,10 +483,10 @@ const HomePage = () => {
               <p className="text-white/80 text-sm md:text-base mb-3">120Hz. Chip A18.</p>
               <p className="text-white/60 text-sm mb-5">Từ 21.999.000đ</p>
               <div className="flex items-center justify-center gap-4">
-                <Link to="/products?category=smartphone" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                <Link to="/phone" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
                   Mua
                 </Link>
-                <Link to="/products?category=smartphone" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                <Link to="/phone" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
                   Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>
@@ -508,10 +508,10 @@ const HomePage = () => {
               <p className="text-apple-dark text-sm md:text-base mb-3">Nhẹ 1.24kg. Pin 18 giờ.</p>
               <p className="text-apple-secondary text-sm mb-5">Từ 24.499.000đ</p>
               <div className="flex items-center justify-center gap-4">
-                <Link to="/products?category=laptop" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                <Link to="/laptop" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
                   Mua
                 </Link>
-                <Link to="/products?category=laptop" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                <Link to="/laptop" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
                   Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>
@@ -533,10 +533,10 @@ const HomePage = () => {
               <p className="text-apple-dark text-sm md:text-base mb-3">Mỏng 6.1mm.</p>
               <p className="text-apple-secondary text-sm mb-5">Từ 16.990.000đ</p>
               <div className="flex items-center justify-center gap-4">
-                <Link to="/products?category=tablet" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                <Link to="/tablet" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
                   Mua
                 </Link>
-                <Link to="/products?category=tablet" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                <Link to="/tablet" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
                   Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>
@@ -558,10 +558,10 @@ const HomePage = () => {
               <p className="text-white/80 text-sm md:text-base mb-3">Đo nhịp tim, oxy.</p>
               <p className="text-white/60 text-sm mb-5">Từ 7.290.000đ</p>
               <div className="flex items-center justify-center gap-4">
-                <Link to="/products?category=accessory" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
+                <Link to="/accessories" className="px-5 py-2 rounded-full bg-apple-blue text-white text-xs md:text-sm font-semibold hover:bg-apple-blue/90 transition-colors">
                   Mua
                 </Link>
-                <Link to="/products?category=accessory" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
+                <Link to="/accessories" className="text-apple-blue hover:underline text-xs md:text-sm font-medium flex items-center">
                   Tìm hiểu <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>

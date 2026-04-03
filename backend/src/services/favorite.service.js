@@ -42,6 +42,7 @@ const getUserFavorites = async (userId) => {
           images: {
             take: 1,
           },
+          brand: { select: { name: true } },
         },
       },
     },
@@ -59,7 +60,7 @@ const getUserFavorites = async (userId) => {
       finalPrice: productWithPrices.finalPrice,
       images: productWithPrices.images,
       category: productWithPrices.category,
-      brand: productWithPrices.brand,
+      brand: productWithPrices.brand?.name ?? null,
       rating: productWithPrices.rating,
       numReviews: productWithPrices.numReviews,
       isNewArrival: productWithPrices.isNewArrival,

@@ -6,7 +6,11 @@ import { BottomNav } from '@/components/layout/BottomNav';
 
 const MainLayout = () => {
   const location = useLocation();
-  const showBottomNav = location.pathname === '/' || location.pathname === '/products';
+  const showBottomNav =
+    location.pathname === '/' ||
+    ['/phone', '/laptop', '/tablet', '/accessories'].some(
+      (p) => location.pathname === p || location.pathname.startsWith(`${p}/`)
+    );
 
   return (
     <div className="min-h-svh flex flex-col font-sans selection:bg-apple-blue/20">

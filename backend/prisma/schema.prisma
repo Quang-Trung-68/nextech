@@ -102,9 +102,23 @@ model OAuthAccount {
   @@map("oauth_accounts")
 }
 
+model Brand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  logo        String?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@map("brands")
+}
+
 model Product {
   id              String              @id @default(cuid())
   name            String
+  slug            String              @unique
   description     String
   price           Decimal             @db.Decimal(15, 2)
   stock           Int
@@ -113,7 +127,8 @@ model Product {
   numReviews      Int                 @default(0)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
-  brand           String?
+  brandId         String?
+  brand           Brand?              @relation(fields: [brandId], references: [id], onDelete: SetNull)
   isBestseller    Boolean             @default(false)
   isNewArrival    Boolean             @default(true)
   manufactureYear Int?
@@ -133,6 +148,7 @@ model Product {
   stockImports      StockImport[]
   serialUnits       SerialUnit[]
 
+  @@index([brandId])
   @@map("products")
 }
 

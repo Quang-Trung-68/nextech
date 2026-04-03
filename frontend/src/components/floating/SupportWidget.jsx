@@ -48,8 +48,14 @@ export default function SupportWidget() {
   const widgetRef = useRef(null);
   const location = useLocation();
   
-  const hasBottomNav = typeof window !== 'undefined' && window.innerWidth < 768 && 
-    (location.pathname === '/' || location.pathname === '/products' || location.pathname.startsWith('/profile'));
+  const onProductRoot =
+    ['/phone', '/laptop', '/tablet', '/accessories'].some(
+      (p) => location.pathname === p || location.pathname.startsWith(`${p}/`)
+    );
+  const hasBottomNav =
+    typeof window !== 'undefined' &&
+    window.innerWidth < 768 &&
+    (location.pathname === '/' || onProductRoot || location.pathname.startsWith('/profile'));
   
   const bottomOffsetClass = hasBottomNav 
     ? "bottom-[calc(80px+env(safe-area-inset-bottom))]" 

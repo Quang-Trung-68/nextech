@@ -6,6 +6,7 @@ import { DataTable } from '@/features/admin/components/DataTable';
 import { CustomPagination } from '@/features/admin/components/CustomPagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { VndCurrencyInput } from '@/components/ui/vnd-currency-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -242,12 +243,9 @@ export default function AdminStockImportPage() {
           </div>
           <div className="space-y-2">
             <Label>Đơn giá nhập (tuỳ chọn)</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={unitCost}
-              onChange={(e) => setUnitCost(e.target.value)}
+            <VndCurrencyInput
+              value={unitCost === '' ? '' : Number(unitCost)}
+              onChange={(n) => setUnitCost(n === '' ? '' : n)}
             />
           </div>
           <div className="space-y-2">

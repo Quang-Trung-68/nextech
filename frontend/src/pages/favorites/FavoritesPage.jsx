@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { getSlugByCategory } from '@/constants/category';
 import { Heart } from 'lucide-react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useMyFavorites, FavoriteButton } from '@/features/favorites';
@@ -13,7 +14,7 @@ const getOptimizedImage = (url, width) => {
 };
 
 const FavoriteProductCard = ({ product }) => {
-  const { id, name, images, finalPrice, price, discountPercent, brand } = product;
+  const { id, slug, category, name, images, finalPrice, price, discountPercent, brand } = product;
 
   const firstImage = getOptimizedImage(images?.[0]?.url, 400);
   const displayPrice = finalPrice ?? price;
@@ -22,7 +23,7 @@ const FavoriteProductCard = ({ product }) => {
     <div className="group relative bg-white border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-[1.02] rounded-[24px] transition-all duration-300 p-4 sm:p-5 flex flex-col h-full">
       {/* Image */}
       <Link
-        to={`/products/all/${id}`}
+        to={slug && category ? `/${getSlugByCategory(category)}/${slug}` : '#'}
         className="relative bg-white p-4 sm:p-6 rounded-xl overflow-hidden flex items-center justify-center w-full aspect-square mb-4"
       >
         {/* Badges */}
@@ -57,7 +58,7 @@ const FavoriteProductCard = ({ product }) => {
 
       {/* Info */}
       <div className="flex flex-col flex-1 pb-1">
-        <Link to={`/products/all/${id}`} className="block">
+        <Link to={slug && category ? `/${getSlugByCategory(category)}/${slug}` : '#'} className="block">
           <h3 className="font-semibold text-sm sm:text-[15px] text-apple-dark tracking-tight mb-1 group-hover:text-apple-blue transition-colors line-clamp-2">
             {name}
           </h3>
@@ -143,7 +144,7 @@ const FavoritesPage = () => {
             Nhấn vào biểu tượng trái tim trên sản phẩm để lưu vào danh sách yêu thích của bạn.
           </p>
           <Link
-            to="/products"
+            to="/phone"
             className="px-6 py-3 rounded-full bg-apple-blue text-white font-semibold text-base min-h-[44px] flex items-center justify-center hover:bg-apple-blue/90 transition-colors"
           >
             Khám phá ngay
