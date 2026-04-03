@@ -3,16 +3,22 @@ import { Badge } from '@/components/ui/badge';
 export function StatusBadge({ status }) {
   const STATUS_VI = {
     PENDING: 'Chờ xử lý',
+    CONFIRMED: 'Đã xác nhận',
+    PACKING: 'Đang đóng gói',
+    SHIPPING: 'Đang vận chuyển',
+    COMPLETED: 'Hoàn thành',
+    RETURNED: 'Đã hoàn trả',
     PROCESSING: 'Đang xử lý',
     SHIPPED: 'Đang giao',
     DELIVERED: 'Đã giao',
     PAID: 'Đã thanh toán',
-    COMPLETED: 'Hoàn thành',
     ACTIVE: 'Hoạt động',
     CANCELLED: 'Đã huỷ',
     FAILED: 'Thất bại',
     BANNED: 'Bị cấm',
     REFUNDED: 'Đã hoàn tiền',
+    ADMIN: 'Quản trị',
+    USER: 'Khách hàng',
   };
 
   const statusText = STATUS_VI[status?.toUpperCase()] || status?.toLowerCase();
@@ -21,6 +27,12 @@ export function StatusBadge({ status }) {
     switch (s?.toUpperCase()) {
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'CONFIRMED':
+        return 'bg-sky-100 text-sky-800 border-sky-200';
+      case 'PACKING':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'SHIPPING':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'PROCESSING':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'SHIPPED':
@@ -30,19 +42,25 @@ export function StatusBadge({ status }) {
       case 'COMPLETED':
       case 'ACTIVE':
         return 'bg-green-100 text-green-800 border-green-200';
+      case 'RETURNED':
+        return 'bg-violet-100 text-violet-800 border-violet-200';
       case 'CANCELLED':
       case 'FAILED':
       case 'BANNED':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'REFUNDED':
         return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'ADMIN':
+        return 'bg-primary/15 text-primary border-primary/30';
+      case 'USER':
+        return 'bg-slate-100 text-slate-800 border-slate-200';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
-    <Badge variant="outline" className={`capitalize font-medium ${getStatusStyle(status)}`}>
+    <Badge variant="outline" className={`font-medium ${getStatusStyle(status)}`}>
       {statusText}
     </Badge>
   );

@@ -22,7 +22,8 @@ const adminProductQuerySchema = z.object({
   maxPrice: z.coerce.number().min(0).optional(),
   sort: z.enum(['price_asc', 'price_desc', 'newest', 'oldest', 'stock_asc', 'stock_desc']).optional().default('newest'),
   page: z.coerce.number().int().min(1).optional().default(1),
-  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+  // Dropdown / lọc admin: cần limit > 100 (vd. 200–300 sản phẩm)
+  limit: z.coerce.number().int().min(1).max(500).optional().default(20),
 });
 
 // Base object (plain ZodObject — no .superRefine so .partial() works on it)

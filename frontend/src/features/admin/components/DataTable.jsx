@@ -17,6 +17,7 @@ export function DataTable({
   columns,
   data,
   onRowClick,
+  rowClassName,
 }) {
   const table = useReactTable({
     data,
@@ -51,7 +52,7 @@ export function DataTable({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className={`even:bg-muted/20 hover:bg-muted/50 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+                className={`even:bg-muted/20 hover:bg-muted/50 transition-colors ${onRowClick ? "cursor-pointer" : ""} ${rowClassName?.(row.original) ?? ""}`}
                 onClick={() => onRowClick?.(row.original)}
               >
                 {row.getVisibleCells().map((cell) => (

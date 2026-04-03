@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bell, ShoppingCart, CreditCard, Package, AlertTriangle, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -32,19 +33,57 @@ const getActionUrl = (notification) => {
   }
 };
 
-const NotificationDropdown = () => {
+const PANEL_MAX_W = 420;
+const PANEL_MIN_W = 280;
+
+const NotificationDropdown = ({ variant = 'default' }) => {
+  const isSidebar = variant === 'sidebar';
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [sidebarPanelStyle, setSidebarPanelStyle] = useState(null);
+  const triggerRef = useRef(null);
+  const panelRef = useRef(null);
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { unreadCount, notifications, markOneAsRead, markAllAsRead } = useNotifications(user);
 
+  const updateSidebarPanelPosition = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const gap = 8;
+    const pad = 8;
+    const rightSpace = window.innerWidth - r.right - gap - pad;
+    let width = Math.min(PANEL_MAX_W, Math.max(PANEL_MIN_W, rightSpace));
+    let left = r.right + gap;
+    if (left + width > window.innerWidth - pad) {
+      left = Math.max(pad, window.innerWidth - pad - width);
+    }
+    const maxH = Math.min(480, window.innerHeight - 16);
+    let top = r.top;
+    if (top + maxH > window.innerHeight - pad) {
+      top = Math.max(pad, window.innerHeight - pad - maxH);
+    }
+    setSidebarPanelStyle({ top, left, width, maxHeight: maxH });
+  };
+
+  useLayoutEffect(() => {
+    if (!isOpen || !isSidebar) return;
+    updateSidebarPanelPosition();
+    const onWin = () => updateSidebarPanelPosition();
+    window.addEventListener('resize', onWin);
+    window.addEventListener('scroll', onWin, true);
+    return () => {
+      window.removeEventListener('resize', onWin);
+      window.removeEventListener('scroll', onWin, true);
+    };
+  }, [isOpen, isSidebar]);
+
   // Click-outside to close
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
+      const t = event.target;
+      if (triggerRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      setIsOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -58,105 +97,141 @@ const NotificationDropdown = () => {
 
   const displayNotifications = notifications.slice(0, 10);
 
-  return (
-    <div className="relative flex" ref={dropdownRef}>
-      {/* Trigger button */}
-      <button
-        onClick={() => {
-          if (window.innerWidth < 768) {
-            navigate('/notifications');
-          } else {
-            setIsOpen((prev) => !prev);
-          }
-        }}
-        className="hover:text-apple-blue transition-colors relative flex items-center py-2 focus:outline-none"
-      >
-        <Bell size={22} strokeWidth={1.5} />
+  const panelSurface =
+    'bg-white border border-[#d2d2d7] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col';
+
+  const panelInner = (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#f5f5f7] shrink-0">
+        <div>
+          <h4 className="font-bold text-[17px] text-apple-dark tracking-tight">Thông báo</h4>
+          {unreadCount > 0 && (
+            <p className="text-[13px] font-medium text-apple-secondary mt-0.5">{unreadCount} chưa đọc</p>
+          )}
+        </div>
         {unreadCount > 0 && (
-          <span className="absolute top-[2px] -right-[8px] bg-red-500 text-white text-[10px] rounded-full min-w-[17px] h-[17px] flex items-center justify-center font-bold shadow-sm px-[3px]">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
+          <button
+            onClick={() => markAllAsRead()}
+            className="flex items-center gap-1.5 text-xs text-apple-blue hover:text-apple-blue/80 font-medium transition-colors bg-blue-50 px-3 py-1.5 rounded-full"
+          >
+            <CheckCheck size={13} />
+            Đọc tất cả
+          </button>
         )}
-      </button>
+      </div>
 
-      {/* Dropdown panel — same pattern as cart/user menu */}
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 bg-white border border-[#d2d2d7] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] w-[400px] sm:w-[420px] z-[110] animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-[#f5f5f7]">
-            <div>
-              <h4 className="font-bold text-[17px] text-apple-dark tracking-tight">Thông báo</h4>
-              {unreadCount > 0 && (
-                <p className="text-[13px] font-medium text-apple-secondary mt-0.5">{unreadCount} chưa đọc</p>
-              )}
+      {/* Notification list */}
+      <div className="max-h-[380px] overflow-y-auto custom-scrollbar min-h-0">
+        {displayNotifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="w-14 h-14 rounded-full bg-[#f5f5f7] flex items-center justify-center">
+              <Bell size={26} className="text-[#d2d2d7]" strokeWidth={1.5} />
             </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={() => markAllAsRead()}
-                className="flex items-center gap-1.5 text-xs text-apple-blue hover:text-apple-blue/80 font-medium transition-colors bg-blue-50 px-3 py-1.5 rounded-full"
-              >
-                <CheckCheck size={13} />
-                Đọc tất cả
-              </button>
-            )}
+            <p className="text-[14.5px] text-apple-secondary font-semibold">Không có thông báo nào</p>
           </div>
-
-          {/* Notification list */}
-          <div className="max-h-[380px] overflow-y-auto custom-scrollbar">
-            {displayNotifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-4">
-                <div className="w-14 h-14 rounded-full bg-[#f5f5f7] flex items-center justify-center">
-                  <Bell size={26} className="text-[#d2d2d7]" strokeWidth={1.5} />
-                </div>
-                <p className="text-[14.5px] text-apple-secondary font-semibold">Không có thông báo nào</p>
-              </div>
-            ) : (
-              displayNotifications.map((notif) => (
-                <div
-                  key={notif.id}
-                  onClick={() => handleNotificationClick(notif)}
-                  className={`flex gap-4 px-6 py-4 cursor-pointer hover:bg-[#f5f5f7] transition-colors border-b border-[#f5f5f7] last:border-b-0 ${
-                    !notif.isRead ? 'bg-blue-50/40' : 'bg-white'
-                  }`}
-                >
-                  {/* Icon circle */}
-                  <div className="relative flex-shrink-0 mt-0.5">
-                    <div className="w-12 h-12 rounded-full bg-[#f5f5f7] shadow-sm flex items-center justify-center">
-                      {getIconForType(notif.type)}
-                    </div>
-                    {!notif.isRead && (
-                      <span className="absolute -top-[2px] -right-[2px] w-3 h-3 bg-apple-blue rounded-full border-2 border-white" />
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <p className={`text-[15px] leading-snug ${!notif.isRead ? 'font-bold text-apple-dark' : 'font-semibold text-apple-dark'}`}>
-                      {notif.title}
-                    </p>
-                    <p className="text-[14px] text-gray-700 font-medium line-clamp-2 mt-1.5 leading-relaxed break-words">
-                      {notif.message}
-                    </p>
-                    <p className="text-[12.5px] text-gray-500 mt-2 font-bold tracking-tight">
-                      {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: vi })}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-[#f5f5f7]">
-            <button
-              onClick={() => { setIsOpen(false); navigate('/notifications'); }}
-              className="w-full text-center text-[15px] font-bold text-apple-blue hover:bg-[#f5f5f7] py-3 rounded-xl transition-colors"
+        ) : (
+          displayNotifications.map((notif) => (
+            <div
+              key={notif.id}
+              onClick={() => handleNotificationClick(notif)}
+              className={`flex gap-4 px-6 py-4 cursor-pointer hover:bg-[#f5f5f7] transition-colors border-b border-[#f5f5f7] last:border-b-0 ${
+                !notif.isRead ? 'bg-blue-50/40' : 'bg-white'
+              }`}
             >
-              Xem tất cả thông báo
-            </button>
-          </div>
+              <div className="relative flex-shrink-0 mt-0.5">
+                <div className="w-12 h-12 rounded-full bg-[#f5f5f7] shadow-sm flex items-center justify-center">
+                  {getIconForType(notif.type)}
+                </div>
+                {!notif.isRead && (
+                  <span className="absolute -top-[2px] -right-[2px] w-3 h-3 bg-apple-blue rounded-full border-2 border-white" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 pt-0.5">
+                <p className={`text-[15px] leading-snug ${!notif.isRead ? 'font-bold text-apple-dark' : 'font-semibold text-apple-dark'}`}>
+                  {notif.title}
+                </p>
+                <p className="text-[14px] text-gray-700 font-medium line-clamp-2 mt-1.5 leading-relaxed break-words">
+                  {notif.message}
+                </p>
+                <p className="text-[12.5px] text-gray-500 mt-2 font-bold tracking-tight">
+                  {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: vi })}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="p-4 border-t border-[#f5f5f7] shrink-0">
+        <button
+          onClick={() => {
+            setIsOpen(false);
+            navigate('/notifications');
+          }}
+          className="w-full text-center text-[15px] font-bold text-apple-blue hover:bg-[#f5f5f7] py-3 rounded-xl transition-colors"
+        >
+          Xem tất cả thông báo
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className={isSidebar ? 'relative flex w-full justify-start' : 'relative flex'}>
+      {/* Trigger — ref on wrapper so sidebar fixed panel anchors correctly */}
+      <div ref={triggerRef} className="relative inline-flex">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.innerWidth < 768) {
+              navigate('/notifications');
+            } else {
+              setIsOpen((prev) => !prev);
+            }
+          }}
+          className="hover:text-apple-blue transition-colors relative flex items-center justify-center rounded-md py-2 min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Bell size={22} strokeWidth={1.5} />
+          {unreadCount > 0 && (
+            <span className="absolute top-[2px] -right-[8px] bg-red-500 text-white text-[10px] rounded-full min-w-[17px] h-[17px] flex items-center justify-center font-bold shadow-sm px-[3px]">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Header shop: absolute, căn phải trigger */}
+      {isOpen && !isSidebar && (
+        <div
+          ref={panelRef}
+          className={`absolute right-0 top-full z-[110] mt-2 w-[400px] sm:w-[420px] ${panelSurface}`}
+        >
+          {panelInner}
         </div>
       )}
+
+      {/* Admin sidebar: fixed + portal — không bị clip overflow, căn theo viewport */}
+      {isOpen &&
+        isSidebar &&
+        sidebarPanelStyle &&
+        createPortal(
+          <div
+            ref={panelRef}
+            className={`fixed z-[250] ${panelSurface}`}
+            style={{
+              top: sidebarPanelStyle.top,
+              left: sidebarPanelStyle.left,
+              width: sidebarPanelStyle.width,
+              maxHeight: sidebarPanelStyle.maxHeight,
+            }}
+          >
+            {panelInner}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

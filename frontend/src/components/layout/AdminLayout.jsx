@@ -7,7 +7,7 @@ const AdminLayout = () => {
   return (
     <div className="flex min-h-screen bg-background text-foreground flex-col md:flex-row">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block shrink-0 h-screen sticky top-0">
+      <div className="hidden md:block shrink-0 h-screen sticky top-0 overflow-visible z-20">
         <Sidebar />
       </div>
 

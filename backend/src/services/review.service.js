@@ -10,7 +10,7 @@ const recalculateProductRating = require('../utils/recalculateProductRating');
  * Business rules (theo thứ tự):
  * 1. OrderItem phải tồn tại.
  * 2. OrderItem phải thuộc về user đang đăng nhập.
- * 3. Order phải có status DELIVERED.
+ * 3. Order phải có status COMPLETED.
  * 4. Chưa review OrderItem này (orderItemId @unique enforce at DB level, nhưng check trước để thông báo friendly).
  * 5. Tạo review.
  */
@@ -35,7 +35,7 @@ const createReview = async ({ orderItemId, rating, comment, userId }) => {
   }
 
   // 4 — trạng thái đơn
-  if (orderItem.order.status !== 'DELIVERED') {
+  if (orderItem.order.status !== 'COMPLETED') {
     throw new AppError('Chỉ có thể review sản phẩm từ đơn hàng đã giao.', 400);
   }
 

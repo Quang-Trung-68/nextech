@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOrder, useCancelOrder } from '@/features/orders/hooks/useOrder';
+import { useOrder, useCancelOrder, useReturnOrder } from '@/features/orders/hooks/useOrder';
 import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
 import { formatVND } from '@/utils/price';
 import { formatCouponRuleDescription } from '@/utils/couponDisplay';
@@ -23,6 +23,7 @@ import {
   CheckCircle,
   Copy,
   Timer,
+  ExternalLink,
 } from 'lucide-react';
 import WriteReviewModal from '@/features/reviews/WriteReviewModal';
 import axiosInstance from '@/lib/axios';
@@ -39,6 +40,76 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
+const LINEAR_FLOW = [
+  { status: 'PENDING', label: 'Chờ xác nhận' },
+  { status: 'CONFIRMED', label: 'Đã xác nhận' },
+  { status: 'PACKING', label: 'Đóng gói' },
+  { status: 'SHIPPING', label: 'Vận chuyển' },
+  { status: 'COMPLETED', label: 'Hoàn thành' },
+];
+
+/** Thanh tiến trình ngang — đặt phía trên nội dung chính */
+function OrderTrackingBar({ status }) {
+  if (status === 'CANCELLED') {
+    return (
+      <div className="rounded-2xl border border-red-100 bg-red-50/60 px-4 py-3 text-sm font-medium text-red-700">
+        Đơn hàng đã được huỷ.
+      </div>
+    );
+  }
+  if (status === 'RETURNED') {
+    return (
+      <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-4 py-3 text-sm font-medium text-violet-800">
+        Đơn hàng đã hoàn trả.
+      </div>
+    );
+  }
+  const activeIdx = LINEAR_FLOW.findIndex((s) => s.status === status);
+  return (
+    <div className="w-full rounded-2xl border border-[#e5e5ea] bg-white px-2 py-5 sm:px-4 shadow-sm">
+      <div className="flex items-center justify-between gap-0 min-w-0">
+        {LINEAR_FLOW.map((s, i) => {
+          const done = activeIdx > i || (activeIdx === i && status === 'COMPLETED');
+          const current = activeIdx === i;
+          const isLast = i === LINEAR_FLOW.length - 1;
+          return (
+            <Fragment key={s.status}>
+              <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[11px] font-bold ${
+                    done
+                      ? 'border-green-500 bg-green-500 text-white'
+                      : current
+                        ? 'border-apple-blue bg-apple-blue text-white'
+                        : 'border-[#d2d2d7] text-muted-foreground bg-white'
+                  }`}
+                >
+                  {done ? <CheckCircle className="h-4 w-4" /> : i + 1}
+                </span>
+                <span
+                  className={`max-w-[88px] text-center text-[11px] leading-tight sm:max-w-none sm:text-xs ${
+                    current ? 'font-semibold text-apple-dark' : 'text-apple-secondary'
+                  }`}
+                >
+                  {s.label}
+                </span>
+              </div>
+              {!isLast && (
+                <div
+                  className={`mb-6 h-0.5 min-w-[8px] flex-1 max-w-[48px] sm:max-w-[72px] ${
+                    activeIdx > i ? 'bg-green-500' : 'bg-[#e8e8ed]'
+                  }`}
+                  aria-hidden
+                />
+              )}
+            </Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const OrderDetailPage = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -50,6 +121,7 @@ const OrderDetailPage = () => {
 
   const { data: order, isLoading, isError } = useOrder(id);
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
+  const { mutate: returnOrder, isPending: isReturning } = useReturnOrder();
 
   const [isCancelled, setIsCancelled] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null); // item hiện đang được review
@@ -58,14 +130,14 @@ const OrderDetailPage = () => {
 
   const currentStatus = isCancelled ? 'CANCELLED' : order?.status;
 
-  // Query reviewable items — chỉ khi order đã DELIVERED
+  // Query reviewable items — chỉ khi order đã COMPLETED
   const { data: reviewableData } = useQuery({
     queryKey: ['reviewable-items', id],
     queryFn: async () => {
       const { data } = await axiosInstance.get(`/orders/${id}/reviewable-items`);
       return data; // { success, items }
     },
-    enabled: !!id && currentStatus === 'DELIVERED',
+    enabled: !!id && currentStatus === 'COMPLETED',
     staleTime: 0,
   });
 
@@ -140,6 +212,16 @@ const OrderDetailPage = () => {
   const handleCopyOrderId = () => {
     navigator.clipboard.writeText(id.toUpperCase());
     toast.success('Đã sao chép mã đơn hàng');
+  };
+
+  const handleRequestReturn = () => {
+    returnOrder(
+      { id, reason: 'Yêu cầu hoàn trả từ trang chi tiết đơn hàng' },
+      {
+        onSuccess: () => toast.success('Đã gửi yêu cầu hoàn trả'),
+        onError: (err) => toast.error(err.response?.data?.message || 'Không thể hoàn trả đơn hàng'),
+      }
+    );
   };
 
   useEffect(() => {
@@ -238,7 +320,7 @@ const OrderDetailPage = () => {
 
       {/* NORMAL DETAIL HEADER */}
       {!isSuccessPage && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-1 sm:gap-3 mb-2">
               <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full -ml-2 text-muted-foreground min-w-[44px] min-h-[44px]">
@@ -265,6 +347,35 @@ const OrderDetailPage = () => {
           </div>
         </div>
       )}
+
+      <div className="mb-6 space-y-4">
+        <OrderTrackingBar status={currentStatus} />
+        {!isSuccessPage && (order.carrierName || order.trackingCode || order.trackingUrl) && (
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-[#e5e5ea] bg-white px-4 py-3 text-sm shadow-sm">
+            {order.carrierName && (
+              <p className="text-apple-secondary">
+                <span className="font-medium text-apple-dark">Đơn vị vận chuyển:</span> {order.carrierName}
+              </p>
+            )}
+            {order.trackingCode && (
+              <p className="text-apple-secondary">
+                <span className="font-medium text-apple-dark">Mã vận đơn:</span>{' '}
+                <span className="font-mono">{order.trackingCode}</span>
+              </p>
+            )}
+            {order.trackingUrl && (
+              <a
+                href={order.trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-apple-blue hover:underline"
+              >
+                Theo dõi vận chuyển <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="grid md:grid-cols-[1fr_380px] gap-6 lg:gap-10 items-start">
         {/* Left Column: Products List */}
@@ -301,7 +412,12 @@ const OrderDetailPage = () => {
                       </p>
                     ) : null}
                     <p className="text-sm text-apple-secondary">SL: {item.quantity}</p>
-                    
+                    {item.serialUnit?.serial && (
+                      <p className="text-xs font-mono text-primary mt-1">
+                        IMEI/Serial: {item.serialUnit.serial}
+                      </p>
+                    )}
+
                     {/* Giá theo snapshot — giá sale trước, gạch giá gốc */}
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       {discountPercent > 0 && item.originalPrice != null ? (
@@ -323,8 +439,8 @@ const OrderDetailPage = () => {
                       <span className="font-bold text-apple-dark">{formatVND(lineTotal)}</span>
                     </div>
 
-                    {/* Review actions — chỉ hiện khi DELIVERED */}
-                    {currentStatus === 'DELIVERED' && reviewableMap[item.id] !== undefined && (
+                    {/* Review actions — chỉ hiện khi COMPLETED */}
+                    {currentStatus === 'COMPLETED' && reviewableMap[item.id] !== undefined && (
                       <div className="mt-3">
                         {reviewableMap[item.id].hasReviewed ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-3 py-1">
@@ -390,9 +506,8 @@ const OrderDetailPage = () => {
           )}
         </div>
 
-        {/* Right Column: Order Info & Summary */}
+        {/* Right Column: Address & Summary */}
         <div className="flex flex-col gap-6 sticky top-24">
-          
           <div className="bg-apple-gray/40 border border-[#f5f5f7] rounded-2xl p-6 md:p-8">
             <h2 className="text-lg font-bold text-apple-dark tracking-tight mb-5 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-apple-blue" />
@@ -498,6 +613,46 @@ const OrderDetailPage = () => {
                  </div>
                )}
             </div>
+
+            {!isSuccessPage && currentStatus === 'COMPLETED' && (
+              <div className="mt-4 pt-4 border-t border-[#f5f5f7]">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full rounded-full border-violet-200 text-violet-800 hover:bg-violet-50"
+                    >
+                      Yêu cầu hoàn trả
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-3xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-xl font-bold text-apple-dark">
+                        Xác nhận hoàn trả
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="text-base text-apple-secondary mt-2">
+                        Bạn muốn yêu cầu hoàn trả đơn{' '}
+                        <b className="font-mono tracking-tight">#{id.toUpperCase()}</b>? Trạng thái đơn sẽ chuyển
+                        sang &quot;Đã hoàn trả&quot; sau khi xử lý.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-6 flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-2">
+                      <AlertDialogCancel className="rounded-full px-6 font-medium border-[#d2d2d7] h-12 md:h-10 mt-0">
+                        Đóng
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleRequestReturn}
+                        className="bg-violet-600 hover:bg-violet-700 text-white rounded-full px-6 font-semibold h-12 md:h-10"
+                        disabled={isReturning}
+                      >
+                        {isReturning ? 'Đang gửi...' : 'Xác nhận hoàn trả'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
 
         </div>

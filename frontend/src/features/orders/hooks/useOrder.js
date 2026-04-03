@@ -22,8 +22,24 @@ export const useCancelOrder = () => {
       return data;
     },
     onSuccess: (data, { id }) => {
-      queryClient.invalidateQueries(['order', id]);
-      queryClient.invalidateQueries(['orders']); // Nếu có trang List.
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+};
+
+export const useReturnOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, reason }) => {
+      const { data } = await axiosInstance.patch(`/orders/${id}/return`, { reason });
+      return data;
+    },
+    onSuccess: (data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['reviewable-items', id] });
     },
   });
 };

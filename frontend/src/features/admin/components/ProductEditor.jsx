@@ -627,10 +627,10 @@ export function ProductEditor({
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading || isUploadingImage}>
-              Cancel
+              Huỷ
             </Button>
             <Button type="submit" disabled={isLoading || isUploadingImage}>
-              {isLoading ? "Saving..." : isUploadingImage ? "Uploading..." : "Save Product"}
+              {isLoading ? 'Đang lưu…' : isUploadingImage ? 'Đang tải ảnh…' : 'Lưu sản phẩm'}
             </Button>
           </div>
         </form>

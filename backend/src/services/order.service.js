@@ -9,6 +9,7 @@ const ERROR_CODES = require('../errors/errorCodes');
 const { isSaleActive } = require('../utils/saleUtils');
 const notificationService = require('./notification.service');
 const { buildVariantDisplay } = require('../utils/variantLabel');
+const { validateTransition } = require('../utils/orderStateMachine');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ const ORDER_DETAIL_INCLUDE = {
         select: { id: true, name: true, price: true, salePrice: true, images: true, hasVariants: true },
       },
       variant: VARIANT_ORDER_INCLUDE,
+      serialUnit: { select: { id: true, serial: true, status: true } },
     },
   },
   user: {
@@ -73,10 +75,142 @@ function mapOrderItemForEmail(oi) {
   };
 }
 
-const STATUS_FLOW = {
-  PENDING: 'PROCESSING',
-  PROCESSING: 'SHIPPED',
-  SHIPPED: 'DELIVERED',
+/**
+ * Trừ kho + suất giảm giá (flash sale) khi xác nhận đơn — gọi khi PENDING→CONFIRMED hoặc webhook thanh toán.
+ */
+async function deductInventoryForOrderTx(tx, orderItems, productNameFallback) {
+  for (const item of orderItems) {
+    const product = await tx.product.findUnique({ where: { id: item.productId } });
+    if (!product) throw new NotFoundError('Product');
+
+    if (product.hasVariants) {
+      if (!item.variantId) {
+        throw new AppError('Vui lòng chọn biến thể', 400, ERROR_CODES.PRODUCT.VARIANT_REQUIRED);
+      }
+      const variant = await tx.productVariant.findFirst({
+        where: { id: item.variantId, productId: product.id, deletedAt: null },
+      });
+      if (!variant) throw new NotFoundError('Variant');
+      if (variant.stock < item.quantity) {
+        throw new ConflictError(
+          `Product "${productNameFallback || product.name}" does not have enough stock (remaining ${variant.stock})`,
+          ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
+        );
+      }
+      const vp = getVariantEffectivePricing(product, variant);
+
+      if (vp.saleSource === 'variant' && variant.saleStock != null) {
+        const updated = await tx.productVariant.updateMany({
+          where: {
+            id: variant.id,
+            saleSoldCount: { lt: variant.saleStock },
+          },
+          data: { saleSoldCount: { increment: item.quantity } },
+        });
+        if (updated.count === 0) {
+          throw new ConflictError(
+            'Biến thể đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
+            'SALE_SOLD_OUT'
+          );
+        }
+      } else if (vp.saleSource === 'product' && product.saleStock != null) {
+        const updated = await tx.product.updateMany({
+          where: {
+            id: product.id,
+            saleSoldCount: { lt: product.saleStock },
+          },
+          data: { saleSoldCount: { increment: item.quantity } },
+        });
+        if (updated.count === 0) {
+          throw new ConflictError(
+            'Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
+            'SALE_SOLD_OUT'
+          );
+        }
+      }
+
+      await tx.productVariant.update({
+        where: { id: variant.id },
+        data: { stock: { decrement: item.quantity } },
+      });
+      continue;
+    }
+
+    if (item.variantId) {
+      throw new AppError('Giỏ hàng không hợp lệ', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
+    }
+
+    const saleActive = isSaleActive(product);
+    if (product.stock < item.quantity) {
+      throw new ConflictError(
+        `Product "${product.name}" does not have enough stock (remaining ${product.stock})`,
+        ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
+      );
+    }
+
+    if (saleActive && product.saleStock != null) {
+      const updated = await tx.product.updateMany({
+        where: {
+          id: product.id,
+          saleSoldCount: { lt: product.saleStock },
+        },
+        data: { saleSoldCount: { increment: item.quantity } },
+      });
+
+      if (updated.count === 0) {
+        throw new ConflictError(
+          'Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
+          'SALE_SOLD_OUT'
+        );
+      }
+    }
+
+    await tx.product.update({
+      where: { id: item.productId },
+      data: { stock: { decrement: item.quantity } },
+    });
+  }
+}
+
+/** Hoàn kho khi huỷ đơn đã trừ kho (CONFIRMED trở đi, trừ PENDING). */
+async function restoreInventoryForOrderTx(tx, orderItems) {
+  for (const oi of orderItems) {
+    if (oi.variantId) {
+      await tx.productVariant.update({
+        where: { id: oi.variantId },
+        data: { stock: { increment: oi.quantity } },
+      });
+    } else {
+      await tx.product.update({
+        where: { id: oi.productId },
+        data: { stock: { increment: oi.quantity } },
+      });
+    }
+  }
+}
+
+async function releaseReservedSerialsTx(tx, orderItems) {
+  for (const oi of orderItems) {
+    if (!oi.serialUnitId) continue;
+    await tx.serialUnit.update({
+      where: { id: oi.serialUnitId },
+      data: { status: 'IN_STOCK', reservedAt: null },
+    });
+    await tx.orderItem.update({
+      where: { id: oi.id },
+      data: { serialUnitId: null, assignedAt: null },
+    });
+  }
+}
+
+const STATUS_LABEL_VI = {
+  PENDING: 'Chờ xác nhận',
+  CONFIRMED: 'Đã xác nhận',
+  PACKING: 'Đang đóng gói',
+  SHIPPING: 'Đang giao',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã huỷ',
+  RETURNED: 'Đã hoàn trả',
 };
 
 // ─── User: Tạo đơn hàng ───────────────────────────────────────────────────────
@@ -120,7 +254,7 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
   // COD,STRIPE → PENDING chờ xử lý
   const initialStatus = 'PENDING';
 
-  // $transaction: tạo Order + tạo Invoice + cắt stock + xoá Cart (nếu COD)
+  // $transaction: tạo Order — KHÔNG trừ kho tại đây; trừ kho khi CONFIRMED (admin hoặc thanh toán online).
   const order = await prisma.$transaction(async (tx) => {
     const orderItemsData = [];
 
@@ -145,40 +279,6 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
         const vp = getVariantEffectivePricing(product, variant);
         const effectivePrice = vp.finalPrice;
 
-        if (vp.saleSource === 'variant' && variant.saleStock != null) {
-          const updated = await tx.productVariant.updateMany({
-            where: {
-              id: variant.id,
-              saleSoldCount: { lt: variant.saleStock },
-            },
-            data: { saleSoldCount: { increment: item.quantity } },
-          });
-          if (updated.count === 0) {
-            throw new ConflictError(
-              'Biến thể đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
-              'SALE_SOLD_OUT'
-            );
-          }
-        } else if (vp.saleSource === 'product' && product.saleStock != null) {
-          const updated = await tx.product.updateMany({
-            where: {
-              id: product.id,
-              saleSoldCount: { lt: product.saleStock },
-            },
-            data: { saleSoldCount: { increment: item.quantity } },
-          });
-          if (updated.count === 0) {
-            throw new ConflictError(
-              'Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
-              'SALE_SOLD_OUT'
-            );
-          }
-        }
-
-        await tx.productVariant.update({
-          where: { id: variant.id },
-          data: { stock: { decrement: item.quantity } },
-        });
         orderItemsData.push({
           productId: item.productId,
           variantId: item.variantId,
@@ -196,27 +296,12 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
       const saleActive = isSaleActive(product);
       const effectivePrice = saleActive ? product.salePrice : product.price;
 
-      if (saleActive && product.saleStock != null) {
-        const updated = await tx.product.updateMany({
-          where: {
-            id: product.id,
-            saleSoldCount: { lt: product.saleStock },
-          },
-          data: { saleSoldCount: { increment: item.quantity } },
-        });
-
-        if (updated.count === 0) {
-          throw new ConflictError(
-            'Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
-            'SALE_SOLD_OUT'
-          );
-        }
+      if (product.stock < item.quantity) {
+        throw new ConflictError(
+          `Product "${item.name}" does not have enough stock (remaining ${product.stock})`,
+          ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
+        );
       }
-
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      });
 
       orderItemsData.push({
         productId: item.productId,
@@ -320,26 +405,7 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
         }
       }
 
-      for (const item of cartItems) {
-        const product = await prisma.product.findUnique({ where: { id: item.productId } });
-        if (!product) continue;
-        let stockLeft = product.stock;
-        if (product.hasVariants && item.variantId) {
-          const v = await prisma.productVariant.findUnique({ where: { id: item.variantId } });
-          if (v) stockLeft = v.stock;
-        }
-        if (stockLeft + item.quantity > 10 && stockLeft <= 10) {
-          for (const admin of admins) {
-            await notificationService.createAndSend(
-              admin.id,
-              'low_stock',
-              'Sản phẩm sắp hết hàng',
-              `"${product.name}" còn ${stockLeft} sản phẩm trong kho`,
-              { productId: product.id, productName: product.name, stock: stockLeft }
-            );
-          }
-        }
-      }
+      // Low-stock: dùng job lowStockJob (cron) + inventory service
     } catch (err) {
       console.error('[Notification Error] Failed to send new order notifications:', err);
     }
@@ -474,32 +540,20 @@ const cancelOrder = async (orderId, userId, reason) => {
   if (!order) throw new NotFoundError('Order');
   if (order.userId !== userId) throw new ForbiddenError('You do not have permission to cancel this order');
 
-  // CANCELLED/SHIPPED/DELIVERED đều bị block bởi guard này
-  if (!['PENDING', 'PROCESSING'].includes(order.status)) {
+  if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
     throw new AppError(
-      `Cannot cancel order in ${order.status} status. Only PENDING or PROCESSING orders can be cancelled.`,
+      `Cannot cancel order in ${order.status} status. Only PENDING or CONFIRMED orders can be cancelled.`,
       400,
       ERROR_CODES.ORDER.ORDER_CANNOT_BE_CANCELLED
     );
   }
 
-  // Với Stripe đã PAID: không hoàn tiền tự động, ghi chú cần xử lý thủ công
   const requiresManualRefund =
     order.paymentMethod === 'STRIPE' && order.paymentStatus === 'PAID';
 
   const updatedOrder = await prisma.$transaction(async (tx) => {
-    for (const oi of order.orderItems) {
-      if (oi.variantId) {
-        await tx.productVariant.update({
-          where: { id: oi.variantId },
-          data: { stock: { increment: oi.quantity } },
-        });
-      } else {
-        await tx.product.update({
-          where: { id: oi.productId },
-          data: { stock: { increment: oi.quantity } },
-        });
-      }
+    if (order.status === 'CONFIRMED') {
+      await restoreInventoryForOrderTx(tx, order.orderItems);
     }
     return tx.order.update({
       where: { id: orderId },
@@ -603,45 +657,27 @@ const getAllOrders = async ({ status, paymentStatus, userId, sortBy, sortOrder, 
 
 // ─── Admin: Cập nhật trạng thái đơn ─────────────────────────────────────────
 
-const adminUpdateOrderStatus = async (orderId, newStatus) => {
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
+const adminUpdateOrderStatus = async (orderId, newStatus, payload = {}) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { orderItems: true },
+  });
 
   if (!order) throw new NotFoundError('Order');
 
-  if (order.status === 'CANCELLED') {
-    throw new AppError('Cannot update a cancelled order', 400, ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION);
+  if (order.status === 'CANCELLED' || order.status === 'RETURNED') {
+    throw new AppError('Cannot update this order', 400, ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION);
   }
 
-  if (order.status === 'DELIVERED') {
-    throw new AppError('Order is already delivered, cannot update further', 400, ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION);
-  }
-
-  // ── Admin cancel: PENDING hoặc PROCESSING → CANCELLED ──────────────────────
   if (newStatus === 'CANCELLED') {
-    if (!['PENDING', 'PROCESSING'].includes(order.status)) {
-      throw new AppError(
-        `Cannot cancel order in ${order.status} status. Only PENDING or PROCESSING orders can be cancelled.`,
-        400,
-        ERROR_CODES.ORDER.ORDER_CANNOT_BE_CANCELLED
-      );
-    }
-    const orderWithItems = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: { orderItems: true },
-    });
+    validateTransition(order.status, 'CANCELLED');
+
     const cancelled = await prisma.$transaction(async (tx) => {
-      for (const oi of orderWithItems.orderItems) {
-        if (oi.variantId) {
-          await tx.productVariant.update({
-            where: { id: oi.variantId },
-            data: { stock: { increment: oi.quantity } },
-          });
-        } else {
-          await tx.product.update({
-            where: { id: oi.productId },
-            data: { stock: { increment: oi.quantity } },
-          });
-        }
+      if (['CONFIRMED', 'PACKING', 'SHIPPING'].includes(order.status)) {
+        await restoreInventoryForOrderTx(tx, order.orderItems);
+      }
+      if (['PACKING', 'SHIPPING'].includes(order.status)) {
+        await releaseReservedSerialsTx(tx, order.orderItems);
       }
       return tx.order.update({
         where: { id: orderId },
@@ -664,7 +700,6 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       }
     });
 
-    // Fire-and-forget: gửi email thông báo hủy đến người mua
     if (cancelled.user?.email) {
       emailJob.dispatchOrderCancelledEmail(cancelled.user.email, {
         user: { name: cancelled.user.name },
@@ -675,63 +710,46 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
           discountAmount: cancelled.discountAmount,
           coupon: cancelled.coupon,
         },
-        cancelReason: 'Hủy bởi quản trị viên',
+        cancelReason: payload.reason || 'Hủy bởi quản trị viên',
         requiresManualRefund: cancelled.paymentMethod === 'STRIPE' && cancelled.paymentStatus === 'PAID',
       });
     }
     return cancelled;
   }
 
-  // ── Enforce forward flow: PROCESSING → SHIPPED → DELIVERED ─────────────────
-  // PENDING không có trong STATUS_FLOW (đơn Stripe chưa thanh toán)
-  const expectedNext = STATUS_FLOW[order.status];
-  if (!expectedNext) {
-    throw new AppError(
-      `Order is in ${order.status} status and cannot be updated via Admin flow. Only applies to PENDING, PROCESSING or SHIPPED.`,
-      400,
-      ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION
-    );
-  }
-  if (newStatus !== expectedNext) {
-    throw new AppError(
-      `Invalid transition: order is in ${order.status}, next step must be ${expectedNext}`,
-      400,
-      ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION
-    );
-  }
+  validateTransition(order.status, newStatus);
 
-  const updateData = { status: newStatus };
-  if (newStatus === 'DELIVERED' && order.paymentMethod === 'COD') {
-    updateData.paymentStatus = 'PAID';
-  }
-
-  const updatedOrder = await prisma.order.update({
-    where: { id: orderId },
-    data: updateData,
-    include: ORDER_DETAIL_INCLUDE,
-  });
-
-  Promise.resolve().then(async () => {
-    try {
-      await notificationService.createAndSend(
-        updatedOrder.userId,
-        'order_status_changed',
-        'Cập nhật đơn hàng',
-        `Đơn hàng #${updatedOrder.id} của bạn đã chuyển sang trạng thái: ${{
-          PENDING: 'Chờ xử lý',
-          PROCESSING: 'Đang xử lý',
-          SHIPPED: 'Đang giao',
-          DELIVERED: 'Đã giao',
-          CANCELLED: 'Đã huỷ'
-        }[newStatus] || newStatus}`,
-        { orderId: updatedOrder.id, newStatus }
+  if (newStatus === 'CONFIRMED' && order.status === 'PENDING') {
+    if (order.paymentMethod !== 'COD' && order.paymentStatus === 'UNPAID') {
+      throw new AppError(
+        'Đơn thanh toán online chưa hoàn tất — không thể xác nhận thủ công',
+        400,
+        ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION
       );
-    } catch (err) {
-      console.error('[Notification Error] Failed to send order status notification:', err);
     }
-  });
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      await deductInventoryForOrderTx(tx, order.orderItems);
+      return tx.order.update({
+        where: { id: orderId },
+        data: { status: 'CONFIRMED' },
+        include: ORDER_DETAIL_INCLUDE,
+      });
+    });
 
-  if (newStatus === 'PROCESSING') {
+    Promise.resolve().then(async () => {
+      try {
+        await notificationService.createAndSend(
+          updatedOrder.userId,
+          'order_status_changed',
+          'Đơn hàng đã xác nhận',
+          `Đơn hàng #${updatedOrder.id} đã được xác nhận.`,
+          { orderId: updatedOrder.id, newStatus: 'CONFIRMED' }
+        );
+      } catch (err) {
+        console.error('[Notification Error] Failed to send order status notification:', err);
+      }
+    });
+
     emailJob.dispatchOrderProcessingEmail(updatedOrder.user.email, {
       user: { name: updatedOrder.user.name },
       order: {
@@ -740,10 +758,42 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         totalAmount: updatedOrder.totalAmount,
         discountAmount: updatedOrder.discountAmount,
         coupon: updatedOrder.coupon,
-        shippingAddress: updatedOrder.shippingAddress
+        shippingAddress: updatedOrder.shippingAddress,
+      },
+    });
+    return updatedOrder;
+  }
+
+  if (newStatus === 'SHIPPING' && order.status === 'PACKING') {
+    const { trackingCode, trackingUrl, carrierName } = payload;
+    if (!carrierName || !String(carrierName).trim() || !trackingCode || !String(trackingCode).trim()) {
+      throw new AppError('Vui lòng nhập đơn vị vận chuyển và mã vận đơn', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
+    }
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'SHIPPING',
+        carrierName: String(carrierName).trim(),
+        trackingCode: String(trackingCode).trim(),
+        trackingUrl: trackingUrl ? String(trackingUrl).trim() : null,
+      },
+      include: ORDER_DETAIL_INCLUDE,
+    });
+
+    Promise.resolve().then(async () => {
+      try {
+        await notificationService.createAndSend(
+          updatedOrder.userId,
+          'order_status_changed',
+          'Đơn hàng đang giao',
+          `Đơn hàng #${updatedOrder.id} đã giao cho đơn vị vận chuyển.`,
+          { orderId: updatedOrder.id, newStatus: 'SHIPPING' }
+        );
+      } catch (err) {
+        console.error('[Notification Error] Failed to send order status notification:', err);
       }
     });
-  } else if (newStatus === 'SHIPPED') {
+
     emailJob.dispatchOrderShippedEmail(updatedOrder.user.email, {
       user: { name: updatedOrder.user.name },
       order: {
@@ -753,14 +803,54 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         discountAmount: updatedOrder.discountAmount,
         coupon: updatedOrder.coupon,
         shippingAddress: updatedOrder.shippingAddress,
-        trackingUrl: updatedOrder.trackingUrl ?? null
+        trackingUrl: updatedOrder.trackingUrl ?? null,
+      },
+    });
+    return updatedOrder;
+  }
+
+  if (newStatus === 'COMPLETED' && order.status === 'SHIPPING') {
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      const items = await tx.orderItem.findMany({
+        where: { orderId },
+        include: { serialUnit: true },
+      });
+      for (const oi of items) {
+        if (oi.serialUnitId) {
+          await tx.serialUnit.update({
+            where: { id: oi.serialUnitId },
+            data: { status: 'SOLD', soldAt: new Date() },
+          });
+        }
+      }
+      const data = {
+        status: 'COMPLETED',
+        ...(order.paymentMethod === 'COD' ? { paymentStatus: 'PAID' } : {}),
+      };
+      return tx.order.update({
+        where: { id: orderId },
+        data,
+        include: ORDER_DETAIL_INCLUDE,
+      });
+    });
+
+    Promise.resolve().then(async () => {
+      try {
+        await notificationService.createAndSend(
+          updatedOrder.userId,
+          'order_status_changed',
+          'Đơn hàng hoàn thành',
+          `Đơn hàng #${updatedOrder.id} đã giao thành công.`,
+          { orderId: updatedOrder.id, newStatus: 'COMPLETED' }
+        );
+      } catch (err) {
+        console.error('[Notification Error] Failed to send order status notification:', err);
       }
     });
-  } else if (newStatus === 'DELIVERED') {
+
     const { getInvoiceByOrderId, issueInvoice } = require('./invoice.service');
     const invoice = await getInvoiceByOrderId(updatedOrder.id);
     let issuedInvoice = null;
-
     if (invoice && invoice.status === 'DRAFT') {
       try {
         issuedInvoice = await issueInvoice(invoice.id);
@@ -780,13 +870,52 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         discountAmount: updatedOrder.discountAmount,
         coupon: updatedOrder.coupon,
         shippingAddress: updatedOrder.shippingAddress,
-        trackingUrl: updatedOrder.trackingUrl ?? null
+        trackingUrl: updatedOrder.trackingUrl ?? null,
       },
       invoice: issuedInvoice,
     });
+    return updatedOrder;
   }
 
-  return updatedOrder;
+  if (newStatus === 'RETURNED' && order.status === 'COMPLETED') {
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      const items = await tx.orderItem.findMany({ where: { orderId } });
+      for (const oi of items) {
+        if (oi.serialUnitId) {
+          await tx.serialUnit.update({
+            where: { id: oi.serialUnitId },
+            data: { status: 'RETURNED', returnedAt: new Date() },
+          });
+        }
+      }
+      return tx.order.update({
+        where: { id: orderId },
+        data: { status: 'RETURNED' },
+        include: ORDER_DETAIL_INCLUDE,
+      });
+    });
+
+    Promise.resolve().then(async () => {
+      try {
+        await notificationService.createAndSend(
+          updatedOrder.userId,
+          'order_status_changed',
+          'Hoàn trả đơn hàng',
+          `Đơn hàng #${updatedOrder.id} đã được ghi nhận hoàn trả.`,
+          { orderId: updatedOrder.id, newStatus: 'RETURNED' }
+        );
+      } catch (err) {
+        console.error('[Notification Error] Failed to send order status notification:', err);
+      }
+    });
+    return updatedOrder;
+  }
+
+  throw new AppError(
+    `Chuyển trạng thái không hợp lệ từ ${order.status} sang ${newStatus}`,
+    400,
+    ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION
+  );
 };
 
 // ─── Admin: Chi tiết đơn (bất kỳ) ────────────────────────────────────────────
@@ -833,8 +962,8 @@ const getReviewableItems = async (orderId, userId) => {
     throw new ForbiddenError('Bạn không có quyền xem đơn hàng này.');
   }
 
-  if (order.status !== 'DELIVERED') {
-    throw new AppError('Chỉ có thể xem danh sách review của đơn hàng đã giao.', 400);
+  if (order.status !== 'COMPLETED') {
+    throw new AppError('Chỉ có thể xem danh sách review của đơn hàng đã hoàn thành.', 400);
   }
 
   const items = order.orderItems.map((item) => ({
@@ -850,6 +979,155 @@ const getReviewableItems = async (orderId, userId) => {
   return { items };
 };
 
+const getAvailableSerialsForOrder = async (orderId) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      orderItems: {
+        include: {
+          product: { select: { id: true, name: true, hasVariants: true } },
+          variant: { select: { id: true, sku: true } },
+        },
+      },
+    },
+  });
+  if (!order) throw new NotFoundError('Order');
+
+  const byItem = await Promise.all(
+    order.orderItems.map(async (oi) => {
+      const available = await prisma.serialUnit.findMany({
+        where: {
+          status: 'IN_STOCK',
+          productId: oi.productId,
+          variantId: oi.variantId || null,
+        },
+        select: { id: true, serial: true, status: true },
+        orderBy: { serial: 'asc' },
+        take: 200,
+      });
+      return {
+        orderItemId: oi.id,
+        productId: oi.productId,
+        productName: oi.product?.name ?? '—',
+        variantId: oi.variantId,
+        variantSku: oi.variant?.sku ?? null,
+        quantity: oi.quantity,
+        availableSerials: available,
+      };
+    })
+  );
+
+  return { orderId: order.id, items: byItem };
+};
+
+const assignSerialsToOrder = async (orderId, assignments) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { orderItems: true },
+  });
+  if (!order) throw new NotFoundError('Order');
+  if (order.status !== 'CONFIRMED') {
+    throw new AppError('Chỉ gán serial khi đơn ở trạng thái CONFIRMED', 400, ERROR_CODES.ORDER.INVALID_ORDER_STATUS_TRANSITION);
+  }
+
+  const byItemId = new Map(order.orderItems.map((oi) => [oi.id, oi]));
+  for (const oi of order.orderItems) {
+    if (oi.quantity !== 1) {
+      throw new AppError(
+        'Gán serial/IMEI hiện chỉ hỗ trợ từng dòng số lượng 1',
+        400,
+        ERROR_CODES.SERVER.VALIDATION_ERROR
+      );
+    }
+  }
+  if (assignments.length !== order.orderItems.length) {
+    throw new AppError('Phải gán đủ serial cho tất cả dòng sản phẩm', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
+  }
+  const seen = new Set();
+  for (const a of assignments) {
+    if (!byItemId.has(a.orderItemId)) {
+      throw new AppError('orderItemId không thuộc đơn hàng', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
+    }
+    if (seen.has(a.orderItemId)) {
+      throw new AppError('Trùng orderItemId trong danh sách gán', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
+    }
+    seen.add(a.orderItemId);
+  }
+
+  return prisma.$transaction(async (tx) => {
+    for (const { orderItemId, serialUnitId } of assignments) {
+      const oi = byItemId.get(orderItemId);
+      const locked = await tx.serialUnit.updateMany({
+        where: {
+          id: serialUnitId,
+          status: 'IN_STOCK',
+          productId: oi.productId,
+          variantId: oi.variantId || null,
+        },
+        data: { status: 'RESERVED', reservedAt: new Date() },
+      });
+      if (locked.count === 0) {
+        throw new ConflictError('Serial không khả dụng hoặc không khớp sản phẩm', 'SERIAL_UNAVAILABLE');
+      }
+      await tx.orderItem.update({
+        where: { id: orderItemId },
+        data: { serialUnitId, assignedAt: new Date() },
+      });
+    }
+
+    return tx.order.update({
+      where: { id: orderId },
+      data: { status: 'PACKING' },
+      include: ORDER_DETAIL_INCLUDE,
+    });
+  });
+};
+
+const userRequestReturn = async (orderId, userId, reason) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { orderItems: true },
+  });
+  if (!order) throw new NotFoundError('Order');
+  if (order.userId !== userId) throw new ForbiddenError('Bạn không có quyền thao tác đơn này');
+  if (order.status !== 'COMPLETED') {
+    throw new AppError('Chỉ có thể hoàn trả đơn đã hoàn thành.', 400);
+  }
+
+  const updated = await prisma.$transaction(async (tx) => {
+    const items = await tx.orderItem.findMany({ where: { orderId } });
+    for (const oi of items) {
+      if (oi.serialUnitId) {
+        await tx.serialUnit.update({
+          where: { id: oi.serialUnitId },
+          data: { status: 'RETURNED', returnedAt: new Date() },
+        });
+      }
+    }
+    return tx.order.update({
+      where: { id: orderId },
+      data: { status: 'RETURNED' },
+      include: ORDER_DETAIL_INCLUDE,
+    });
+  });
+
+  Promise.resolve().then(async () => {
+    try {
+      await notificationService.createAndSend(
+        updated.userId,
+        'order_status_changed',
+        'Yêu cầu hoàn trả',
+        `Đơn hàng #${updated.id} đã chuyển sang hoàn trả.${reason ? ` Lý do: ${reason}` : ''}`,
+        { orderId: updated.id, newStatus: 'RETURNED' }
+      );
+    } catch (err) {
+      console.error('[Notification Error] return notification:', err);
+    }
+  });
+
+  return { order: updated };
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -859,4 +1137,8 @@ module.exports = {
   adminGetOrderById,
   adminUpdateOrderStatus,
   getReviewableItems,
+  deductInventoryForOrderTx,
+  getAvailableSerialsForOrder,
+  assignSerialsToOrder,
+  userRequestReturn,
 };

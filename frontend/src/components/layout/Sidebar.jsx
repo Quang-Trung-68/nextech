@@ -14,7 +14,11 @@ import {
   ChevronRight,
   Tag,
   Settings,
+  Warehouse,
+  Truck,
+  Barcode,
 } from 'lucide-react';
+import NotificationDropdown from '@/components/layout/NotificationDropdown';
 
 // Custom Avatar component replacing Shadcn Avatar to avoid missing dependencies
 const Avatar = ({ src, fallback, className }) => {
@@ -48,59 +52,76 @@ const Sidebar = ({ isMobile }) => {
   }, [collapsed]);
 
   const links = [
-    { name: 'Dashboard', to: '/admin/overview', icon: LayoutDashboard },
-    { name: 'Products', to: '/admin/products', icon: Package },
-    { name: 'Orders', to: '/admin/orders', icon: ShoppingCart },
-    { name: 'Users', to: '/admin/users', icon: Users },
-    { name: 'Coupons', to: '/admin/coupons', icon: Tag },
-    { name: 'Settings', to: '/admin/settings', icon: Settings },
+    { name: 'Tổng quan', to: '/admin/overview', icon: LayoutDashboard },
+    { name: 'Sản phẩm', to: '/admin/products', icon: Package },
+    { name: 'Đơn hàng', to: '/admin/orders', icon: ShoppingCart },
+    { name: 'Nhà cung cấp', to: '/admin/inventory/suppliers', icon: Warehouse },
+    { name: 'Nhập kho', to: '/admin/inventory/stock-imports', icon: Truck },
+    { name: 'Serial / IMEI', to: '/admin/inventory/serials', icon: Barcode },
+    { name: 'Người dùng', to: '/admin/users', icon: Users },
+    { name: 'Mã giảm giá', to: '/admin/coupons', icon: Tag },
+    { name: 'Cài đặt', to: '/admin/settings', icon: Settings },
   ];
 
   return (
     <aside 
       className={cn(
-        "bg-card shadow-sm flex flex-col p-4 transition-[width] duration-200 ease-in-out relative h-full",
+        "bg-card shadow-sm flex flex-col p-4 transition-[width] duration-200 ease-in-out relative h-full overflow-visible",
         !isMobile ? "border-r min-h-screen" : "w-full border-r-0",
         !isMobile && collapsed ? "w-[72px]" : "w-[240px]"
       )}
     >
       {!isMobile && (
         <button 
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-6 bg-border rounded-full p-0.5 border shadow-sm z-10 hover:bg-muted text-foreground"
+          className="absolute -right-3 top-4 bg-border rounded-full p-0.5 border shadow-sm z-10 hover:bg-muted text-foreground"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
       )}
 
-      {!isMobile && collapsed ? (
-        <h2 className="text-sm font-medium mb-6 text-foreground text-center truncate">UX</h2>
-      ) : (
-        <h2 className="text-sm font-medium mb-6 text-foreground px-2 truncate">Admin Panel</h2>
-      )}
-
-      {/* Admin Profile */}
-      <div 
-        className={cn("flex items-center gap-3 mb-6 px-2", !isMobile && collapsed ? "justify-center px-0" : "")}
-        title={!isMobile && collapsed ? `${user?.name} · ${user?.email}` : undefined}
-      >
-        <Avatar 
-          src={user?.avatar} 
-          fallback={user?.name?.charAt(0) || 'A'} 
-          className="flex-shrink-0"
-        />
+      {/* Đầu nav: badge vai trò (khi mở rộng / mobile); không còn chữ "QT" */}
+      <div className="mb-4 flex flex-col gap-4 shrink-0">
         {(!collapsed || isMobile) && (
-          <div className="flex flex-col min-w-0 overflow-hidden">
-            <span className="font-medium text-sm truncate">{user?.name}</span>
-            <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
-            <span className="mt-1 text-[10px] uppercase font-bold tracking-wider inline-flex justify-center border rounded-md px-1 w-max border-primary/20 bg-primary/10 text-primary">
-              Administrator
+          <div className="px-2 pt-0.5">
+            <span className="inline-flex items-center text-[10px] uppercase font-bold tracking-wider border rounded-md px-2 py-1 border-primary/20 bg-primary/10 text-primary">
+              Quản trị viên
             </span>
           </div>
         )}
+
+        <div
+          className={cn(
+            'flex items-center gap-3 px-2',
+            !isMobile && collapsed ? 'justify-center px-0' : '',
+          )}
+          title={!isMobile && collapsed ? `${user?.name} · ${user?.email}` : undefined}
+        >
+          <Avatar
+            src={user?.avatar}
+            fallback={user?.name?.charAt(0) || 'A'}
+            className="flex-shrink-0 h-9 w-9"
+          />
+          {(!collapsed || isMobile) && (
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <span className="truncate text-sm font-medium">{user?.name}</span>
+              <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+            </div>
+          )}
+        </div>
+
+        <div
+          className={cn('px-2', !isMobile && collapsed ? 'flex justify-center px-0' : '')}
+          title={!isMobile && collapsed ? 'Thông báo' : undefined}
+        >
+          <div className="text-muted-foreground [&_button]:text-muted-foreground [&_button:hover]:text-foreground">
+            <NotificationDropdown variant="sidebar" />
+          </div>
+        </div>
       </div>
 
-      <nav className="flex flex-col gap-1 flex-1">
+      <nav className="flex flex-1 flex-col gap-1">
         {links.map((link) => (
           <NavLink
             key={link.to}
@@ -127,7 +148,7 @@ const Sidebar = ({ isMobile }) => {
         <NavLink
           to="/"
           end
-          title={!isMobile && collapsed ? "Back to Shop" : undefined}
+          title={!isMobile && collapsed ? 'Về cửa hàng' : undefined}
           className={() => cn(
             'flex items-center rounded-md font-medium transition-colors',
             !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
@@ -135,19 +156,19 @@ const Sidebar = ({ isMobile }) => {
           )}
         >
           <ArrowLeft size={20} className="flex-shrink-0" />
-          {(!collapsed || isMobile) && <span className="truncate">Back to Shop</span>}
+          {(!collapsed || isMobile) && <span className="truncate">Về cửa hàng</span>}
         </NavLink>
         
         <button
           onClick={() => logout()}
-          title={!isMobile && collapsed ? "Logout" : undefined}
+          title={!isMobile && collapsed ? 'Đăng xuất' : undefined}
           className={cn(
             'flex items-center rounded-md font-medium transition-colors text-destructive hover:bg-destructive/10 mt-auto',
             !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm'
           )}
         >
           <LogOut size={20} className="flex-shrink-0" />
-          {(!collapsed || isMobile) && <span className="truncate">Logout</span>}
+          {(!collapsed || isMobile) && <span className="truncate">Đăng xuất</span>}
         </button>
       </nav>
     </aside>

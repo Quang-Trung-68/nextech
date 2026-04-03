@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useAdminOrders, useUpdateOrderStatus } from '@/features/admin/hooks/useAdmin';
+import { useAdminOrders } from '@/features/admin/hooks/useAdmin';
 import { DataTable } from '@/features/admin/components/DataTable';
 import { CustomPagination } from '@/features/admin/components/CustomPagination';
 import { StatusBadge } from '@/features/admin/components/StatusBadge';
@@ -22,7 +22,7 @@ import { Copy } from 'lucide-react';
 import OrderDetailModal from './components/OrderDetailModal';
 
 const AdminOrdersPage = () => {
-  usePageTitle('Manage Orders | Admin');
+  usePageTitle('Đơn hàng | Quản trị');
 
   const [filterState, setFilterState] = useState({ page: 1, limit: 10, paymentStatus: '', status: '' });
   const [searchInput, setSearchInput] = useState('');
@@ -34,6 +34,24 @@ const AdminOrdersPage = () => {
 
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [highlightOrderId, setHighlightOrderId] = useState(null);
+
+  useEffect(() => {
+    let clearTimer;
+    const onNewOrder = (e) => {
+      const oid = e.detail?.orderId;
+      if (!oid) return;
+      setHighlightOrderId(oid);
+      setFilterState((prev) => ({ ...prev, page: 1 }));
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => setHighlightOrderId(null), 45_000);
+    };
+    window.addEventListener('admin:new-order', onNewOrder);
+    return () => {
+      window.removeEventListener('admin:new-order', onNewOrder);
+      clearTimeout(clearTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (queryOrderId) {
@@ -56,17 +74,6 @@ const AdminOrdersPage = () => {
   }, [debouncedSearch]);
 
   const { data, isLoading } = useAdminOrders(params);
-  const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();
-
-  const handleStatusChange = (orderId, newStatus) => {
-    updateOrderStatus(
-      { id: orderId, status: newStatus },
-      {
-        onSuccess: () => toast.success('Email notification sent to customer'),
-        onError: (err) => toast.error(err.response?.data?.message || 'Failed to update status'),
-      }
-    );
-  };
 
   const handleRowClick = (order) => {
     setSelectedOrderId(order.id);
@@ -81,7 +88,7 @@ const AdminOrdersPage = () => {
   const columns = [
     {
       accessorKey: 'id',
-      header: 'Order ID',
+      header: 'Mã đơn',
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
           <span className="text-xs font-mono">#{row.original.id.slice(-8).toUpperCase()}</span>
@@ -102,7 +109,7 @@ const AdminOrdersPage = () => {
     },
     {
       accessorKey: 'user.name',
-      header: 'Customer',
+      header: 'Khách hàng',
       cell: ({ row }) => (
         <span>
           {row.original.user?.name || 'Guest'}
@@ -113,7 +120,7 @@ const AdminOrdersPage = () => {
     },
     {
       accessorKey: 'totalAmount',
-      header: 'Total',
+      header: 'Tổng tiền',
       cell: ({ row }) => formatCurrency(row.original.totalAmount),
     },
     {
@@ -134,9 +141,11 @@ const AdminOrdersPage = () => {
           </SelectContent>
         </Select>
       ),
-      cell: ({ row }) => (
-        <span className="capitalize">{row.original.paymentMethod}</span>
-      )
+      cell: ({ row }) => {
+        const m = row.original.paymentMethod;
+        const map = { COD: 'Thanh toán khi nhận (COD)', STRIPE: 'Thẻ (Stripe)', SEPAY: 'Chuyển khoản (SePay)' };
+        return <span>{map[m] ?? m}</span>;
+      },
     },
     {
       accessorKey: 'status',
@@ -148,13 +157,15 @@ const AdminOrdersPage = () => {
           <SelectTrigger className="w-[120px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
             <SelectValue placeholder="Trạng thái (tất cả)" />
           </SelectTrigger>
-          <SelectContent onClick={e => e.stopPropagation()}>
+            <SelectContent onClick={e => e.stopPropagation()}>
             <SelectItem value="all">Trạng thái (tất cả)</SelectItem>
-            <SelectItem value="PENDING">Chờ xử lý</SelectItem>
-            <SelectItem value="PROCESSING">Đang xử lý</SelectItem>
-            <SelectItem value="SHIPPED">Đang giao</SelectItem>
-            <SelectItem value="DELIVERED">Đã giao</SelectItem>
+            <SelectItem value="PENDING">Chờ xác nhận</SelectItem>
+            <SelectItem value="CONFIRMED">Đã xác nhận</SelectItem>
+            <SelectItem value="PACKING">Đang đóng gói</SelectItem>
+            <SelectItem value="SHIPPING">Đang vận chuyển</SelectItem>
+            <SelectItem value="COMPLETED">Hoàn thành</SelectItem>
             <SelectItem value="CANCELLED">Đã hủy</SelectItem>
+            <SelectItem value="RETURNED">Đã hoàn trả</SelectItem>
           </SelectContent>
         </Select>
       ),
@@ -162,43 +173,25 @@ const AdminOrdersPage = () => {
     },
     {
       id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => {
-        const orderId = row.original.id;
-        const status = row.original.status;
-        return (
-          <div className="flex gap-2 text-xs" onClick={e => e.stopPropagation()}>
-            {status === 'PENDING' && (
-              <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'PROCESSING')} disabled={isUpdating}>
-                Chuyển: Đang xử lý
-              </Button>
-            )}
-            {status === 'PROCESSING' && (
-              <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'SHIPPED')} disabled={isUpdating}>
-                Chuyển: Đang giao
-              </Button>
-            )}
-            {status === 'SHIPPED' && (
-              <Button size="sm" variant="outline" onClick={() => handleStatusChange(orderId, 'DELIVERED')} disabled={isUpdating}>
-                Chuyển: Đã giao
-              </Button>
-            )}
-          </div>
-        );
-      },
+      header: 'Thao tác',
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
+          Mở chi tiết để xử lý
+        </span>
+      ),
     },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Manage Orders</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Quản lý đơn hàng</h1>
       </div>
 
       <div className="py-2">
         <input
           type="text"
-          placeholder="Search by ID, name, or email..."
+          placeholder="Tìm theo mã đơn, tên hoặc email..."
           className="border rounded-md px-3 py-2 w-full max-w-sm"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -218,6 +211,11 @@ const AdminOrdersPage = () => {
           columns={columns}
           data={data?.orders || []}
           onRowClick={handleRowClick}
+          rowClassName={(row) =>
+            highlightOrderId && row.id === highlightOrderId
+              ? 'ring-2 ring-primary/50 bg-primary/5 animate-in fade-in duration-300'
+              : ''
+          }
         />
       )}
 

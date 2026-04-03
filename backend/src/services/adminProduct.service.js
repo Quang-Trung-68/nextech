@@ -151,7 +151,7 @@ const deleteProduct = async (id) => {
     where: {
       productId: id,
       order: {
-        status: { notIn: ['DELIVERED', 'CANCELLED'] },
+        status: { notIn: ['COMPLETED', 'CANCELLED', 'RETURNED'] },
       },
     },
     include: { order: { select: { id: true, status: true } } },

@@ -92,24 +92,37 @@ const cancelOrderSchema = z.object({
 
 /**
  * Schema validate body cho PATCH /api/admin/orders/:id/status (admin cập nhật)
- * Flow hợp lệ: PROCESSING → SHIPPED → DELIVERED
- * Admin cũng có thể huỷ đơn: PENDING/PROCESSING → CANCELLED
  */
-const adminUpdateOrderStatusSchema = z.object({
-  status: z.enum(['PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
-    errorMap: () => ({
-      message: 'Trạng thái không hợp lệ. Admin có thể cập nhật: PROCESSING → SHIPPED → DELIVERED, hoặc CANCELLED.',
+const adminUpdateOrderStatusSchema = z
+  .object({
+    status: z.enum(['CONFIRMED', 'SHIPPING', 'COMPLETED', 'CANCELLED', 'RETURNED'], {
+      errorMap: () => ({
+        message:
+          'Trạng thái không hợp lệ (CONFIRMED, SHIPPING, COMPLETED, CANCELLED, RETURNED). PACKING qua gán serial.',
+      }),
     }),
-  }),
-  reason: z.string().trim().optional(),
-});
+    reason: z.string().trim().optional(),
+    carrierName: z.string().trim().optional().nullable(),
+    trackingCode: z.string().trim().optional().nullable(),
+    trackingUrl: z.string().trim().optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === 'SHIPPING') {
+      if (!data.carrierName || !String(data.carrierName).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Vui lòng nhập đơn vị vận chuyển', path: ['carrierName'] });
+      }
+      if (!data.trackingCode || !String(data.trackingCode).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Vui lòng nhập mã vận đơn', path: ['trackingCode'] });
+      }
+    }
+  });
 
 /**
  * Schema validate req.query cho GET /api/orders (user xem lịch sử)
  */
 const listMyOrdersQuerySchema = z.object({
   status: z
-    .enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'], {
+    .enum(['PENDING', 'CONFIRMED', 'PACKING', 'SHIPPING', 'COMPLETED', 'CANCELLED', 'RETURNED'], {
       errorMap: () => ({ message: 'Giá trị status không hợp lệ' }),
     })
     .or(z.literal(''))
@@ -124,7 +137,7 @@ const listMyOrdersQuerySchema = z.object({
  */
 const adminListOrdersQuerySchema = z.object({
   status: z
-    .enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'])
+    .enum(['PENDING', 'CONFIRMED', 'PACKING', 'SHIPPING', 'COMPLETED', 'CANCELLED', 'RETURNED'])
     .or(z.literal(''))
     .optional(),
   paymentStatus: z.enum(['UNPAID', 'PAID', 'REFUNDED']).or(z.literal('')).optional(),
@@ -143,6 +156,21 @@ const orderParamsSchema = z.object({
   id: z.string().cuid('ID đơn hàng không hợp lệ'),
 });
 
+const assignSerialsSchema = z.object({
+  assignments: z
+    .array(
+      z.object({
+        orderItemId: z.string().cuid(),
+        serialUnitId: z.string().cuid(),
+      })
+    )
+    .min(1),
+});
+
+const userReturnOrderSchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+});
+
 module.exports = {
   shippingAddressSchema,
   createOrderSchema,
@@ -151,4 +179,6 @@ module.exports = {
   listMyOrdersQuerySchema,
   adminListOrdersQuerySchema,
   orderParamsSchema,
+  assignSerialsSchema,
+  userReturnOrderSchema,
 };

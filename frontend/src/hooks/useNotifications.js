@@ -169,6 +169,16 @@ export function useNotifications(user) {
         if (!notification.isRead) markOneAsReadMutation.mutate(notification.id);
         navigate(dest);
       });
+
+      if (notification.type === "new_order" && user?.role === "ADMIN") {
+        queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+        const oid = notification.data?.orderId;
+        if (oid) {
+          window.dispatchEvent(
+            new CustomEvent("admin:new-order", { detail: { orderId: oid } }),
+          );
+        }
+      }
     };
 
     userChannel.bind("notification.new", handleNewNotification);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import usePageTitle from '@/hooks/usePageTitle';
 import axiosInstance from '@/lib/axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Save } from 'lucide-react';
 
 export default function AdminSettingsPage() {
+  usePageTitle('Cài đặt | Quản trị');
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({
     shopName: '',

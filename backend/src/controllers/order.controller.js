@@ -3,7 +3,7 @@ const orderService = require('../services/order.service');
 /**
  * POST /api/orders
  * Tạo đơn hàng từ Cart.
- * - COD: status=PROCESSING, không có clientSecret
+ * - COD: status=PENDING (chờ admin CONFIRMED), không có clientSecret
  * - STRIPE: status=PENDING, trả về clientSecret
  */
 const createOrder = async (req, res, next) => {
@@ -45,7 +45,7 @@ const getOrderById = async (req, res, next) => {
 
 /**
  * PATCH /api/orders/:id/cancel
- * User tự huỷ đơn. Chỉ cho phép khi PENDING hoặc PROCESSING.
+ * User tự huỷ đơn. Chỉ cho phép khi PENDING hoặc CONFIRMED.
  * Bắt buộc có reason (tối thiểu 10 ký tự).
  */
 const cancelOrder = async (req, res, next) => {
@@ -87,13 +87,39 @@ const adminGetOrderById = async (req, res, next) => {
 
 /**
  * PATCH /api/admin/orders/:id/status
- * Admin cập nhật trạng thái theo flow: PROCESSING → SHIPPED → DELIVERED.
- * Không được đi ngược, không được update đơn đã CANCELLED.
+ * Admin cập nhật trạng thái (workflow mới).
  */
 const adminUpdateOrderStatus = async (req, res, next) => {
   try {
-    const order = await orderService.adminUpdateOrderStatus(req.params.id, req.body.status);
+    const order = await orderService.adminUpdateOrderStatus(req.params.id, req.body.status, req.body);
     res.status(200).json({ success: true, order });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const adminGetAvailableSerials = async (req, res, next) => {
+  try {
+    const result = await orderService.getAvailableSerialsForOrder(req.params.id);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const adminAssignSerials = async (req, res, next) => {
+  try {
+    const order = await orderService.assignSerialsToOrder(req.params.id, req.body.assignments);
+    res.status(200).json({ success: true, order });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const userReturnOrder = async (req, res, next) => {
+  try {
+    const result = await orderService.userRequestReturn(req.params.id, req.user.id, req.body.reason);
+    res.status(200).json({ success: true, ...result });
   } catch (error) {
     next(error);
   }
@@ -120,5 +146,8 @@ module.exports = {
   adminGetAllOrders,
   adminGetOrderById,
   adminUpdateOrderStatus,
+  adminGetAvailableSerials,
+  adminAssignSerials,
+  userReturnOrder,
   reviewableItems,
 };

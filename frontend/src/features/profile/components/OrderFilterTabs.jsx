@@ -1,9 +1,11 @@
 const STATUS_FILTERS = [
   { label: 'Tất cả', value: '' },
-  { label: 'Chờ xử lý', value: 'PENDING' },
-  { label: 'Đang xử lý', value: 'PROCESSING' },
-  { label: 'Đang giao', value: 'SHIPPED' },
-  { label: 'Đã giao', value: 'DELIVERED' },
+  { label: 'Chờ xác nhận', value: 'PENDING' },
+  { label: 'Đã xác nhận', value: 'CONFIRMED' },
+  { label: 'Đóng gói', value: 'PACKING' },
+  { label: 'Vận chuyển', value: 'SHIPPING' },
+  { label: 'Hoàn thành', value: 'COMPLETED' },
+  { label: 'Hoàn trả', value: 'RETURNED' },
   { label: 'Đã huỷ', value: 'CANCELLED' },
 ];
 
@@ -12,7 +14,7 @@ const OrderFilterTabs = ({ activeStatus, onChange }) => {
     <div className="flex items-center gap-2 flex-wrap">
       {STATUS_FILTERS.map(({ label, value }) => (
         <button
-          key={value}
+          key={value || 'all'}
           onClick={() => onChange(value)}
           className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all whitespace-nowrap ${
             activeStatus === value

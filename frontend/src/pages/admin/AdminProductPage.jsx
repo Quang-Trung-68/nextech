@@ -25,7 +25,7 @@ import { adminKeys } from '@/features/admin/hooks/useAdmin';
 import { buildVariantsPayload } from '@/features/admin/utils/buildVariantsPayload';
 
 const AdminProductPage = () => {
-  usePageTitle('Manage Products | Admin');
+  usePageTitle('Sản phẩm | Quản trị');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -60,7 +60,7 @@ const AdminProductPage = () => {
       if (body.hasVariants && attributeDraft.length && productId) {
         await buildVariantsPayload(productId, attributeDraft, variantRows, body.price);
       }
-      toast.success('Product created successfully');
+      toast.success('Đã tạo sản phẩm');
       queryClient.invalidateQueries({ queryKey: adminKeys.all });
       setCreateModalOpen(false);
     } catch (err) {
@@ -75,7 +75,7 @@ const AdminProductPage = () => {
   const columns = [
     {
       accessorKey: 'images',
-      header: 'Image',
+      header: 'Ảnh',
       cell: ({ row }) => (
         <img
           src={row.original.images?.[0]?.url || 'https://via.placeholder.com/50'}
@@ -86,7 +86,7 @@ const AdminProductPage = () => {
     },
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: 'Tên',
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
     },
     {
@@ -99,10 +99,10 @@ const AdminProductPage = () => {
           }
         >
           <SelectTrigger className="w-[140px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
-            <SelectValue placeholder="Category (all)" />
+            <SelectValue placeholder="Danh mục (tất cả)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Category (all)</SelectItem>
+            <SelectItem value="all">Danh mục (tất cả)</SelectItem>
             <SelectItem value="laptop">Laptop</SelectItem>
             <SelectItem value="smartphone">Smartphone</SelectItem>
             <SelectItem value="tablet">Tablet</SelectItem>
@@ -110,16 +110,20 @@ const AdminProductPage = () => {
           </SelectContent>
         </Select>
       ),
-      cell: ({ getValue }) => <span className="capitalize">{getValue()?.toLowerCase()}</span>,
+      cell: ({ getValue }) => {
+        const slug = getValue()?.toLowerCase();
+        const vi = { laptop: 'Laptop', smartphone: 'Điện thoại', tablet: 'Máy tính bảng', accessory: 'Phụ kiện' };
+        return <span>{vi[slug] ?? slug}</span>;
+      },
     },
     {
       accessorKey: 'price',
-      header: 'Price',
+      header: 'Giá',
       cell: ({ row }) => formatCurrency(row.original.price),
     },
     {
       accessorKey: 'stock',
-      header: 'Stock',
+      header: 'Tồn kho',
       cell: ({ row }) => {
         const v = row.original;
         if (v.hasVariants) {
@@ -132,7 +136,7 @@ const AdminProductPage = () => {
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: 'Thao tác',
       cell: ({ row }) => (
         <div className="flex gap-2">
           <Button
@@ -161,11 +165,11 @@ const AdminProductPage = () => {
     if (selectedProduct) {
       deleteProduct(selectedProduct.id, {
         onSuccess: () => {
-          toast.success('Product deleted successfully');
+          toast.success('Đã xóa sản phẩm');
           setDeleteConfirmOpen(false);
           setSelectedProduct(null);
         },
-        onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete product'),
+        onError: (err) => toast.error(err.response?.data?.message || 'Không xóa được sản phẩm'),
       });
     }
   };
@@ -173,21 +177,21 @@ const AdminProductPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Manage Products</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Quản lý sản phẩm</h1>
         <Button
           onClick={() => {
             setCreateModalOpen(true);
             setServerError(null);
           }}
         >
-          <Plus className="mr-2 h-4 w-4" /> Add Product
+          <Plus className="mr-2 h-4 w-4" /> Thêm sản phẩm
         </Button>
       </div>
 
       <div className="py-4">
         <input
           type="text"
-          placeholder="Search products..."
+          placeholder="Tìm sản phẩm..."
           className="border rounded-md px-3 py-2 w-full max-w-sm"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -229,9 +233,9 @@ const AdminProductPage = () => {
           setSelectedProduct(null);
         }}
         onConfirm={handleDelete}
-        title="Delete Product"
-        description={`Are you sure you want to delete "${selectedProduct?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title="Xóa sản phẩm"
+        description={`Bạn có chắc muốn xóa "${selectedProduct?.name}"? Thao tác không thể hoàn tác.`}
+        confirmText="Xóa"
         isLoading={isDeleting}
       />
     </div>

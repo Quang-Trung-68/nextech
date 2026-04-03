@@ -23,10 +23,12 @@ import { Link } from 'react-router-dom';
 
 const STATUS_LABELS = {
   '': 'Bạn chưa có đơn hàng nào.',
-  PENDING: 'Không có đơn hàng nào đang chờ xử lý.',
-  PROCESSING: 'Không có đơn hàng nào đang xử lý.',
-  SHIPPED: 'Không có đơn hàng nào đang giao.',
-  DELIVERED: 'Không có đơn hàng nào đã giao.',
+  PENDING: 'Không có đơn hàng nào đang chờ xác nhận.',
+  CONFIRMED: 'Không có đơn hàng nào ở trạng thái đã xác nhận.',
+  PACKING: 'Không có đơn hàng nào đang đóng gói.',
+  SHIPPING: 'Không có đơn hàng nào đang vận chuyển.',
+  COMPLETED: 'Không có đơn hàng nào đã hoàn thành.',
+  RETURNED: 'Không có đơn hàng nào đã hoàn trả.',
   CANCELLED: 'Không có đơn hàng nào đã huỷ.',
 };
 

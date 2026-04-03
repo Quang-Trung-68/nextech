@@ -58,6 +58,9 @@ const AdminOrdersPage    = lazy(() => import('@/pages/admin/orders/AdminOrdersPa
 const AdminUserPage      = lazy(() => import('@/pages/admin/AdminUserPage'));
 const AdminCouponsPage   = lazy(() => import('@/pages/admin/AdminCouponsPage'));
 const AdminSettingsPage  = lazy(() => import('@/pages/admin/AdminSettingsPage'));
+const AdminSuppliersPage = lazy(() => import('@/pages/admin/inventory/AdminSuppliersPage'));
+const AdminStockImportPage = lazy(() => import('@/pages/admin/inventory/AdminStockImportPage'));
+const AdminSerialsPage = lazy(() => import('@/pages/admin/inventory/AdminSerialsPage'));
 
 const routes = [
   {
@@ -199,6 +202,18 @@ const routes = [
           {
             path: 'products',
             element: <AdminProductPage />,
+          },
+          {
+            path: 'inventory/suppliers',
+            element: <AdminSuppliersPage />,
+          },
+          {
+            path: 'inventory/stock-imports',
+            element: <AdminStockImportPage />,
+          },
+          {
+            path: 'inventory/serials',
+            element: <AdminSerialsPage />,
           },
           {
             path: 'orders',

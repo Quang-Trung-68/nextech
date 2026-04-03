@@ -7,6 +7,7 @@ const {
   adminUpdateOrderStatusSchema,
   adminListOrdersQuerySchema,
   orderParamsSchema,
+  assignSerialsSchema,
 } = require('../validations/order.validation');
 
 // Tất cả route tại đây đều yêu cầu đăng nhập + role ADMIN
@@ -19,6 +20,21 @@ router.get(
   orderController.adminGetAllOrders
 );
 
+// GET /api/admin/orders/:id/available-serials — Serial IN_STOCK theo từng dòng đơn
+router.get(
+  '/:id/available-serials',
+  validate(orderParamsSchema, 'params'),
+  orderController.adminGetAvailableSerials
+);
+
+// PATCH /api/admin/orders/:id/assign-serial — Gán IMEI/serial → PACKING
+router.patch(
+  '/:id/assign-serial',
+  validate(orderParamsSchema, 'params'),
+  validate(assignSerialsSchema),
+  orderController.adminAssignSerials
+);
+
 // GET /api/admin/orders/:id — Chi tiết bất kỳ đơn nào
 router.get(
   '/:id',
@@ -26,7 +42,7 @@ router.get(
   orderController.adminGetOrderById
 );
 
-// PATCH /api/admin/orders/:id/status — Cập nhật status theo flow: PROCESSING→SHIPPED→DELIVERED
+// PATCH /api/admin/orders/:id/status — Workflow trạng thái
 router.patch(
   '/:id/status',
   validate(orderParamsSchema, 'params'),

@@ -354,10 +354,10 @@ export function useAdminOrderDetail(orderId) {
 export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status, reason = '' }) => {
+    mutationFn: async ({ id, status, reason = '', carrierName, trackingCode, trackingUrl }) => {
       const { data } = await axiosInstance.patch(
         `/admin/orders/${id}/status`,
-        { status, reason }
+        { status, reason, carrierName, trackingCode, trackingUrl }
       );
       return data;
     },
@@ -382,8 +382,43 @@ export function useCancelOrder() {
       });
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: adminKeys.orderDetail(id) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.stats() });
+    },
+  });
+}
+
+/**
+ * GET /api/admin/orders/:id/available-serials
+ */
+export function useAvailableSerialsForOrder(orderId) {
+  return useQuery({
+    queryKey: [...adminKeys.orderDetail(orderId), 'available-serials'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/orders/${orderId}/available-serials`);
+      return data;
+    },
+    enabled: !!orderId,
+  });
+}
+
+/**
+ * PATCH /api/admin/orders/:id/assign-serial
+ */
+export function useAssignSerials() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, assignments }) => {
+      const { data } = await axiosInstance.patch(`/admin/orders/${id}/assign-serial`, {
+        assignments,
+      });
+      return data;
+    },
+    onSuccess: (_, v) => {
       queryClient.invalidateQueries({ queryKey: adminKeys.orders({}) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.orderDetail(v.id) });
     },
   });
 }

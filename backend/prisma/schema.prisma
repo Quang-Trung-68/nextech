@@ -32,6 +32,7 @@ model User {
   couponUsages           CouponUsage[]
   notifications          Notification[]
   posts                  Post[]
+  stockImports           StockImport[]
 
   @@map("users")
 }
@@ -120,14 +121,17 @@ model Product {
   saleExpiresAt   DateTime?
   saleStock       Int?
   saleSoldCount   Int                 @default(0)
-  hasVariants     Boolean             @default(false)
-  cartItems       CartItem[]
-  favorites       Favorite[]
-  orderItems      OrderItem[]
-  images          ProductImage[]
-  reviews         Review[]
-  attributes      ProductAttribute[]
-  variants        ProductVariant[]
+  hasVariants       Boolean             @default(false)
+  lowStockThreshold Int                 @default(5)
+  cartItems         CartItem[]
+  favorites         Favorite[]
+  orderItems        OrderItem[]
+  images            ProductImage[]
+  reviews           Review[]
+  attributes        ProductAttribute[]
+  variants          ProductVariant[]
+  stockImports      StockImport[]
+  serialUnits       SerialUnit[]
 
   @@map("products")
 }
@@ -180,12 +184,15 @@ model ProductVariant {
   saleSoldCount   Int       @default(0)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
+  deletedAt         DateTime?
+  lowStockThreshold Int       @default(5)
 
-  product    Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
-  values     ProductVariantValue[]
-  orderItems OrderItem[]
-  cartItems  CartItem[]
+  product      Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  values       ProductVariantValue[]
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  stockImports StockImport[]
+  serialUnits  SerialUnit[]
 
   @@index([productId])
   @@map("product_variants")
@@ -221,6 +228,9 @@ model Order {
   orderItems            OrderItem[]
   user                  User          @relation(fields: [userId], references: [id])
   invoice               Invoice?
+  trackingCode          String?
+  trackingUrl           String?
+  carrierName           String?
 
   // VAT Invoice request (user điền tại checkout)
   vatInvoiceRequested    Boolean       @default(false)
@@ -247,6 +257,9 @@ model OrderItem {
   product       Product         @relation(fields: [productId], references: [id])
   variant       ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
   review        Review?
+  serialUnitId  String?         @unique
+  assignedAt    DateTime?
+  serialUnit    SerialUnit?     @relation(fields: [serialUnitId], references: [id])
 
   @@map("order_item")
 }
@@ -369,10 +382,19 @@ enum CouponDiscountType {
 
 enum OrderStatus {
   PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
+  CONFIRMED
+  PACKING
+  SHIPPING
+  COMPLETED
   CANCELLED
+  RETURNED
+}
+
+enum SerialStatus {
+  IN_STOCK
+  RESERVED
+  SOLD
+  RETURNED
 }
 
 enum PaymentStatus {
@@ -530,4 +552,66 @@ enum PostStatus {
   PENDING
   PUBLISHED
   REJECTED
+}
+
+// ─── Inventory (serial / IMEI) ───────────────────────────────────────────────
+
+model Supplier {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  address      String?
+  notes        String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  stockImports StockImport[]
+
+  @@map("suppliers")
+}
+
+model StockImport {
+  id             String          @id @default(cuid())
+  supplierId     String
+  productId      String
+  variantId      String?
+  importedBy     String
+  importDate     DateTime        @default(now())
+  unitCost       Decimal?        @db.Decimal(15, 2)
+  notes          String?
+  totalUnits     Int
+  supplier       Supplier        @relation(fields: [supplierId], references: [id])
+  product        Product         @relation(fields: [productId], references: [id])
+  variant        ProductVariant? @relation(fields: [variantId], references: [id])
+  importedByUser User            @relation(fields: [importedBy], references: [id])
+  serialUnits    SerialUnit[]
+  createdAt      DateTime        @default(now())
+
+  @@index([productId])
+  @@index([supplierId])
+  @@map("stock_imports")
+}
+
+model SerialUnit {
+  id            String          @id @default(cuid())
+  serial        String          @unique
+  productId     String
+  variantId     String?
+  stockImportId String
+  status        SerialStatus    @default(IN_STOCK)
+  reservedAt    DateTime?
+  soldAt        DateTime?
+  returnedAt    DateTime?
+  stockImport   StockImport     @relation(fields: [stockImportId], references: [id], onDelete: Cascade)
+  product       Product         @relation(fields: [productId], references: [id])
+  variant       ProductVariant? @relation(fields: [variantId], references: [id])
+  orderItem     OrderItem?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId, status])
+  @@index([variantId, status])
+  @@map("serial_units")
 }

@@ -4,7 +4,7 @@ import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useAdminStats, useAdminRevenue } from '@/features/admin/hooks/useAdmin';
 import { StatCard } from '@/features/admin/components/StatCard';
-import { DollarSign, ShoppingBag, Package, Users } from 'lucide-react';
+import { DollarSign, ShoppingBag, Package, Users, ScanBarcode, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatCurrency';
 import {
   Area,
@@ -24,26 +24,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 const latestOrdersColumns = [
   {
     accessorKey: 'id',
-    header: 'Order ID',
+    header: 'Mã đơn',
     cell: ({ row }) => <span className="font-mono text-xs">#{row.original.id.slice(-8).toUpperCase()}</span>,
   },
   {
     accessorKey: 'user.name',
-    header: 'Customer',
+    header: 'Khách hàng',
   },
   {
     accessorKey: 'totalAmount',
-    header: 'Total Amount',
+    header: 'Tổng tiền',
     cell: ({ row }) => <span className="font-medium text-primary">{formatCurrency(row.original.totalAmount)}</span>,
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: 'Trạng thái',
     cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
   {
     accessorKey: 'createdAt',
-    header: 'Date',
+    header: 'Thời gian',
     cell: ({ row }) => <span className="text-muted-foreground text-xs">{new Date(row.original.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</span>,
   },
 ];
@@ -51,7 +51,7 @@ const latestOrdersColumns = [
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const isMonth = label?.startsWith('T');
-    const displayLabel = isMonth ? `Month ${label.substring(1)}` : `Day ${label?.substring(1)}`;
+    const displayLabel = isMonth ? `Tháng ${label.substring(1)}` : `Ngày ${label?.substring(1)}`;
 
     return (
       <div className="bg-background border rounded-lg shadow-sm p-3">
@@ -66,7 +66,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const AdminDashboardPage = () => {
-  usePageTitle('Dashboard | Admin');
+  usePageTitle('Tổng quan | Quản trị');
   const navigate = useNavigate();
   const [period] = useState('month');
   
@@ -86,38 +86,57 @@ const AdminDashboardPage = () => {
   }, [revenueData]);
 
   if (isLoadingStats) return <LoadingSkeleton />;
-  if (isError) return <div className="text-red-500">Failed to load statistics.</div>;
+  if (isError) return <div className="text-red-500">Không tải được thống kê.</div>;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold tracking-tight">Bảng điều khiển</h1>
 
-      {/* Grid 4 StatCard - Total Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Revenue"
+          title="Tổng doanh thu"
           value={formatCurrency(stats?.totalRevenueAllTime || 0)}
           icon={DollarSign}
         />
         <div onClick={() => navigate('/admin/orders')} className="cursor-pointer transition hover:scale-105">
           <StatCard
-            title="Total Orders"
+            title="Tổng đơn hàng"
             value={(stats?.totalOrdersAllTime || 0).toLocaleString('vi-VN')}
             icon={ShoppingBag}
           />
         </div>
         <div onClick={() => navigate('/admin/products')} className="cursor-pointer transition hover:scale-105">
           <StatCard
-            title="Total Products"
+            title="Sản phẩm"
             value={(stats?.totalProducts || 0).toLocaleString('vi-VN')}
             icon={Package}
           />
         </div>
         <div onClick={() => navigate('/admin/users')} className="cursor-pointer transition hover:scale-105">
           <StatCard
-            title="Total Users"
+            title="Người dùng"
             value={(stats?.totalUsersAllTime || 0).toLocaleString('vi-VN')}
             icon={Users}
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div onClick={() => navigate('/admin/inventory/serials')} className="cursor-pointer transition hover:scale-105">
+          <StatCard
+            title="Serial còn trong kho"
+            value={(stats?.inventory?.serialInStockCount ?? 0).toLocaleString('vi-VN')}
+            icon={ScanBarcode}
+          />
+        </div>
+        <div
+          onClick={() => navigate('/admin/inventory/serials?tab=low')}
+          className="cursor-pointer transition hover:scale-105"
+        >
+          <StatCard
+            title="Cảnh báo sắp hết hàng"
+            value={(stats?.inventory?.lowStockAlertCount ?? 0).toLocaleString('vi-VN')}
+            icon={AlertTriangle}
           />
         </div>
       </div>
@@ -126,14 +145,16 @@ const AdminDashboardPage = () => {
         {/* Biểu đồ doanh thu theo tháng */}
         <div className="bg-card border rounded-xl p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-lg font-semibold">Revenue by {selectedMonth === 'All' ? 'month' : 'day'}</h2>
-            
+            <h2 className="text-lg font-semibold">
+              Doanh thu theo {selectedMonth === 'All' ? 'tháng' : 'ngày'}
+            </h2>
+
             <div className="flex items-center justify-end gap-3">
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground mb-1">Select Year</span>
+                <span className="text-xs text-muted-foreground mb-1">Năm</span>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger className="w-[100px]">
-                    <SelectValue placeholder="Year" />
+                    <SelectValue placeholder="Năm" />
                   </SelectTrigger>
                   <SelectContent>
                     {years.map((year) => (
@@ -144,15 +165,17 @@ const AdminDashboardPage = () => {
               </div>
 
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground mb-1">Select Month</span>
+                <span className="text-xs text-muted-foreground mb-1">Tháng</span>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger className="w-[110px]">
-                    <SelectValue placeholder="Month" />
+                    <SelectValue placeholder="Tháng" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All</SelectItem>
+                    <SelectItem value="All">Cả năm</SelectItem>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                      <SelectItem key={m} value={m.toString()}>Month {m}</SelectItem>
+                      <SelectItem key={m} value={m.toString()}>
+                        Tháng {m}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -193,7 +216,7 @@ const AdminDashboardPage = () => {
                     y={averageRevenue} 
                     stroke="#e5e7eb" 
                     strokeDasharray="4 4" 
-                    label={{ value: 'TB', position: 'insideTopLeft', fill: '#9ca3af', fontSize: 12 }} 
+                    label={{ value: 'TB', position: 'insideTopLeft', fill: '#9ca3af', fontSize: 12 }}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Area
@@ -214,7 +237,7 @@ const AdminDashboardPage = () => {
         {/* Bảng 5 đơn hàng mới nhất */}
         <div className="bg-card border rounded-xl p-6 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Latest Orders</h2>
+            <h2 className="text-lg font-semibold">Đơn hàng gần đây</h2>
           </div>
           <DataTable
             columns={latestOrdersColumns}

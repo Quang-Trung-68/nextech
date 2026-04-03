@@ -8,6 +8,7 @@ const {
   cancelOrderSchema,
   listMyOrdersQuerySchema,
   orderParamsSchema,
+  userReturnOrderSchema,
 } = require('../validations/order.validation');
 
 // ─── User Routes (auth required) ─────────────────────────────────────────────
@@ -28,6 +29,15 @@ router.get(
   orderController.getMyOrders
 );
 
+// PATCH /api/orders/:id/return — Hoàn trả (COMPLETED → RETURNED)
+router.patch(
+  '/:id/return',
+  protect,
+  validate(orderParamsSchema, 'params'),
+  validate(userReturnOrderSchema),
+  orderController.userReturnOrder
+);
+
 // GET /api/orders/:id — Chi tiết 1 đơn (chỉ của mình)
 router.get(
   '/:id',
@@ -36,7 +46,7 @@ router.get(
   orderController.getOrderById
 );
 
-// PATCH /api/orders/:id/cancel — Tự huỷ đơn (chỉ PENDING/PROCESSING)
+// PATCH /api/orders/:id/cancel — Tự huỷ đơn (PENDING/CONFIRMED)
 router.patch(
   '/:id/cancel',
   protect,

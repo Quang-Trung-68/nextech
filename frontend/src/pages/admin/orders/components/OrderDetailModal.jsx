@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog';
-import { useAdminOrderDetail, useCancelOrder } from '@/features/admin/hooks/useAdmin';
+import { useAdminOrderDetail, useCancelOrder, useUpdateOrderStatus } from '@/features/admin/hooks/useAdmin';
+import OrderStatusStepper from './OrderStatusStepper';
+import SerialAssignmentPanel from './SerialAssignmentPanel';
+import ShippingInfoForm from './ShippingInfoForm';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/lib/toast';
@@ -33,11 +36,13 @@ import { formatCouponRuleDescription } from '@/utils/couponDisplay';
 // ─── Status configs ────────────────────────────────────────────────────────────
 
 const ORDER_STATUS = {
-  PENDING:    { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   label: 'Chờ xử lý' },
-  PROCESSING: { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    label: 'Đang xử lý' },
-  SHIPPED:    { bg: 'bg-violet-50',  text: 'text-violet-700',  border: 'border-violet-200',  label: 'Đang giao' },
-  DELIVERED:  { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Đã giao' },
-  CANCELLED:  { bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',     label: 'Đã hủy' },
+  PENDING:   { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   label: 'Chờ xác nhận' },
+  CONFIRMED: { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    label: 'Đã xác nhận' },
+  PACKING:   { bg: 'bg-cyan-50',    text: 'text-cyan-800',    border: 'border-cyan-200',    label: 'Đóng gói' },
+  SHIPPING:  { bg: 'bg-violet-50',  text: 'text-violet-700',  border: 'border-violet-200',  label: 'Đang giao' },
+  COMPLETED: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Hoàn thành' },
+  CANCELLED: { bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',     label: 'Đã hủy' },
+  RETURNED:  { bg: 'bg-orange-50',  text: 'text-orange-800',  border: 'border-orange-200',   label: 'Hoàn trả' },
 };
 
 const PAYMENT_STATUS = {
@@ -145,14 +150,15 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const { data: order, isLoading, isError, refetch } = useAdminOrderDetail(orderId);
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
+  const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();
 
   const handleConfirmCancel = () => {
     if (!orderId) return;
     cancelOrder(orderId, {
-      onSuccess: () => {
+      onSuccess: async () => {
         setShowConfirm(false);
         toast.success('Đã hủy đơn hàng thành công');
-        onClose();
+        await refetch();
       },
       onError: (err) => {
         setShowConfirm(false);
@@ -183,7 +189,9 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
 
   const addr      = order ? parseAddress(order.shippingAddress) : null;
   const subtotal  = order?.orderItems?.reduce((s, i) => s + Number(i.price) * i.quantity, 0) ?? 0;
-  const canCancel = order?.status === 'PENDING' || order?.status === 'PROCESSING';
+  const canCancel =
+    order &&
+    ['PENDING', 'CONFIRMED', 'PACKING', 'SHIPPING'].includes(order.status);
   const orderNum  = orderId ? orderId.slice(-8).toUpperCase() : '---';
 
   return (
@@ -290,6 +298,73 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                           <Pill status={order.paymentStatus || 'PENDING'} map={PAYMENT_STATUS} />
                         </div>
                       </div>
+                      <div className="mt-4">
+                        <OrderStatusStepper status={order.status} />
+                      </div>
+                      {(order.trackingCode || order.carrierName) && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {order.carrierName && <span>{order.carrierName} — </span>}
+                          {order.trackingCode && <span className="font-mono">{order.trackingCode}</span>}
+                          {order.trackingUrl && (
+                            <a href={order.trackingUrl} target="_blank" rel="noreferrer" className="ml-2 text-primary underline">
+                              Tra cứu
+                            </a>
+                          )}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* ── Workflow actions ───────────────────────────────── */}
+                    <div className="space-y-4 rounded-xl border border-dashed p-4 bg-muted/10">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        Xử lý đơn
+                      </p>
+                      {order.status === 'PENDING' && order.paymentMethod === 'COD' && (
+                        <Button
+                          size="sm"
+                          disabled={isUpdating}
+                          onClick={() =>
+                            updateOrderStatus(
+                              { id: orderId, status: 'CONFIRMED' },
+                              {
+                                onSuccess: () => {
+                                  toast.success('Đã xác nhận đơn');
+                                  refetch();
+                                },
+                                onError: (e) => toast.error(e.response?.data?.message || 'Lỗi'),
+                              }
+                            )
+                          }
+                        >
+                          Xác nhận đơn (COD)
+                        </Button>
+                      )}
+                      {order.status === 'CONFIRMED' && (
+                        <SerialAssignmentPanel orderId={orderId} onDone={() => refetch()} />
+                      )}
+                      {order.status === 'PACKING' && (
+                        <ShippingInfoForm orderId={orderId} onDone={() => refetch()} />
+                      )}
+                      {order.status === 'SHIPPING' && (
+                        <Button
+                          size="sm"
+                          disabled={isUpdating}
+                          onClick={() =>
+                            updateOrderStatus(
+                              { id: orderId, status: 'COMPLETED' },
+                              {
+                                onSuccess: () => {
+                                  toast.success('Đã hoàn thành đơn');
+                                  refetch();
+                                },
+                                onError: (e) => toast.error(e.response?.data?.message || 'Lỗi'),
+                              }
+                            )
+                          }
+                        >
+                          Hoàn thành giao hàng
+                        </Button>
+                      )}
                     </div>
 
                     {/* ── 1.5. Invoice ────────────────────────────────────── */}
@@ -432,6 +507,7 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                           <thead className="bg-muted/50 text-muted-foreground">
                             <tr>
                               <th className="text-left px-4 py-2.5 font-medium">Sản phẩm</th>
+                              <th className="text-left px-3 py-2.5 font-medium text-xs">IMEI / Serial</th>
                               <th className="text-center px-3 py-2.5 font-medium w-14">SL</th>
                               <th className="text-right px-4 py-2.5 font-medium w-28">Đơn giá</th>
                               <th className="text-right px-4 py-2.5 font-medium w-32">Thành tiền</th>
@@ -440,7 +516,7 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                           <tbody className="divide-y">
                             {order.orderItems?.length === 0 ? (
                               <tr>
-                                <td colSpan={4} className="text-center py-10 text-muted-foreground">
+                                <td colSpan={5} className="text-center py-10 text-muted-foreground">
                                   Không có sản phẩm
                                 </td>
                               </tr>
@@ -471,6 +547,9 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                                         ) : null}
                                       </div>
                                     </div>
+                                  </td>
+                                  <td className="px-3 py-3 text-xs font-mono text-muted-foreground">
+                                    {item.serialUnit?.serial || '—'}
                                   </td>
                                   <td className="px-3 py-3 text-center font-medium">{item.quantity}</td>
                                   <td className="px-4 py-3 text-right">

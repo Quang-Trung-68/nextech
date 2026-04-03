@@ -47,12 +47,19 @@ const handleWebhookEvent = async (rawBody, signature) => {
         break;
       }
 
+      const { deductInventoryForOrderTx } = require("./order.service");
+
       const updatedOrder = await prisma.$transaction(async (tx) => {
+        const full = await tx.order.findUnique({
+          where: { id: order.id },
+          include: { orderItems: true },
+        });
+        await deductInventoryForOrderTx(tx, full.orderItems);
         const o = await tx.order.update({
           where: { id: order.id },
           data: {
             paymentStatus: "PAID",
-            status: "PROCESSING",
+            status: "CONFIRMED",
           },
           include: {
             orderItems: {
@@ -92,7 +99,7 @@ const handleWebhookEvent = async (rawBody, signature) => {
             "order_status_changed",
             "Thanh toán thành công",
             `Cảm ơn bạn! Đơn hàng #${updatedOrder.id} đã thanh toán qua thẻ thành công.`,
-            { orderId: updatedOrder.id, newStatus: "PROCESSING" },
+            { orderId: updatedOrder.id, newStatus: "CONFIRMED" },
           );
 
           const admins = await prisma.user.findMany({
@@ -249,12 +256,19 @@ async function finalizeSepayOrderPaid(orderId) {
     return { skipped: true, orderId: order.id };
   }
 
+  const { deductInventoryForOrderTx } = require("./order.service");
+
   const updatedOrder = await prisma.$transaction(async (tx) => {
+    const full = await tx.order.findUnique({
+      where: { id: order.id },
+      include: { orderItems: true },
+    });
+    await deductInventoryForOrderTx(tx, full.orderItems);
     const o = await tx.order.update({
       where: { id: order.id },
       data: {
         paymentStatus: "PAID",
-        status: "PROCESSING",
+        status: "CONFIRMED",
       },
       include: SEPAY_ORDER_INCLUDE,
     });
@@ -279,7 +293,7 @@ async function finalizeSepayOrderPaid(orderId) {
         "order_status_changed",
         "Thanh toán thành công",
         `Cảm ơn bạn! Đơn hàng #${updatedOrder.id} đã thanh toán VietQR thành công.`,
-        { orderId: updatedOrder.id, newStatus: "PROCESSING" },
+        { orderId: updatedOrder.id, newStatus: "CONFIRMED" },
       );
 
       const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });

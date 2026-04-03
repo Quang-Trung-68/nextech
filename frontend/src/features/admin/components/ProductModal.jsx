@@ -18,7 +18,7 @@ export function ProductModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[920px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Product</DialogTitle>
+          <DialogTitle>Thêm sản phẩm</DialogTitle>
         </DialogHeader>
         <ProductEditor
           isActive={isOpen}

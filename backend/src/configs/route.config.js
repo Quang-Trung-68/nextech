@@ -39,6 +39,8 @@ const apiRoutes = [
   { prefix: '/api/orders',       router: require('../routes/order.routes') },
   { prefix: '/api/reviews',      router: require('../routes/review.routes') },
   { prefix: '/api/admin/orders', router: require('../routes/admin.order.routes') },
+  // Inventory (suppliers, stock-imports, serials) — mount trước /api/admin để tránh conflict /products/:id
+  { prefix: '/api/admin', router: require('../routes/admin.inventory.routes') },
   { prefix: '/api/admin/invoices', router: require('../routes/invoice.routes') },
   { prefix: '/api/admin/settings', router: require('../routes/settings.routes') },
   { prefix: '/api/admin/products', router: require('../routes/productVariant.routes') }, // Attributes & variants (trước /api/admin)

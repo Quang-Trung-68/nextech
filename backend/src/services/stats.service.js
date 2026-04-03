@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const inventoryService = require('./inventory.service');
 
 // Helper: tính thời điểm bắt đầu của period
 const getPeriodStart = (period) => {
@@ -52,6 +53,9 @@ const getOverviewStats = async (period = 'month') => {
 
     // NEW: Yearly paid orders for Monthly Revenue Chart
     yearlyPaidOrders,
+
+    // Serial IN_STOCK count (kho theo IMEI)
+    serialInStockCount,
   ] = await Promise.all([
     // 1. Revenue trong period
     prisma.order.aggregate({
@@ -135,7 +139,12 @@ const getOverviewStats = async (period = 'month') => {
         createdAt: true,
       },
     }),
+
+    // 15. Serial units còn trong kho (IN_STOCK)
+    prisma.serialUnit.count({ where: { status: 'IN_STOCK' } }),
   ]);
+
+  const lowStockReport = await inventoryService.getLowStockReport();
 
   // Gắn thêm thông tin product cho top 5
   const productIds = topProducts.map((p) => p.productId);
@@ -182,10 +191,12 @@ const getOverviewStats = async (period = 'month') => {
     orders: {
       byStatus: {
         PENDING: orderStatusMap.PENDING || 0,
-        PROCESSING: orderStatusMap.PROCESSING || 0,
-        SHIPPED: orderStatusMap.SHIPPED || 0,
-        DELIVERED: orderStatusMap.DELIVERED || 0,
+        CONFIRMED: orderStatusMap.CONFIRMED || 0,
+        PACKING: orderStatusMap.PACKING || 0,
+        SHIPPING: orderStatusMap.SHIPPING || 0,
+        COMPLETED: orderStatusMap.COMPLETED || 0,
         CANCELLED: orderStatusMap.CANCELLED || 0,
+        RETURNED: orderStatusMap.RETURNED || 0,
       },
       cancellationRate: `${cancellationRate}%`,
       totalInPeriod: totalOrdersInPeriod,
@@ -206,6 +217,10 @@ const getOverviewStats = async (period = 'month') => {
     totalRevenueAllTime: totalRevenueAllTimeResult._sum.totalAmount || 0,
     latestOrders,
     monthlyRevenue,
+    inventory: {
+      serialInStockCount,
+      lowStockAlertCount: lowStockReport.alerts.length,
+    },
   };
 };
 

@@ -12,7 +12,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import useAuthStore from '@/stores/useAuthStore';
 
 const AdminUserPage = () => {
-  usePageTitle('Manage Users | Admin');
+  usePageTitle('Người dùng | Quản trị');
 
   const currentUser = useAuthStore((s) => s.user);
   const [filterState, setFilterState] = useState({ page: 1, limit: 10 });
@@ -40,11 +40,11 @@ const AdminUserPage = () => {
       {
         onSuccess: () => {
           const newStatus = status === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
-          toast.success(`User ${newStatus === 'ACTIVE' ? 'activated' : 'banned'} successfully`);
+          toast.success(newStatus === 'ACTIVE' ? 'Đã kích hoạt tài khoản' : 'Đã khóa tài khoản');
           setConfirmModal({ isOpen: false, user: null });
         },
         onError: (err) => {
-          toast.error(err.response?.data?.message || 'Failed to update user status');
+          toast.error(err.response?.data?.message || 'Không cập nhật được trạng thái');
           setConfirmModal({ isOpen: false, user: null });
         },
       }
@@ -58,7 +58,7 @@ const AdminUserPage = () => {
   const columns = [
     {
       accessorKey: 'avatar',
-      header: 'Avatar',
+      header: 'Ảnh',
       cell: ({ row }) => (
         <img
           src={row.original.avatar || 'https://via.placeholder.com/50'}
@@ -69,13 +69,13 @@ const AdminUserPage = () => {
     },
     {
       accessorKey: 'name',
-      header: 'Name',
+      header: 'Tên',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className="font-medium">{row.original.name}</span>
           {currentUser?.id === row.original.id && (
             <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
-              Me
+              Bạn
             </span>
           )}
         </div>
@@ -87,24 +87,24 @@ const AdminUserPage = () => {
     },
     {
       accessorKey: 'role',
-      header: 'Role',
+      header: 'Vai trò',
       cell: ({ row }) => <StatusBadge status={row.original.role} />,
     },
     {
       accessorKey: 'isActive',
-      header: 'Status',
+      header: 'Trạng thái',
       cell: ({ row }) => <StatusBadge status={row.original.isActive ? 'ACTIVE' : 'BANNED'} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: 'Thao tác',
       cell: ({ row }) => {
         const isActive = row.original.isActive;
         const isAdmin = row.original.role === 'ADMIN';
         const isSelf = currentUser?.id === row.original.id;
         // Không được toggle status của ADMIN và của chính mình
         if (isAdmin || isSelf) {
-          return <span className="text-xs text-muted-foreground">N/A</span>;
+          return <span className="text-xs text-muted-foreground">—</span>;
         }
         return (
           <Button
@@ -113,7 +113,7 @@ const AdminUserPage = () => {
             onClick={() => handleToggleStatusClick({ id: row.original.id, status: isActive ? 'ACTIVE' : 'BANNED', name: row.original.name })}
             disabled={isUpdating}
           >
-            {isActive ? 'Ban User' : 'Activate'}
+            {isActive ? 'Khóa' : 'Kích hoạt'}
           </Button>
         );
       },
@@ -123,13 +123,13 @@ const AdminUserPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Quản lý người dùng</h1>
       </div>
 
       <div className="py-4">
         <input
           type="text"
-          placeholder="Search by name or email..."
+          placeholder="Tìm theo tên hoặc email..."
           className="border rounded-md px-3 py-2 w-full max-w-sm"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
@@ -157,9 +157,9 @@ const AdminUserPage = () => {
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ isOpen: false, user: null })}
         onConfirm={executeToggleStatus}
-        title={confirmModal.user?.status === 'ACTIVE' ? 'Deactivate User?' : 'Activate User?'}
-        description={`Are you sure you want to ${confirmModal.user?.status === 'ACTIVE' ? 'ban' : 'activate'} ${confirmModal.user?.name}?`}
-        confirmText={confirmModal.user?.status === 'ACTIVE' ? 'Ban User' : 'Activate'}
+        title={confirmModal.user?.status === 'ACTIVE' ? 'Khóa tài khoản?' : 'Kích hoạt tài khoản?'}
+        description={`Bạn có chắc muốn ${confirmModal.user?.status === 'ACTIVE' ? 'khóa' : 'kích hoạt'} người dùng ${confirmModal.user?.name}?`}
+        confirmText={confirmModal.user?.status === 'ACTIVE' ? 'Khóa' : 'Kích hoạt'}
         isLoading={isUpdating}
       />
     </div>

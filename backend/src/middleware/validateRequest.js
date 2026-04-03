@@ -12,9 +12,10 @@ const validate = (schema, source = 'body') => {
     const result = schema.safeParse(req[source]);
 
     if (!result.success) {
-      const mappedErrors = result.error.errors.map(e => ({
+      // Zod 4: ZodError có `.issues` (Zod 3 cũng vậy); `.errors` không tồn tại
+      const mappedErrors = result.error.issues.map((e) => ({
         field: e.path.join('.'),
-        message: e.message
+        message: e.message,
       }));
       return next(new ValidationError(mappedErrors));
     }
