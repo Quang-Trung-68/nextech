@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axiosInstance from "@/lib/axios";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,8 +18,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ImageUploadGrid } from "./ImageUploadGrid";
+import { AttributeManager } from "./AttributeManager";
+import { VariantGrid, cartesianProduct } from "./VariantGrid";
 import { AlertCircle, Tag, Sparkles, Calendar, ChevronDown, Clock, Hash, Trash2 } from "lucide-react";
 import { getFinalPrice, getDiscountPercent, formatVND } from "@/utils/price";
+import { toast } from "@/lib/toast";
 
 const productSchema = z.object({
   name: z.string().min(2, "Tên sản phẩm phải có ít nhất 2 ký tự"),
@@ -50,6 +54,7 @@ const productSchema = z.object({
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
     z.number().int().min(2000).max(2100).nullable().optional()
   ),
+  hasVariants: z.boolean().optional(),
 }).superRefine((data, ctx) => {
   if (data.salePrice != null && data.price != null && data.salePrice >= data.price) {
     ctx.addIssue({
@@ -90,13 +95,15 @@ const isoToDatetimeLocal = (isoString) => {
 export function ProductModal({
   isOpen,
   onClose,
-  onSubmit, // will receive body object on success
+  onSubmit, // (body, meta?) => void | Promise — meta: { attributeDraft, variantRows }
   initialData = null,
   isLoading = false,
   serverError = null,
 }) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isFlashSaleOpen, setIsFlashSaleOpen] = useState(false);
+  const [attributeDraft, setAttributeDraft] = useState([]);
+  const [variantRows, setVariantRows] = useState([]);
 
   const {
     register,
@@ -122,12 +129,20 @@ export function ProductModal({
       isNewArrival: true,
       isBestseller: false,
       manufactureYear: "",
+      hasVariants: false,
     },
   });
 
   // Live preview for salePrice
   const watchedPrice = watch("price");
+  const watchedHasVariants = watch("hasVariants");
   const watchedSalePrice = watch("salePrice");
+
+  useEffect(() => {
+    if (watchedHasVariants) {
+      setValue("stock", 0);
+    }
+  }, [watchedHasVariants, setValue]);
   const previewDiscountPercent = watchedPrice && watchedSalePrice
     ? getDiscountPercent(Number(watchedPrice), Number(watchedSalePrice))
     : 0;
@@ -142,7 +157,7 @@ export function ProductModal({
           name: initialData.name || "",
           description: initialData.description || "",
           price: initialData.price || "",
-          stock: initialData.stock || "",
+          stock: initialData.stock ?? "",
           brand: initialData.brand || "",
           category: initialData.category || "",
           images: initialData.images || [],
@@ -152,10 +167,13 @@ export function ProductModal({
           isNewArrival: initialData.isNewArrival ?? true,
           isBestseller: initialData.isBestseller ?? false,
           manufactureYear: initialData.manufactureYear != null ? initialData.manufactureYear : "",
+          hasVariants: !!initialData.hasVariants,
         });
         if (initialData.salePrice != null) {
           setIsFlashSaleOpen(true);
         }
+        setAttributeDraft([]);
+        setVariantRows([]);
       } else {
         reset({
           name: "",
@@ -171,17 +189,107 @@ export function ProductModal({
           isNewArrival: true,
           isBestseller: false,
           manufactureYear: "",
+          hasVariants: false,
         });
         setIsFlashSaleOpen(false);
+        setAttributeDraft([]);
+        setVariantRows([]);
       }
     }
-    if (!isOpen) { 
-      setIsUploadingImage(false); 
+    if (!isOpen) {
+      setIsUploadingImage(false);
     }
   }, [initialData, isOpen, reset]);
 
-  const onFormSubmit = (data) => {
-    // Clean up empty strings to null/undefined
+  // Load chi tiết thuộc tính / biến thể khi sửa sản phẩm có biến thể
+  useEffect(() => {
+    if (!isOpen || !initialData?.id || !initialData.hasVariants) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [a, v] = await Promise.all([
+          axiosInstance.get(`/admin/products/${initialData.id}/attributes`),
+          axiosInstance.get(`/admin/products/${initialData.id}/variants`),
+        ]);
+        const attrs = a.data?.data ?? a.data;
+        const variants = v.data?.data ?? v.data;
+        if (cancelled || !attrs?.length) return;
+        const draft = attrs
+          .sort((x, y) => x.position - y.position)
+          .map((at) => ({
+            name: at.name,
+            values: [...at.values].sort((p, q) => p.position - q.position).map((val) => val.value),
+          }));
+        setAttributeDraft(draft);
+        const arrs = attrs
+          .sort((x, y) => x.position - y.position)
+          .map((at) => [...at.values].sort((p, q) => p.position - q.position).map((val) => val.value));
+        const combos = cartesianProduct(arrs);
+        const sortedAttrs = attrs.sort((x, y) => x.position - y.position);
+        const rows = combos.map((combo) => {
+          const ids = combo.map((val, idx) =>
+            sortedAttrs[idx].values.find((x) => x.value === val)?.id
+          );
+          const match = variants.find((variant) => {
+            const vids =
+              variant.values?.map((vv) => vv.attributeValueId || vv.attributeValue?.id) || [];
+            if (vids.length !== ids.length) return false;
+            return ids.every((id) => vids.includes(id));
+          });
+          return {
+            price: match ? Number(match.price) : Number(initialData.price) || 0,
+            stock: match ? match.stock : 10,
+            imageUrl: match?.imageUrl || "",
+          };
+        });
+        setVariantRows(rows);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, initialData?.id, initialData?.hasVariants]);
+
+  // Đồng bộ số dòng biến thể khi đổi thuộc tính (tạo mới)
+  useEffect(() => {
+    if (!watchedHasVariants || initialData?.id) return;
+    const arrs = attributeDraft.map((a) => a.values.filter(Boolean));
+    if (arrs.length === 0 || arrs.some((x) => x.length === 0)) {
+      setVariantRows([]);
+      return;
+    }
+    const combos = cartesianProduct(arrs);
+    const bp = Number(watchedPrice) || 0;
+    setVariantRows((prev) => {
+      if (prev.length === combos.length) return prev;
+      return combos.map((_, i) => prev[i] || { price: bp, stock: 10, imageUrl: "" });
+    });
+  }, [attributeDraft, watchedHasVariants, watchedPrice, initialData?.id]);
+
+  const onFormSubmit = async (data) => {
+    if (data.hasVariants) {
+      const okAttr =
+        attributeDraft.length > 0 &&
+        attributeDraft.every(
+          (a) => a.name.trim() && a.values.some((v) => String(v).trim())
+        );
+      if (!okAttr) {
+        toast.error("Vui lòng nhập đủ tên thuộc tính và ít nhất một giá trị mỗi thuộc tính");
+        return;
+      }
+      const arrs = attributeDraft.map((a) => a.values.map((v) => String(v).trim()).filter(Boolean));
+      if (arrs.some((x) => x.length === 0)) {
+        toast.error("Mỗi thuộc tính cần ít nhất một giá trị");
+        return;
+      }
+      const nCombos = cartesianProduct(arrs).length;
+      if (!variantRows.length || variantRows.length !== nCombos) {
+        toast.error("Chưa đủ dòng biến thể — kiểm tra thuộc tính và giá/tồn kho");
+        return;
+      }
+    }
     const cleaned = {
       ...data,
       salePrice: data.salePrice ? data.salePrice : null,
@@ -189,7 +297,14 @@ export function ProductModal({
       saleStock: data.saleStock ? data.saleStock : null,
       manufactureYear: data.manufactureYear ? data.manufactureYear : null,
     };
-    onSubmit(cleaned);
+    if (cleaned.hasVariants) {
+      cleaned.stock = 0;
+    }
+    const meta = {
+      attributeDraft,
+      variantRows,
+    };
+    await onSubmit(cleaned, meta);
   };
 
   const handleClearFlashSale = () => {
@@ -200,7 +315,7 @@ export function ProductModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[920px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Product" : "Add Product"}
@@ -256,9 +371,13 @@ export function ProductModal({
                 id="stock"
                 type="number"
                 min="0"
+                disabled={watchedHasVariants}
                 {...register("stock")}
                 className={errors.stock ? "border-red-500" : ""}
               />
+              {watchedHasVariants && (
+                <p className="text-xs text-muted-foreground">Tồn kho theo từng biến thể bên dưới</p>
+              )}
               {errors.stock && <p className="text-red-500 text-xs">{errors.stock.message}</p>}
             </div>
             <div className="space-y-2">
@@ -271,6 +390,30 @@ export function ProductModal({
               {errors.brand && <p className="text-red-500 text-xs">{errors.brand.message}</p>}
             </div>
           </div>
+
+          <div className="flex items-center gap-3 rounded-lg border p-3 bg-muted/40">
+            <Controller
+              name="hasVariants"
+              control={control}
+              render={({ field }) => (
+                <Switch id="hasVariants" checked={!!field.value} onCheckedChange={field.onChange} />
+              )}
+            />
+            <Label htmlFor="hasVariants" className="cursor-pointer">
+              Sản phẩm có nhiều biến thể (màu, dung lượng, …)
+            </Label>
+          </div>
+
+          {watchedHasVariants && (
+            <div className="space-y-4">
+              <AttributeManager attributes={attributeDraft} onChange={setAttributeDraft} />
+              <VariantGrid
+                attributes={attributeDraft}
+                rows={variantRows}
+                onChangeRows={setVariantRows}
+              />
+            </div>
+          )}
 
           {/* Task 6: Custom fields */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-100 rounded-xl">

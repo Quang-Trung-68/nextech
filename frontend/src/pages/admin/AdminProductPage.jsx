@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/features/admin/hooks/useAdmin';
+import { useAdminProducts, useDeleteProduct } from '@/features/admin/hooks/useAdmin';
 import { DataTable } from '@/features/admin/components/DataTable';
 import { ProductModal } from '@/features/admin/components/ProductModal';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
@@ -18,10 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import axiosInstance from '@/lib/axios';
+import { cartesianProduct } from '@/features/admin/components/VariantGrid';
+import { useQueryClient } from '@tanstack/react-query';
+import { adminKeys } from '@/features/admin/hooks/useAdmin';
 
 const AdminProductPage = () => {
   usePageTitle('Manage Products | Admin');
-  
+  const queryClient = useQueryClient();
+
   const [filterState, setFilterState] = useState({ page: 1, limit: 10, category: '' });
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 500);
@@ -33,16 +38,96 @@ const AdminProductPage = () => {
   React.useEffect(() => {
     setFilterState((prev) => ({ ...prev, page: 1 }));
   }, [debouncedSearch]);
-  
-  const { data, isLoading } = useAdminProducts(params);
-  const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
-  const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
-  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
-  const [activeModal, setActiveModal] = useState(null); // 'create' | 'edit' | null
+  const { data, isLoading } = useAdminProducts(params);
+  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+
+  const [activeModal, setActiveModal] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [serverError, setServerError] = useState(null);
+
+  const buildVariantsPayload = async (productId, attributeDraft, variantRows, fallbackPrice) => {
+    const attrsPayload = {
+      attributes: attributeDraft.map((a, i) => ({
+        name: a.name.trim(),
+        position: i,
+        values: a.values
+          .map((v) => String(v).trim())
+          .filter(Boolean)
+          .map((value, j) => ({ value, position: j })),
+      })),
+    };
+    await axiosInstance.put(`/admin/products/${productId}/attributes`, attrsPayload);
+    const { data: attrRes } = await axiosInstance.get(`/admin/products/${productId}/attributes`);
+    const attrs = attrRes.data ?? attrRes;
+    const sortedAttrs = [...attrs].sort((a, b) => a.position - b.position);
+    const arrs = sortedAttrs.map((at) =>
+      [...at.values].sort((p, q) => p.position - q.position).map((val) => val.value)
+    );
+    const combos = cartesianProduct(arrs);
+    const variants = combos.map((combo, idx) => {
+      const attributeValueIds = combo.map((val, i) => {
+        const v = sortedAttrs[i].values.find((x) => x.value === val);
+        return v?.id;
+      });
+      if (attributeValueIds.some((id) => !id)) {
+        throw new Error('Không map được giá trị thuộc tính');
+      }
+      const row = variantRows[idx] || {};
+      let imageUrl = row.imageUrl;
+      if (imageUrl === '' || imageUrl === undefined) imageUrl = null;
+      return {
+        attributeValueIds,
+        price: Number(row.price ?? fallbackPrice),
+        stock: Number(row.stock ?? 0),
+        imageUrl,
+      };
+    });
+    await axiosInstance.put(`/admin/products/${productId}/variants`, { variants });
+  };
+
+  const handleCreateOrUpdate = async (body, meta = {}) => {
+    const { attributeDraft = [], variantRows = [] } = meta;
+    setServerError(null);
+    setIsSavingProduct(true);
+    try {
+      if (activeModal === 'create') {
+        const { data } = await axiosInstance.post('/admin/products', body);
+        const productId = data.product?.id;
+        if (body.hasVariants && attributeDraft.length && productId) {
+          await buildVariantsPayload(productId, attributeDraft, variantRows, body.price);
+        }
+        toast.success('Product created successfully');
+        queryClient.invalidateQueries({ queryKey: adminKeys.all });
+        setActiveModal(null);
+        return;
+      }
+
+      if (activeModal === 'edit' && selectedProduct) {
+        const { data } = await axiosInstance.patch(`/admin/products/${selectedProduct.id}`, body);
+        if (body.hasVariants && attributeDraft.length) {
+          await buildVariantsPayload(
+            selectedProduct.id,
+            attributeDraft,
+            variantRows,
+            body.price
+          );
+        }
+        void data;
+        toast.success('Product updated successfully');
+        queryClient.invalidateQueries({ queryKey: adminKeys.all });
+        setActiveModal(null);
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'Thao tác thất bại';
+      toast.error(msg);
+      setServerError(msg);
+    } finally {
+      setIsSavingProduct(false);
+    }
+  };
 
   const columns = [
     {
@@ -66,7 +151,9 @@ const AdminProductPage = () => {
       header: () => (
         <Select
           value={params.category || 'all'}
-          onValueChange={(value) => setFilterState((prev) => ({ ...prev, category: value !== 'all' ? value : '', page: 1 }))}
+          onValueChange={(value) =>
+            setFilterState((prev) => ({ ...prev, category: value !== 'all' ? value : '', page: 1 }))
+          }
         >
           <SelectTrigger className="w-[140px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
             <SelectValue placeholder="Category (all)" />
@@ -80,9 +167,7 @@ const AdminProductPage = () => {
           </SelectContent>
         </Select>
       ),
-      cell: ({ getValue }) => (
-        <span className="capitalize">{getValue()?.toLowerCase()}</span>
-      ),
+      cell: ({ getValue }) => <span className="capitalize">{getValue()?.toLowerCase()}</span>,
     },
     {
       accessorKey: 'price',
@@ -92,11 +177,15 @@ const AdminProductPage = () => {
     {
       accessorKey: 'stock',
       header: 'Stock',
-      cell: ({ row }) => (
-        <span className={row.original.stock === 0 ? 'text-destructive font-medium' : ''}>
-          {row.original.stock}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const v = row.original;
+        if (v.hasVariants) {
+          return <span className="text-muted-foreground text-sm">Theo biến thể</span>;
+        }
+        return (
+          <span className={v.stock === 0 ? 'text-destructive font-medium' : ''}>{v.stock}</span>
+        );
+      },
     },
     {
       id: 'actions',
@@ -129,36 +218,6 @@ const AdminProductPage = () => {
     },
   ];
 
-  const handleCreateOrUpdate = (body) => {
-    setServerError(null);
-    if (activeModal === 'create') {
-      createProduct(body, {
-        onSuccess: () => {
-          toast.success('Product created successfully');
-          setActiveModal(null);
-        },
-        onError: (err) => {
-          toast.error('Failed to create product');
-          setServerError(err.response?.data?.message || 'Failed to create product');
-        },
-      });
-    } else if (activeModal === 'edit' && selectedProduct) {
-      updateProduct(
-        { id: selectedProduct.id, body },
-        {
-          onSuccess: () => {
-            toast.success('Product updated successfully');
-            setActiveModal(null);
-          },
-          onError: (err) => {
-            toast.error('Failed to update product');
-            setServerError(err.response?.data?.message || 'Failed to update product');
-          },
-        }
-      );
-    }
-  };
-
   const handleDelete = () => {
     if (selectedProduct) {
       deleteProduct(selectedProduct.id, {
@@ -176,7 +235,12 @@ const AdminProductPage = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Manage Products</h1>
-        <Button onClick={() => { setActiveModal('create'); setServerError(null); }}>
+        <Button
+          onClick={() => {
+            setActiveModal('create');
+            setServerError(null);
+          }}
+        >
           <Plus className="mr-2 h-4 w-4" /> Add Product
         </Button>
       </div>
@@ -202,12 +266,11 @@ const AdminProductPage = () => {
           <CustomPagination
             currentPage={params.page}
             totalPages={data.pagination.totalPages}
-            onPageChange={(page) => setFilterState(prev => ({ ...prev, page }))}
+            onPageChange={(page) => setFilterState((prev) => ({ ...prev, page }))}
           />
         </div>
       )}
 
-      {/* Modals & Dialogs */}
       <ProductModal
         isOpen={!!activeModal}
         onClose={() => {
@@ -217,7 +280,7 @@ const AdminProductPage = () => {
         }}
         onSubmit={handleCreateOrUpdate}
         initialData={activeModal === 'edit' ? selectedProduct : null}
-        isLoading={isCreating || isUpdating}
+        isLoading={isSavingProduct}
         serverError={serverError}
       />
 

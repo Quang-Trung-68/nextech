@@ -1,6 +1,6 @@
-const paymentService = require('../services/payment.service');
-const { AppError } = require('../errors/AppError');
-const ERROR_CODES = require('../errors/errorCodes');
+const paymentService = require("../services/payment.service");
+const { AppError } = require("../errors/AppError");
+const ERROR_CODES = require("../errors/errorCodes");
 
 /**
  * POST /api/payments/webhook
@@ -9,10 +9,16 @@ const ERROR_CODES = require('../errors/errorCodes');
  * KHÔNG cần JWT — Stripe tự xác thực bằng signature header.
  */
 const handleWebhook = async (req, res, next) => {
-  const signature = req.headers['stripe-signature'];
+  const signature = req.headers["stripe-signature"];
 
   if (!signature) {
-    return next(new AppError('Missing Stripe-Signature header.', 400, ERROR_CODES.PAYMENT.STRIPE_WEBHOOK_INVALID));
+    return next(
+      new AppError(
+        "Missing Stripe-Signature header.",
+        400,
+        ERROR_CODES.PAYMENT.STRIPE_WEBHOOK_INVALID,
+      ),
+    );
   }
 
   try {
@@ -32,8 +38,8 @@ const handleSepayWebhook = async (req, res, next) => {
     await paymentService.handleSepayWebhookEvent(req.body);
     res.status(200).json({ success: true });
   } catch (err) {
-    console.error('[SePay Webhook Error]', err);
-    res.status(500).json({ success: false, message: 'Internal Server Error' });
+    console.error("[SePay Webhook Error]", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -46,7 +52,10 @@ const handleSepayWebhook = async (req, res, next) => {
  */
 const getOrderPaymentIntent = async (req, res, next) => {
   try {
-    const data = await paymentService.getOrderPaymentIntent(req.params.orderId, req.user.id);
+    const data = await paymentService.getOrderPaymentIntent(
+      req.params.orderId,
+      req.user.id,
+    );
     res.status(200).json({ success: true, data });
   } catch (err) {
     next(err);
@@ -62,7 +71,26 @@ const getOrderPaymentIntent = async (req, res, next) => {
  */
 const getOrderPaymentStatus = async (req, res, next) => {
   try {
-    const data = await paymentService.getOrderPaymentStatus(req.params.orderId, req.user.id);
+    const data = await paymentService.getOrderPaymentStatus(
+      req.params.orderId,
+      req.user.id,
+    );
+    res.status(200).json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/payments/sepay/sync/:orderId
+ * Sau khi redirect từ SePay success_url — tra cứu API SePay và cập nhật DB nếu đã CAPTURED.
+ */
+const syncSepayOrder = async (req, res, next) => {
+  try {
+    const data = await paymentService.syncSepayOrderAfterRedirect(
+      req.params.orderId,
+      req.user.id,
+    );
     res.status(200).json({ success: true, data });
   } catch (err) {
     next(err);
@@ -73,6 +101,6 @@ module.exports = {
   handleWebhook,
   getOrderPaymentIntent,
   getOrderPaymentStatus,
+  syncSepayOrder,
   handleSepayWebhook,
 };
-

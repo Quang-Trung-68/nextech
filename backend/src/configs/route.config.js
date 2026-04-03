@@ -41,6 +41,7 @@ const apiRoutes = [
   { prefix: '/api/admin/orders', router: require('../routes/admin.order.routes') },
   { prefix: '/api/admin/invoices', router: require('../routes/invoice.routes') },
   { prefix: '/api/admin/settings', router: require('../routes/settings.routes') },
+  { prefix: '/api/admin/products', router: require('../routes/productVariant.routes') }, // Attributes & variants (trước /api/admin)
   { prefix: '/api/admin',        router: require('../routes/admin.routes') },       // Stats, Products, Users
   { prefix: '/api/payments',     router: require('../routes/payment.routes') }, // GET intent/status
   { prefix: '/api/favorites',    router: require('../routes/favorite.routes') },

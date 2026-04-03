@@ -34,6 +34,7 @@ const baseProductSchema = z.object({
   isNewArrival: z.boolean().optional(),
   isBestseller: z.boolean().optional(),
   manufactureYear: z.coerce.number().int().min(2000).max(2100).optional().nullable(),
+  hasVariants: z.boolean().optional(),
 });
 
 const refineFlashSale = (data, ctx) => {

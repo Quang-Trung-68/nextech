@@ -1,0 +1,12 @@
+# uWebSockets.js chỉ có binary cho Linux glibc — Alpine (musl) gây lỗi:
+# "ld-linux-x86-64.so.2: No such file or directory".
+# Node 20 không được hỗ trợ bởi uWS (ABI 115) → dùng Node 18.
+FROM node:18-bookworm-slim
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends git ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @soketi/soketi
+WORKDIR /app
+COPY soketi.json ./soketi.json
+EXPOSE 6001
+CMD ["soketi", "start", "--config=/app/soketi.json"]

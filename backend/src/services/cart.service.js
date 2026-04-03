@@ -4,14 +4,15 @@ const { NotFoundError, ConflictError, AppError } = require('../errors/AppError')
 const ERROR_CODES = require('../errors/errorCodes');
 
 const _getOrCreateCart = async (userId) => {
-  return await prisma.cart.upsert({
+  return prisma.cart.upsert({
     where: { userId },
     update: {},
     create: { userId },
     include: {
       items: {
         include: {
-          product: { include: { images: true } }
+          product: { include: { images: true } },
+          variant: true,
         },
         orderBy: {
           createdAt: 'asc',
@@ -26,8 +27,23 @@ const _formatCart = (cart) => {
   let cartTotal = 0;
 
   const items = cart.items.map((item) => {
-    const finalPrice = getFinalPrice(item.product.price, item.product.salePrice);
-    const discountPercent = getDiscountPercent(item.product.price, item.product.salePrice);
+    const { product, variant } = item;
+    const hasVariants = product.hasVariants;
+
+    let finalPrice;
+    let stock;
+    let discountPercent;
+
+    if (hasVariants && variant) {
+      finalPrice = Number(variant.price);
+      stock = variant.stock;
+      discountPercent = getDiscountPercent(product.price, product.salePrice);
+    } else {
+      finalPrice = getFinalPrice(product.price, product.salePrice);
+      discountPercent = getDiscountPercent(product.price, product.salePrice);
+      stock = product.stock;
+    }
+
     const lineTotal = finalPrice * item.quantity;
     totalItems += item.quantity;
     cartTotal += lineTotal;
@@ -35,16 +51,18 @@ const _formatCart = (cart) => {
     return {
       id: item.id,
       productId: item.productId,
-      name: item.product.name,
-      price: item.product.price,
-      salePrice: item.product.salePrice,
+      variantId: item.variantId,
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
       finalPrice,
       discountPercent,
-      image: item.product.images && item.product.images.length > 0 ? item.product.images[0].url : null,
-      stock: item.product.stock,
+      image:
+        variant?.imageUrl ||
+        (product.images && product.images.length > 0 ? product.images[0].url : null),
+      stock,
       quantity: item.quantity,
       lineTotal,
-      // Keep legacy subtotal field for backward compat
       subtotal: lineTotal,
     };
   });
@@ -59,12 +77,20 @@ const _formatCart = (cart) => {
   };
 };
 
+const _cartItemWhere = (cartId, productId, variantId) => ({
+  cartId_productId_variantId: {
+    cartId,
+    productId,
+    variantId: variantId ?? null,
+  },
+});
+
 const getCart = async (userId) => {
   const cart = await _getOrCreateCart(userId);
   return _formatCart(cart);
 };
 
-const addToCart = async (userId, productId, quantity) => {
+const addToCart = async (userId, productId, quantity, variantId = null) => {
   const product = await prisma.product.findUnique({
     where: { id: productId },
   });
@@ -73,26 +99,41 @@ const addToCart = async (userId, productId, quantity) => {
     throw new NotFoundError('Product');
   }
 
-  if (product.stock <= 0) {
-    throw new ConflictError('Product is out of stock', ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
+  if (product.hasVariants) {
+    if (!variantId) {
+      throw new AppError('Vui lòng chọn biến thể sản phẩm', 400, ERROR_CODES.PRODUCT.VARIANT_REQUIRED);
+    }
+    const variant = await prisma.productVariant.findFirst({
+      where: { id: variantId, productId, deletedAt: null },
+    });
+    if (!variant) {
+      throw new NotFoundError('Variant');
+    }
+    if (variant.stock <= 0) {
+      throw new ConflictError('Product is out of stock', ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
+    }
+  } else if (variantId) {
+    throw new AppError('Sản phẩm này không có biến thể', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
   }
 
   const cart = await _getOrCreateCart(userId);
 
   await prisma.$transaction(async (tx) => {
     const existingItem = await tx.cartItem.findUnique({
-      where: {
-        cartId_productId: {
-          cartId: cart.id,
-          productId,
-        },
-      },
+      where: _cartItemWhere(cart.id, productId, variantId),
     });
+
+    const maxStock = product.hasVariants
+      ? (await tx.productVariant.findUnique({ where: { id: variantId } })).stock
+      : product.stock;
 
     if (existingItem) {
       const newQuantity = existingItem.quantity + quantity;
-      if (newQuantity > product.stock) {
-        throw new ConflictError(`Only ${product.stock} items left in stock`, ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
+      if (newQuantity > maxStock) {
+        throw new ConflictError(
+          `Only ${maxStock} items left in stock`,
+          ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
+        );
       }
 
       await tx.cartItem.update({
@@ -100,14 +141,18 @@ const addToCart = async (userId, productId, quantity) => {
         data: { quantity: newQuantity },
       });
     } else {
-      if (quantity > product.stock) {
-        throw new ConflictError(`Only ${product.stock} items left in stock`, ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
+      if (quantity > maxStock) {
+        throw new ConflictError(
+          `Only ${maxStock} items left in stock`,
+          ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
+        );
       }
 
       await tx.cartItem.create({
         data: {
           cartId: cart.id,
           productId,
+          variantId: variantId ?? null,
           quantity,
         },
       });
@@ -118,15 +163,14 @@ const addToCart = async (userId, productId, quantity) => {
   return _formatCart(updatedCart);
 };
 
-const updateCartItem = async (userId, productId, quantity) => {
+const updateCartItem = async (userId, productId, quantity, variantId = null) => {
   const cart = await _getOrCreateCart(userId);
 
   const existingItem = await prisma.cartItem.findUnique({
-    where: {
-      cartId_productId: { cartId: cart.id, productId },
-    },
+    where: _cartItemWhere(cart.id, productId, variantId),
     include: {
       product: true,
+      variant: true,
     },
   });
 
@@ -134,13 +178,20 @@ const updateCartItem = async (userId, productId, quantity) => {
     throw new NotFoundError('Cart item');
   }
 
+  const maxStock = existingItem.product.hasVariants
+    ? existingItem.variant.stock
+    : existingItem.product.stock;
+
   if (quantity === 0) {
     await prisma.cartItem.delete({
       where: { id: existingItem.id },
     });
   } else {
-    if (quantity > existingItem.product.stock) {
-      throw new ConflictError(`Only ${existingItem.product.stock} items left in stock`, ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK);
+    if (quantity > maxStock) {
+      throw new ConflictError(
+        `Only ${maxStock} items left in stock`,
+        ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
+      );
     }
 
     await prisma.cartItem.update({
@@ -153,24 +204,19 @@ const updateCartItem = async (userId, productId, quantity) => {
   return _formatCart(updatedCart);
 };
 
-const removeFromCart = async (userId, productId) => {
+const removeFromCart = async (userId, productId, variantId = null) => {
   const cart = await _getOrCreateCart(userId);
 
   const existingItem = await prisma.cartItem.findUnique({
-    where: {
-      cartId_productId: { cartId: cart.id, productId },
-    },
+    where: _cartItemWhere(cart.id, productId, variantId),
   });
 
   if (!existingItem) {
     throw new NotFoundError('Cart item');
   }
 
-  await prisma.cartItem.deleteMany({
-    where: {
-      cartId: cart.id,
-      productId,
-    },
+  await prisma.cartItem.delete({
+    where: { id: existingItem.id },
   });
 
   const updatedCart = await _getOrCreateCart(userId);

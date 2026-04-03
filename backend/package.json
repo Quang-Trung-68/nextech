@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
+    "dev:docker": "nodemon --legacy-watch server.js",
     "start": "node server.js",
     "soketi": "soketi start --config=soketi.json",
     "db:migrate": "prisma migrate dev",
@@ -46,5 +47,8 @@
   "devDependencies": {
     "nodemon": "^3.1.0",
     "prisma": "^7.5.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

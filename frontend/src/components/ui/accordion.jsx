@@ -5,13 +5,24 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
 function Accordion({
   className,
+  /** @deprecated dùng `multiple` (Base UI) */
+  openMultiple,
+  multiple,
+  /** Radix-style — map sang `multiple` (Base UI không có prop này) */
+  type,
+  /** không chuyển xuống DOM */
+  collapsible: _collapsible,
   ...props
 }) {
+  const resolvedMultiple =
+    multiple ?? openMultiple ?? (type === 'multiple');
   return (
     <AccordionPrimitive.Root
       data-slot="accordion"
       className={cn("flex w-full flex-col", className)}
-      {...props} />
+      multiple={resolvedMultiple}
+      {...props}
+    />
   );
 }
 

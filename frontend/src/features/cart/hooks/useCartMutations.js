@@ -5,8 +5,12 @@ import { toast } from 'sonner';
 export function useAddToCart() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, quantity }) => {
-      const { data } = await axiosInstance.post('/cart/items', { productId, quantity });
+    mutationFn: async ({ productId, quantity, variantId }) => {
+      const { data } = await axiosInstance.post('/cart/items', {
+        productId,
+        quantity,
+        ...(variantId ? { variantId } : {}),
+      });
       return data;
     },
     onSuccess: () => {
@@ -15,14 +19,23 @@ export function useAddToCart() {
   });
 }
 
+function sameCartLine(item, productId, variantId) {
+  const v1 = item.variantId ?? null;
+  const v2 = variantId ?? null;
+  return item.productId === productId && v1 === v2;
+}
+
 export function useUpdateCartItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, quantity }) => {
-      const { data } = await axiosInstance.put(`/cart/items/${productId}`, { quantity });
+    mutationFn: async ({ productId, quantity, variantId }) => {
+      const { data } = await axiosInstance.put(`/cart/items/${productId}`, {
+        quantity,
+        ...(variantId ? { variantId } : {}),
+      });
       return data;
     },
-    onMutate: async ({ productId, quantity }) => {
+    onMutate: async ({ productId, quantity, variantId }) => {
       await queryClient.cancelQueries({ queryKey: ['cart'] });
       const previousCart = queryClient.getQueryData(['cart']);
       
@@ -30,9 +43,16 @@ export function useUpdateCartItem() {
         if (!old || !old.items) return old;
         return {
           ...old,
-          items: old.items.map(item => 
-            item.productId === productId ? { ...item, quantity, subtotal: item.price * quantity } : item
-          )
+          items: old.items.map(item =>
+            sameCartLine(item, productId, variantId)
+              ? {
+                  ...item,
+                  quantity,
+                  lineTotal: item.finalPrice * quantity,
+                  subtotal: item.finalPrice * quantity,
+                }
+              : item
+          ),
         };
       });
       return { previousCart };
@@ -50,8 +70,13 @@ export function useUpdateCartItem() {
 export function useRemoveCartItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (productId) => {
-      const { data } = await axiosInstance.delete(`/cart/items/${productId}`);
+    mutationFn: async (arg) => {
+      const productId = typeof arg === 'object' && arg !== null ? arg.productId : arg;
+      const variantId =
+        typeof arg === 'object' && arg !== null ? arg.variantId : undefined;
+      const { data } = await axiosInstance.delete(`/cart/items/${productId}`, {
+        params: variantId ? { variantId } : {},
+      });
       return data;
     },
     onSuccess: () => {

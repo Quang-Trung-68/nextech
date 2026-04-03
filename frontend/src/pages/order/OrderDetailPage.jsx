@@ -84,6 +84,38 @@ const OrderDetailPage = () => {
     }
   }, [isSuccessPage, queryClient]);
 
+  /**
+   * SePay: success_url chỉ đưa user về ?success=true; PAID trong DB đến từ IPN webhook.
+   * Nếu webhook chưa kịp / không tới được (localhost), backend tra cứu API SePay (CAPTURED) và cập nhật.
+   */
+  useEffect(() => {
+    if (!isSuccessPage || !id || !order) return;
+    if (order.paymentMethod !== 'SEPAY' || order.paymentStatus === 'PAID') return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    const sync = async () => {
+      if (cancelled || attempts >= maxAttempts) return;
+      attempts += 1;
+      try {
+        await axiosInstance.post(`/payments/sepay/sync/${id}`);
+        await queryClient.invalidateQueries({ queryKey: ['order', id] });
+        await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      } catch (e) {
+        console.warn('[Order] SePay sync failed', e?.response?.data || e.message);
+      }
+    };
+
+    sync();
+    const timer = setInterval(sync, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [isSuccessPage, id, order?.paymentMethod, order?.paymentStatus, queryClient]);
+
   const handleCancelOrder = () => {
     cancelOrder({ id, reason: 'Người dùng tự hủy đơn hàng' }, {
       onSuccess: () => {

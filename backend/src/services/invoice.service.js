@@ -9,7 +9,7 @@ const EmailService = require('./email.service')
  */
 const ORDER_INVOICE_INCLUDE = {
   orderItems: {
-    include: { product: true },
+    include: { product: true, variant: true },
   },
   user: true,
   invoice: { include: { items: true } },

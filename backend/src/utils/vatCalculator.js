@@ -37,7 +37,7 @@ function calculateVatBreakdown(order, vatRate) {
     const totalPrice = unitPrice * item.quantity
     return {
       productName: item.product.name,
-      sku:         item.product.sku ?? null,
+      sku:         item.variant?.sku ?? null,
       quantity:    item.quantity,
       unitPrice,   // pre-tax
       totalPrice,  // pre-tax * qty

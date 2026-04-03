@@ -11,8 +11,8 @@ const getCart = async (req, res, next) => {
 
 const addToCart = async (req, res, next) => {
   try {
-    const { productId, quantity } = req.body;
-    const cart = await cartService.addToCart(req.user.id, productId, quantity);
+    const { productId, quantity, variantId } = req.body;
+    const cart = await cartService.addToCart(req.user.id, productId, quantity, variantId ?? null);
     res.status(200).json({ success: true, data: cart });
   } catch (error) {
     next(error);
@@ -22,8 +22,8 @@ const addToCart = async (req, res, next) => {
 const updateCartItem = async (req, res, next) => {
   try {
     const { productId } = req.params;
-    const { quantity } = req.body;
-    const cart = await cartService.updateCartItem(req.user.id, productId, quantity);
+    const { quantity, variantId } = req.body;
+    const cart = await cartService.updateCartItem(req.user.id, productId, quantity, variantId ?? null);
     res.status(200).json({ success: true, data: cart });
   } catch (error) {
     next(error);
@@ -33,7 +33,8 @@ const updateCartItem = async (req, res, next) => {
 const removeFromCart = async (req, res, next) => {
   try {
     const { productId } = req.params;
-    const cart = await cartService.removeFromCart(req.user.id, productId);
+    const variantId = req.query.variantId || null;
+    const cart = await cartService.removeFromCart(req.user.id, productId, variantId);
     res.status(200).json({ success: true, data: cart });
   } catch (error) {
     next(error);

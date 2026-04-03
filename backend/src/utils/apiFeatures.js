@@ -1,5 +1,22 @@
 const prisma = require('./prisma');
 
+/**
+ * Query ?category=... thường dùng mã ngắn (smartphone, laptop) trong khi DB lưu tiếng Việt (seed).
+ * Map sang đúng giá trị Product.category.
+ */
+const CATEGORY_QUERY_ALIASES = {
+  smartphone: 'Điện thoại',
+  laptop: 'Laptop',
+  tablet: 'Máy tính bảng',
+  accessory: 'Phụ kiện',
+};
+
+function normalizeCategoryParam(value) {
+  if (typeof value !== 'string' || !value.trim()) return value;
+  const trimmed = value.trim();
+  return CATEGORY_QUERY_ALIASES[trimmed] || trimmed;
+}
+
 class ApiFeatures {
   constructor(queryParams) {
     this.queryParams = queryParams;
@@ -19,9 +36,10 @@ class ApiFeatures {
   filter() {
     if (this.queryParams.category) {
       if (typeof this.queryParams.category === 'string' && this.queryParams.category.includes(',')) {
-        this.queryString.category = { in: this.queryParams.category.split(',') };
+        const parts = this.queryParams.category.split(',').map((c) => normalizeCategoryParam(c.trim()));
+        this.queryString.category = { in: parts };
       } else {
-        this.queryString.category = this.queryParams.category;
+        this.queryString.category = normalizeCategoryParam(this.queryParams.category);
       }
     }
 

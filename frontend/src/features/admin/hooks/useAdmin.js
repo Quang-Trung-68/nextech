@@ -29,6 +29,8 @@ export const adminKeys = {
   stats: () => [...adminKeys.all, 'stats'],
   revenue: (year, month) => [...adminKeys.all, 'revenue', year, month],
   products: (params) => [...adminKeys.all, 'products', params],
+  productAttributes: (productId) => [...adminKeys.all, 'products', productId, 'attributes'],
+  productVariants: (productId) => [...adminKeys.all, 'products', productId, 'variants'],
   orders: (params) => [...adminKeys.all, 'orders', params],
   orderDetail: (id) => [...adminKeys.all, 'orders', 'detail', id],
   users: (params) => [...adminKeys.all, 'users', params],
@@ -127,6 +129,107 @@ export function useDeleteProduct() {
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.products({}) });
+    },
+  });
+}
+
+/**
+ * GET /api/admin/products/:id/attributes
+ */
+export function useProductAttributes(productId) {
+  return useQuery({
+    queryKey: adminKeys.productAttributes(productId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/products/${productId}/attributes`);
+      return data.data ?? data;
+    },
+    enabled: !!productId,
+  });
+}
+
+/**
+ * GET /api/admin/products/:id/variants
+ */
+export function useProductVariants(productId) {
+  return useQuery({
+    queryKey: adminKeys.productVariants(productId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/products/${productId}/variants`);
+      return data.data ?? data;
+    },
+    enabled: !!productId,
+  });
+}
+
+/**
+ * PUT /api/admin/products/:id/attributes
+ */
+export function useUpsertAttributes() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, body }) => {
+      const { data } = await axiosInstance.put(`/admin/products/${productId}/attributes`, body);
+      return data;
+    },
+    onSuccess: (_, v) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.productAttributes(v.productId) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.products({}) });
+    },
+  });
+}
+
+/**
+ * PUT /api/admin/products/:id/variants
+ */
+export function useUpsertVariants() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, body }) => {
+      const { data } = await axiosInstance.put(`/admin/products/${productId}/variants`, body);
+      return data;
+    },
+    onSuccess: (_, v) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.productVariants(v.productId) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.products({}) });
+    },
+  });
+}
+
+/**
+ * PATCH /api/admin/products/:productId/variants/:variantId
+ */
+export function useUpdateVariant() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, variantId, body }) => {
+      const { data } = await axiosInstance.patch(
+        `/admin/products/${productId}/variants/${variantId}`,
+        body
+      );
+      return data;
+    },
+    onSuccess: (_, v) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.productVariants(v.productId) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.products({}) });
+    },
+  });
+}
+
+/**
+ * DELETE /api/admin/products/:productId/variants/:variantId
+ */
+export function useDeleteVariant() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, variantId }) => {
+      const { data } = await axiosInstance.delete(
+        `/admin/products/${productId}/variants/${variantId}`
+      );
+      return data;
+    },
+    onSuccess: (_, v) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.productVariants(v.productId) });
       queryClient.invalidateQueries({ queryKey: adminKeys.products({}) });
     },
   });

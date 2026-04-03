@@ -15,7 +15,10 @@ const ORDER_DETAIL_INCLUDE = {
   orderItems: {
     include: {
       product: {
-        select: { id: true, name: true, price: true, salePrice: true, images: true },
+        select: { id: true, name: true, price: true, salePrice: true, images: true, hasVariants: true },
+      },
+      variant: {
+        select: { id: true, sku: true, price: true },
       },
     },
   },
@@ -92,26 +95,59 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
     const orderItemsData = [];
 
     for (const item of cartItems) {
-      // STEP A
       const product = await tx.product.findUnique({ where: { id: item.productId } });
       if (!product) throw new NotFoundError('Product');
 
-      // STEP B
+      if (product.hasVariants) {
+        if (!item.variantId) {
+          throw new AppError('Vui lòng chọn biến thể', 400, ERROR_CODES.PRODUCT.VARIANT_REQUIRED);
+        }
+        const variant = await tx.productVariant.findFirst({
+          where: { id: item.variantId, productId: product.id, deletedAt: null },
+        });
+        if (!variant) throw new NotFoundError('Variant');
+        if (variant.stock < item.quantity) {
+          throw new ConflictError(
+            `Product "${item.name}" does not have enough stock (remaining ${variant.stock})`,
+            ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
+          );
+        }
+        const effectivePrice = Number(variant.price);
+        await tx.productVariant.update({
+          where: { id: variant.id },
+          data: { stock: { decrement: item.quantity } },
+        });
+        orderItemsData.push({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          price: effectivePrice,
+          originalPrice: parseFloat(product.price),
+        });
+        continue;
+      }
+
+      if (item.variantId) {
+        throw new AppError('Giỏ hàng không hợp lệ', 400, ERROR_CODES.SERVER.VALIDATION_ERROR);
+      }
+
       const saleActive = isSaleActive(product);
       const effectivePrice = saleActive ? product.salePrice : product.price;
 
-      // STEP C
       if (saleActive && product.saleStock != null) {
         const updated = await tx.product.updateMany({
           where: {
             id: product.id,
-            saleSoldCount: { lt: product.saleStock }
+            saleSoldCount: { lt: product.saleStock },
           },
-          data: { saleSoldCount: { increment: item.quantity } }
+          data: { saleSoldCount: { increment: item.quantity } },
         });
 
         if (updated.count === 0) {
-          throw new ConflictError('Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.', 'SALE_SOLD_OUT');
+          throw new ConflictError(
+            'Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
+            'SALE_SOLD_OUT'
+          );
         }
       }
 
@@ -120,9 +156,9 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
         data: { stock: { decrement: item.quantity } },
       });
 
-      // STEP D
       orderItemsData.push({
         productId: item.productId,
+        variantId: null,
         quantity: item.quantity,
         price: effectivePrice,
         originalPrice: parseFloat(product.price),
@@ -224,14 +260,20 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
 
       for (const item of cartItems) {
         const product = await prisma.product.findUnique({ where: { id: item.productId } });
-        if (product && product.stock + item.quantity > 10 && product.stock <= 10) {
+        if (!product) continue;
+        let stockLeft = product.stock;
+        if (product.hasVariants && item.variantId) {
+          const v = await prisma.productVariant.findUnique({ where: { id: item.variantId } });
+          if (v) stockLeft = v.stock;
+        }
+        if (stockLeft + item.quantity > 10 && stockLeft <= 10) {
           for (const admin of admins) {
             await notificationService.createAndSend(
               admin.id,
               'low_stock',
               'Sản phẩm sắp hết hàng',
-              `"${product.name}" còn ${product.stock} sản phẩm trong kho`,
-              { productId: product.id, productName: product.name, stock: product.stock }
+              `"${product.name}" còn ${stockLeft} sản phẩm trong kho`,
+              { productId: product.id, productName: product.name, stock: stockLeft }
             );
           }
         }
@@ -314,6 +356,7 @@ const getMyOrders = async (userId, { status, search, page, limit }) => {
         orderItems: {
           include: {
             product: { select: { id: true, name: true, price: true, salePrice: true, images: true } },
+            variant: { select: { id: true, sku: true, price: true } },
           },
         },
       },
@@ -361,7 +404,10 @@ const getOrderById = async (orderId, userId, role) => {
 // ─── User: Huỷ đơn ───────────────────────────────────────────────────────────
 
 const cancelOrder = async (orderId, userId, reason) => {
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { orderItems: true },
+  });
 
   if (!order) throw new NotFoundError('Order');
   if (order.userId !== userId) throw new ForbiddenError('You do not have permission to cancel this order');
@@ -379,10 +425,25 @@ const cancelOrder = async (orderId, userId, reason) => {
   const requiresManualRefund =
     order.paymentMethod === 'STRIPE' && order.paymentStatus === 'PAID';
 
-  const updatedOrder = await prisma.order.update({
-    where: { id: orderId },
-    data: { status: 'CANCELLED' },
-    include: ORDER_DETAIL_INCLUDE,
+  const updatedOrder = await prisma.$transaction(async (tx) => {
+    for (const oi of order.orderItems) {
+      if (oi.variantId) {
+        await tx.productVariant.update({
+          where: { id: oi.variantId },
+          data: { stock: { increment: oi.quantity } },
+        });
+      } else {
+        await tx.product.update({
+          where: { id: oi.productId },
+          data: { stock: { increment: oi.quantity } },
+        });
+      }
+    }
+    return tx.order.update({
+      where: { id: orderId },
+      data: { status: 'CANCELLED' },
+      include: ORDER_DETAIL_INCLUDE,
+    });
   });
 
   Promise.resolve().then(async () => {
@@ -458,6 +519,7 @@ const getAllOrders = async ({ status, paymentStatus, userId, sortBy, sortOrder, 
         orderItems: {
           include: {
             product: { select: { id: true, name: true, price: true, salePrice: true } },
+            variant: { select: { id: true, sku: true, price: true } },
           },
         },
         user: { select: { id: true, name: true, email: true } },
@@ -501,10 +563,29 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         ERROR_CODES.ORDER.ORDER_CANNOT_BE_CANCELLED
       );
     }
-    const cancelled = await prisma.order.update({
+    const orderWithItems = await prisma.order.findUnique({
       where: { id: orderId },
-      data: { status: 'CANCELLED' },
-      include: ORDER_DETAIL_INCLUDE,
+      include: { orderItems: true },
+    });
+    const cancelled = await prisma.$transaction(async (tx) => {
+      for (const oi of orderWithItems.orderItems) {
+        if (oi.variantId) {
+          await tx.productVariant.update({
+            where: { id: oi.variantId },
+            data: { stock: { increment: oi.quantity } },
+          });
+        } else {
+          await tx.product.update({
+            where: { id: oi.productId },
+            data: { stock: { increment: oi.quantity } },
+          });
+        }
+      }
+      return tx.order.update({
+        where: { id: orderId },
+        data: { status: 'CANCELLED' },
+        include: ORDER_DETAIL_INCLUDE,
+      });
     });
 
     Promise.resolve().then(async () => {

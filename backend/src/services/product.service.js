@@ -45,6 +45,23 @@ const getProductById = async (id) => {
           },
         },
       },
+      attributes: {
+        orderBy: { position: 'asc' },
+        include: { values: { orderBy: { position: 'asc' } } },
+      },
+      variants: {
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          values: {
+            include: {
+              attributeValue: {
+                include: { attribute: { select: { id: true, name: true } } },
+              },
+            },
+          },
+        },
+      },
     },
   });
 
@@ -57,6 +74,9 @@ const getProductById = async (id) => {
 
 const createProduct = async (data) => {
   const payload = { ...data };
+  if (payload.hasVariants) {
+    payload.stock = 0;
+  }
   if (payload.images && payload.images.length > 0) {
     payload.images = {
       create: payload.images.map((url) => ({
@@ -78,6 +98,9 @@ const updateProduct = async (id, data) => {
   }
 
   const payload = { ...data };
+  if (payload.hasVariants === true) {
+    payload.stock = 0;
+  }
   if (payload.images) {
     payload.images = {
       deleteMany: {},

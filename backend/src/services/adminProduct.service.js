@@ -34,10 +34,34 @@ const getProducts = async (queryParams) => {
   };
 };
 
+const VARIANT_INCLUDE = {
+  attributes: {
+    orderBy: { position: 'asc' },
+    include: { values: { orderBy: { position: 'asc' } } },
+  },
+  variants: {
+    where: { deletedAt: null },
+    orderBy: { createdAt: 'asc' },
+    include: {
+      values: {
+        include: {
+          attributeValue: {
+            include: { attribute: { select: { id: true, name: true } } },
+          },
+        },
+      },
+    },
+  },
+};
+
 const getProductById = async (id) => {
   const product = await prisma.product.findUnique({
     where: { id },
-    include: { images: true, reviews: { include: { user: { select: { name: true } } } } },
+    include: {
+      images: true,
+      reviews: { include: { user: { select: { name: true } } } },
+      ...VARIANT_INCLUDE,
+    },
   });
   if (!product) throw new NotFoundError('Product');
   return addPriceFields(product);
@@ -45,6 +69,9 @@ const getProductById = async (id) => {
 
 const createProduct = async (data) => {
   const payload = { ...data };
+  if (payload.hasVariants) {
+    payload.stock = 0;
+  }
   if (payload.images && payload.images.length > 0) {
     payload.images = {
       create: payload.images.map((img) => ({
@@ -55,7 +82,7 @@ const createProduct = async (data) => {
   } else {
     delete payload.images; // Nếu mảng rỗng thì bỏ qua field này
   }
-  return prisma.product.create({ data: payload, include: { images: true } });
+  return prisma.product.create({ data: payload, include: { images: true, ...VARIANT_INCLUDE } });
 };
 
 const updateProduct = async (id, data) => {
@@ -72,6 +99,9 @@ const updateProduct = async (id, data) => {
   }
 
   const payload = { ...data };
+  if (payload.hasVariants === true) {
+    payload.stock = 0;
+  }
   if (payload.images) {
     payload.images = {
       deleteMany: {},
@@ -104,7 +134,11 @@ const updateProduct = async (id, data) => {
     }
   }
 
-  const updated = await prisma.product.update({ where: { id }, data: payload, include: { images: true } });
+  const updated = await prisma.product.update({
+    where: { id },
+    data: payload,
+    include: { images: true, ...VARIANT_INCLUDE },
+  });
   return addPriceFields(updated);
 };
 

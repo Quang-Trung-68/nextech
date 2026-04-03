@@ -35,6 +35,10 @@ const ActionButtons = ({ product, viewMode }) => {
       toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
       return navigate('/login', { state: { from: location.pathname + location.search } });
     }
+    if (product.hasVariants) {
+      navigate(`/products/${getSlugByCategory(product.category)}/${product.id}`);
+      return;
+    }
     addToCart(
       { productId: product.id, quantity: 1 },
       {
@@ -50,6 +54,10 @@ const ActionButtons = ({ product, viewMode }) => {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để mua hàng');
       return navigate('/login', { state: { from: location.pathname + location.search } });
+    }
+    if (product.hasVariants) {
+      navigate(`/products/${getSlugByCategory(product.category)}/${product.id}`);
+      return;
     }
     setIsBuying(true);
     addToCart(
@@ -67,16 +75,16 @@ const ActionButtons = ({ product, viewMode }) => {
       <Button 
         className={`rounded-full bg-white border border-[#d2d2d7] hover:bg-[#f5f5f7] text-apple-dark font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
         onClick={handleAddToCart}
-        disabled={product.stock === 0 || isAddingToCart || isBuying}
+        disabled={(!product.hasVariants && product.stock === 0) || isAddingToCart || isBuying}
       >
-        {isAddingToCart ? 'Đang thêm...' : product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+        {isAddingToCart ? 'Đang thêm...' : product.hasVariants ? 'Chọn tùy chọn' : product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
       </Button>
       <Button 
         className={`rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
         onClick={handleBuyNow}
-        disabled={product.stock === 0 || isAddingToCart || isBuying}
+        disabled={(!product.hasVariants && product.stock === 0) || isAddingToCart || isBuying}
       >
-        {isBuying ? 'Đang xử lý...' : 'Mua ngay'}
+        {isBuying ? 'Đang xử lý...' : product.hasVariants ? 'Xem tùy chọn' : 'Mua ngay'}
       </Button>
     </div>
   );
@@ -103,6 +111,7 @@ const ProductsPage = () => {
   const { categorySlug } = useParams();
 
   const highlightParam = searchParams.get('highlight');
+  const categoryQueryParam = searchParams.get('category');
   const highlights = highlightParam ? highlightParam.split(',') : [];
 
   const pageLabel = categorySlug ? SLUG_LABEL_MAP[categorySlug] : null;
@@ -123,7 +132,12 @@ const ProductsPage = () => {
     if (sort === 'Giá giảm dần') sortParam = 'price_desc';
 
     const params = { page: pageParam, limit, sort: sortParam };
-    if (categorySlug && SLUG_MAP[categorySlug]) params.category = SLUG_MAP[categorySlug];
+    if (categorySlug && SLUG_MAP[categorySlug]) {
+      params.category = SLUG_MAP[categorySlug];
+    } else if (categoryQueryParam) {
+      // ?category=smartphone — backend map sang "Điện thoại"
+      params.category = categoryQueryParam;
+    }
     if (highlightParam) params.highlight = highlightParam;
     
     // Find absolute min and max prices from selected ranges
@@ -144,7 +158,7 @@ const ProductsPage = () => {
     fetchNextPage, 
     isFetchingNextPage 
   } = useInfiniteQuery({
-    queryKey: ['products', categorySlug, highlightParam, priceRanges, sort],
+    queryKey: ['products', categorySlug, categoryQueryParam, highlightParam, priceRanges, sort],
     queryFn: async ({ pageParam }) => {
       const res = await axiosInstance.get('/products', { params: getQueryParams(pageParam) });
       return res.data;

@@ -24,7 +24,7 @@ const getOptimizedImage = (url, width) => {
 };
 
 export function CartItem({ item, onUpdateQuantity, onRemove }) {
-  const { productId, name, price, finalPrice, discountPercent, image, stock, quantity, lineTotal, subtotal } = item;
+  const { productId, variantId, name, price, finalPrice, discountPercent, image, stock, quantity, lineTotal, subtotal } = item;
   const displayLineTotal = lineTotal ?? subtotal;
   const displayFinalPrice = finalPrice ?? price;
   const itemImage = getOptimizedImage(image, 120);
@@ -33,18 +33,18 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
     let val = parseInt(e.target.value);
     if (isNaN(val) || val < 1) val = 1;
     if (val > stock) val = stock;
-    onUpdateQuantity(productId, val);
+    onUpdateQuantity(productId, val, variantId);
   };
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
-      onUpdateQuantity(productId, quantity - 1);
+      onUpdateQuantity(productId, quantity - 1, variantId);
     }
   };
 
   const increaseQuantity = () => {
     if (quantity < stock) {
-      onUpdateQuantity(productId, quantity + 1);
+      onUpdateQuantity(productId, quantity + 1, variantId);
     }
   };
 
@@ -93,7 +93,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="min-h-[44px]">Hủy</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white min-h-[44px]">
+                <AlertDialogAction onClick={() => onRemove(productId, variantId)} className="bg-destructive hover:bg-destructive/90 text-white min-h-[44px]">
                   Xóa
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -119,7 +119,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="min-h-[44px]">Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onRemove(productId)} className="bg-destructive hover:bg-destructive/90 text-white min-h-[44px]">
+                    <AlertDialogAction onClick={() => onRemove(productId, variantId)} className="bg-destructive hover:bg-destructive/90 text-white min-h-[44px]">
                       Xóa
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -143,7 +143,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
               onBlur={(e) => {
                 let val = parseInt(e.target.value);
                 if (isNaN(val) || val < 1) val = 1;
-                if (val !== quantity) onUpdateQuantity(productId, val);
+                if (val !== quantity) onUpdateQuantity(productId, val, variantId);
               }}
               min={1}
               max={stock}

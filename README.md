@@ -132,6 +132,26 @@ docker compose down -v
 docker compose up --build backend
 ```
 
+### Soketi (realtime) — Docker vs trình duyệt
+
+| Thành phần | Host WebSocket / HTTP tới Soketi | Ghi chú |
+|------------|-----------------------------------|--------|
+| **Frontend (JS trong browser)** | `localhost:6001` | Map từ `services.soketi.ports`. Không dùng hostname `soketi` — chỉ resolve trong mạng Docker. |
+| **Backend (container)** | `soketi:6001` | Đặt qua `SOKETI_HOST` / `SOKETI_PORT` trong Compose. |
+
+**Vì sao local `nvm use 18` + `npm run soketi` thì OK nhưng Docker “tắt”?**
+
+- Compose từng ghi `VITE_SOKETI_ENABLED=false` → `frontend/src/lib/pusher.js` dùng client **noop**, không mở WebSocket dù container `soketi` vẫn chạy.
+- Cần **`VITE_SOKETI_ENABLED=true`** và `VITE_SOKETI_APP_KEY` / `HOST` / `PORT` khớp `backend/soketi.json` (mặc định `nextech-key`, `localhost`, `6001`).
+
+**Debug nhanh**
+
+1. `docker compose ps` — service `soketi` có **Up** và port `6001`?
+2. `docker compose logs -f soketi` — có lỗi bind / config?
+3. Trình duyệt: DevTools → **Network** → **WS** — có kết nối tới `ws://localhost:6001` khi đăng nhập?
+4. Sau khi sửa biến `VITE_*`: `docker compose up -d --force-recreate frontend` (Vite embed env lúc start).
+5. Image Soketi dùng **Debian (glibc)**, không dùng Alpine: binary `uWebSockets.js` cần `ld-linux-x86-64.so.2` (không có trên musl).
+
 ---
 
 ## 💻 Local Running Guide (Manual — Development)

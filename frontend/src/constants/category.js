@@ -1,8 +1,9 @@
+/** Giá trị phải khớp Product.category trong DB (seed dùng tiếng Việt). */
 export const SLUG_MAP = {
-  'iphone': 'smartphone',
-  'mac': 'laptop',
-  'ipad': 'tablet',
-  'accessories': 'accessory',
+  iphone: 'Điện thoại',
+  mac: 'Laptop',
+  ipad: 'Máy tính bảng',
+  accessories: 'Phụ kiện',
 };
 
 export const SLUG_LABEL_MAP = {

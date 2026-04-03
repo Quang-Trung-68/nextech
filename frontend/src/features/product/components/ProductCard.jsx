@@ -14,7 +14,7 @@ import SaleCountdownBadge from '@/components/product/SaleCountdownBadge';
 import SaleStockBadge from '@/components/product/SaleStockBadge';
 
 export function ProductCard({ product }) {
-  const { id, name, price, rating, stock, images, category } = product;
+  const { id, name, price, rating, stock, images, category, hasVariants } = product;
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -30,6 +30,11 @@ export function ProductCard({ product }) {
     if (!isAuthenticated) {
       toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
       return navigate('/login', { state: { from: location.pathname + location.search } });
+    }
+
+    if (hasVariants) {
+      navigate(`/products/${getSlugByCategory(category)}/${id}`);
+      return;
     }
 
     addToCart(
@@ -90,12 +95,17 @@ export function ProductCard({ product }) {
                 BÁN CHẠY
               </span>
             )}
-            {stock <= 10 && stock > 0 && (
+            {hasVariants && (
+              <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700">
+                Nhiều tùy chọn
+              </span>
+            )}
+            {!hasVariants && stock <= 10 && stock > 0 && (
               <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-500 text-white">
                 Sắp hết
               </span>
             )}
-            {stock === 0 && (
+            {!hasVariants && stock === 0 && (
               <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-destructive text-destructive-foreground">
                 Hết hàng
               </span>
@@ -136,9 +146,9 @@ export function ProductCard({ product }) {
             size="sm" 
             className="w-full h-9 font-semibold text-[13px] active:scale-[0.98] transition-all bg-[#0066cc] hover:bg-[#005bb5] text-white rounded-lg"
             onClick={handleAddToCart}
-            disabled={stock === 0 || isAddingToCart}
+            disabled={(!hasVariants && stock === 0) || isAddingToCart}
           >
-            {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
+            {isAddingToCart ? 'Đang thêm...' : hasVariants ? 'Chọn tùy chọn' : 'Thêm vào giỏ'}
         </Button>
         
         {/* Rating & Favorite */}

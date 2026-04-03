@@ -1,153 +1,125 @@
-services:
+# NexTech — stack dev (Node + Vite + PostgreSQL 16)
+# Chạy từ root: docker compose up -d
+#
+# Kết nối DBeaver / GUI (từ máy host):
+#   Host: localhost
+#   Port: 5433 (map từ container 5432 — xem services.postgres.ports)
+#   Database: giống POSTGRES_DB (mặc định nextech)
+#   User / Password: giống POSTGRES_USER / POSTGRES_PASSWORD (mặc định nextech / nextech)
+#   Hoặc copy từ biến trong file .env cùng thư mục với compose (POSTGRES_*).
+#
+# Ứng dụng:
+#   Frontend: http://localhost:5173
+#   API:      http://localhost:3000/api
+#   Soketi:   ws://localhost:6001 (WebSocket — Pusher-compatible)
+#
+# Soketi & Docker:
+# - Trình duyệt chạy trên máy host → WebSocket phải tới localhost:6001 (port map từ service soketi).
+# - Backend trong mạng Docker → SOKETI_HOST=soketi (đã set ở service backend).
+# - VITE_* được Vite embed lúc dev server chạy; bật realtime: VITE_SOKETI_ENABLED=true + các biến dưới.
+#
+# Lưu ý: backend/.env và frontend/.env vẫn dùng cho secret; DATABASE_URL trong backend
+# được override để trỏ tới service `postgres` trong mạng Docker.
 
-  # ─────────────────────────────────────────────
-  # PostgreSQL Database
-  # ─────────────────────────────────────────────
-  db:
-    image: postgres:15-alpine
-    container_name: nextech_db
+services:
+  postgres:
+    image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-nextech}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nextech}
+      POSTGRES_DB: ${POSTGRES_DB:-nextech}
+    ports:
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - nextech_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-nextech} -d ${POSTGRES_DB:-nextech}",
+        ]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  # ─────────────────────────────────────────────
-  # Soketi (Self-hosted Pusher-compatible WS server)
-  # ─────────────────────────────────────────────
   soketi:
-    image: quay.io/soketi/soketi:1.6-16-alpine
-    container_name: nextech_soketi
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.soketi
     restart: unless-stopped
-    environment:
-      SOKETI_DEBUG: "0"
-      SOKETI_DEFAULT_APP_ID: ${SOKETI_APP_ID}
-      SOKETI_DEFAULT_APP_KEY: ${SOKETI_APP_KEY}
-      SOKETI_DEFAULT_APP_SECRET: ${SOKETI_APP_SECRET}
-      SOKETI_DEFAULT_APP_MAX_CONNS: ${SOKETI_DEFAULT_APP_MAX_CONNS}
-    networks:
-      - nextech_net
+    ports:
+      - "6001:6001"
+    volumes:
+      - ./backend/soketi.json:/app/soketi.json:ro
 
-  # ─────────────────────────────────────────────
-  # Backend (Node.js / Express)
-  # ─────────────────────────────────────────────
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: nextech_backend
+      dockerfile: Dockerfile.dev
     restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nextech}:${POSTGRES_PASSWORD:-nextech}@postgres:5432/${POSTGRES_DB:-nextech}?schema=public
+      PORT: "3000"
+      NODE_ENV: development
+      CLIENT_URL: http://localhost:5173
+      FRONTEND_URL: http://localhost:5173
+      GOOGLE_CALLBACK_URL: http://localhost:3000/api/auth/google/callback
+      FACEBOOK_CALLBACK_URL: http://localhost:3000/api/auth/facebook/callback
+      SOKETI_HOST: soketi
+      SOKETI_PORT: "6001"
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
       soketi:
         condition: service_started
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      PORT: ${PORT}
-      NODE_ENV: ${NODE_ENV}
-      CLIENT_URL: ${CLIENT_URL}
-      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
-      ACCESS_TOKEN_EXPIRES_IN: ${ACCESS_TOKEN_EXPIRES_IN}
-      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
-      REFRESH_TOKEN_EXPIRES_IN: ${REFRESH_TOKEN_EXPIRES_IN}
-      COOKIE_SECRET: ${COOKIE_SECRET}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
-      STRIPE_CURRENCY: ${STRIPE_CURRENCY}
-      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
-      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
-      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-      GMAIL_USER: ${GMAIL_USER}
-      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
-      APP_NAME: ${APP_NAME}
-      FRONTEND_URL: ${FRONTEND_URL}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
-      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID}
-      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET}
-      FACEBOOK_CALLBACK_URL: ${FACEBOOK_CALLBACK_URL}
-      # Soketi connection (from backend to soketi container)
-      SOKETI_APP_ID: ${SOKETI_APP_ID}
-      SOKETI_APP_KEY: ${SOKETI_APP_KEY}
-      SOKETI_APP_SECRET: ${SOKETI_APP_SECRET}
-      SOKETI_HOST: soketi
-      SOKETI_PORT: 6001
-      PUSHER_USE_TLS: "false"
-    networks:
-      - nextech_net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:3000/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
 
-  # ─────────────────────────────────────────────
-  # Frontend (React / Vite → served by Nginx)
-  # ─────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL}
-        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
-        VITE_SOKETI_APP_KEY: ${VITE_SOKETI_APP_KEY}
-        VITE_SOKETI_HOST: ${VITE_SOKETI_HOST}
-        VITE_SOKETI_PORT: ${VITE_SOKETI_PORT}
-        VITE_SOKETI_FORCE_TLS: ${VITE_SOKETI_FORCE_TLS}
-    container_name: nextech_frontend
+      dockerfile: Dockerfile.dev
     restart: unless-stopped
-    depends_on:
-      - backend
-    networks:
-      - nextech_net
-
-  # ─────────────────────────────────────────────
-  # Nginx Reverse Proxy (entry point)
-  # ─────────────────────────────────────────────
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: nextech_nginx
-    restart: unless-stopped
-    depends_on:
-      - frontend
-      - backend
     ports:
-      - "80:80"
-      - "443:443"
+      - "5173:5173"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
-    networks:
-      - nextech_net
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    env_file:
+      - ./frontend/.env
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+      DOCKER: "true"
+      # Phải bật để pusher.js không dùng noop (trước đây false → Soketi “không chạy” dù container soketi OK).
+      # Trình duyệt kết nối tới host localhost:6001 — KHÔNG dùng hostname "soketi" (chỉ resolve trong Docker).
+      VITE_SOKETI_ENABLED: "true"
+      VITE_SOKETI_APP_KEY: nextech-key
+      VITE_SOKETI_HOST: localhost
+      VITE_SOKETI_PORT: "6001"
+      VITE_SOKETI_FORCE_TLS: "false"
+    depends_on:
+      backend:
+        condition: service_healthy
 
-  # ─────────────────────────────────────────────
-  # Certbot (SSL Certificate Management)
-  # ─────────────────────────────────────────────
-  certbot:
-    image: certbot/certbot:latest
-    container_name: nextech_certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-
-# ─────────────────────────────────────────────
-# Volumes
-# ─────────────────────────────────────────────
 volumes:
   postgres_data:
-
-# ─────────────────────────────────────────────
-# Networks
-# ─────────────────────────────────────────────
-networks:
-  nextech_net:
-    driver: bridge
+  backend_node_modules:
+  frontend_node_modules:

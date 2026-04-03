@@ -5,6 +5,7 @@ const { z } = require('zod');
  */
 const addToCartSchema = z.object({
   productId: z.string().cuid('ID sản phẩm không hợp lệ'),
+  variantId: z.string().cuid('ID biến thể không hợp lệ').optional().nullable(),
 
   quantity: z.coerce
     .number()
@@ -22,6 +23,7 @@ const updateCartItemSchema = z.object({
     .number()
     .int('Số lượng phải là số nguyên')
     .min(0, 'Số lượng không được âm'),
+  variantId: z.string().cuid('ID biến thể không hợp lệ').optional().nullable(),
 });
 
 /**
@@ -31,4 +33,14 @@ const cartParamsSchema = z.object({
   productId: z.string().cuid('ID sản phẩm không hợp lệ'),
 });
 
-module.exports = { addToCartSchema, updateCartItemSchema, cartParamsSchema };
+/** DELETE /cart/items/:productId?variantId= */
+const cartItemQuerySchema = z.object({
+  variantId: z.string().cuid().optional(),
+});
+
+module.exports = {
+  addToCartSchema,
+  updateCartItemSchema,
+  cartParamsSchema,
+  cartItemQuerySchema,
+};

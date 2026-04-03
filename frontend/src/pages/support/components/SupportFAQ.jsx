@@ -16,7 +16,7 @@ const tabs = [
 
 function FAQAccordion({ items }) {
   return (
-    <Accordion openMultiple className="divide-y divide-[#d2d2d7] border border-[#d2d2d7] rounded-2xl overflow-hidden bg-white">
+    <Accordion multiple className="divide-y divide-[#d2d2d7] border border-[#d2d2d7] rounded-2xl overflow-hidden bg-white">
       {items.map((item, idx) => (
         <AccordionItem key={idx} value={String(idx)}>
           <AccordionTrigger className="px-5 py-4 text-[15px] font-medium text-[#1d1d1f] hover:no-underline hover:bg-[#f5f5f7] transition-colors rounded-none">

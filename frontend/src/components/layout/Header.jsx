@@ -201,7 +201,7 @@ const Header = () => {
                                     <div className="flex items-center bg-[#f5f5f7] rounded-md overflow-hidden border border-[#d2d2d7]">
                                       <button 
                                         className="w-6 h-6 flex items-center justify-center hover:bg-[#e8e8ed] text-apple-dark transition-colors"
-                                        onClick={() => item.quantity > 1 ? updateQuantity({ productId: item.productId, quantity: item.quantity - 1 }) : removeItem(item.productId)}
+                                        onClick={() => item.quantity > 1 ? updateQuantity({ productId: item.productId, quantity: item.quantity - 1, variantId: item.variantId }) : removeItem({ productId: item.productId, variantId: item.variantId })}
                                       >
                                         -
                                       </button>
@@ -210,7 +210,7 @@ const Header = () => {
                                       </span>
                                       <button 
                                         className="w-6 h-6 flex items-center justify-center hover:bg-[#e8e8ed] text-apple-dark transition-colors disabled:opacity-50"
-                                        onClick={() => updateQuantity({ productId: item.productId, quantity: item.quantity + 1 })}
+                                        onClick={() => updateQuantity({ productId: item.productId, quantity: item.quantity + 1, variantId: item.variantId })}
                                         disabled={item.quantity >= item.stock}
                                       >
                                         +
@@ -220,7 +220,7 @@ const Header = () => {
                                       <span className="text-[14px] font-bold text-apple-dark">{formatCurrency(item.price)}</span>
                                       <button 
                                         className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover/cart-controls:opacity-100 sm:opacity-100"
-                                        onClick={() => removeItem(item.productId)}
+                                        onClick={() => removeItem({ productId: item.productId, variantId: item.variantId })}
                                         title="Xóa sản phẩm"
                                       >
                                         <X size={14} />

@@ -39,14 +39,21 @@ const expirationJob = cron.schedule('* * * * *', async () => {
           },
         });
 
-        // Hoàn trả stock cho sản phẩm
+        // Hoàn trả stock cho sản phẩm / biến thể
         for (const item of order.orderItems) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: { increment: item.quantity },
-            },
-          });
+          if (item.variantId) {
+            await tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { increment: item.quantity } },
+            });
+          } else {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { increment: item.quantity },
+              },
+            });
+          }
         }
       });
 

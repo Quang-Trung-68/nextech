@@ -1,0 +1,18 @@
+FROM node:20-alpine
+WORKDIR /app
+
+RUN apk add --no-cache openssl libc6-compat
+
+COPY package*.json ./
+RUN npm ci
+
+COPY prisma ./prisma
+RUN npx prisma generate
+
+COPY . .
+
+EXPOSE 3000
+
+# Dùng `sh` vì bind mount ./backend:/app có thể làm mất quyền +x trên host
+ENTRYPOINT ["sh", "docker-entrypoint.sh"]
+CMD ["npm", "run", "dev:docker"]

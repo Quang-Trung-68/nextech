@@ -16,12 +16,12 @@ const CartPage = () => {
   const { mutate: removeItem } = useRemoveCartItem();
   const { mutate: clearCart } = useClearCart();
 
-  const handleUpdateQuantity = (productId, quantity) => {
-    updateQuantity({ productId, quantity });
+  const handleUpdateQuantity = (productId, quantity, variantId) => {
+    updateQuantity({ productId, quantity, variantId });
   };
 
-  const handleRemove = (productId) => {
-    removeItem(productId);
+  const handleRemove = (productId, variantId) => {
+    removeItem({ productId, variantId });
   };
 
   const handleClearCart = () => {

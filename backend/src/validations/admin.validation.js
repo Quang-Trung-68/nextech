@@ -56,6 +56,7 @@ const adminProductBaseSchema = z.object({
     (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
     z.number().int().min(2000).max(2100).nullable().optional()
   ),
+  hasVariants: z.boolean().optional(),
 });
 
 const flashSaleRefine = (data, ctx) => {
