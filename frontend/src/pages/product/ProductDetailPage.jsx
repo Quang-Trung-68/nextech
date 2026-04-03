@@ -30,6 +30,25 @@ function findVariantForSelection(variants, attributes, selection) {
   );
 }
 
+/** Giá thực tế khách trả (API enrichVariantForStore). */
+function getVariantPayablePrice(v) {
+  if (!v) return 0;
+  const fin = v.finalPrice != null ? Number(v.finalPrice) : null;
+  if (fin != null && !Number.isNaN(fin)) return fin;
+  return Number(v.price);
+}
+
+/** Có tồn tại biến thể chứa giá trị này đang được giảm giá không (gợi ý trên nút). */
+function variantValueHasSaleLine(variants, valueId) {
+  return variants.some((v) => {
+    const ids = (v.values || []).map((x) => x.attributeValueId);
+    if (!ids.includes(valueId)) return false;
+    const pay = getVariantPayablePrice(v);
+    const base = Number(v.price);
+    return pay < base;
+  });
+}
+
 const ProductDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -65,7 +84,7 @@ const ProductDetailPage = () => {
 
   const variantPriceRange = useMemo(() => {
     if (!hasVariants || !variants.length) return null;
-    const nums = variants.map((v) => Number(v.price));
+    const nums = variants.map((v) => getVariantPayablePrice(v));
     return { min: Math.min(...nums), max: Math.max(...nums) };
   }, [hasVariants, variants]);
 
@@ -89,9 +108,22 @@ const ProductDetailPage = () => {
   }, [hasVariants, selectedVariant?.id, selectedVariant?.stock]);
 
   const displayFinalPrice = useMemo(() => {
-    if (hasVariants && selectedVariant) return Number(selectedVariant.price);
+    if (hasVariants && selectedVariant) return getVariantPayablePrice(selectedVariant);
     return finalPrice;
   }, [hasVariants, selectedVariant, finalPrice]);
+
+  const selectedVariantOnSale = useMemo(() => {
+    if (!hasVariants || !selectedVariant) return false;
+    return getVariantPayablePrice(selectedVariant) < Number(selectedVariant.price);
+  }, [hasVariants, selectedVariant]);
+
+  const selectedVariantDiscountPct = useMemo(() => {
+    if (!hasVariants || !selectedVariant || !selectedVariantOnSale) return 0;
+    const base = Number(selectedVariant.price);
+    const pay = getVariantPayablePrice(selectedVariant);
+    if (base <= 0) return 0;
+    return Math.round((1 - pay / base) * 100);
+  }, [hasVariants, selectedVariant, selectedVariantOnSale]);
 
   const effectiveMaxQty = useMemo(() => {
     if (hasVariants) {
@@ -309,6 +341,16 @@ const ProductDetailPage = () => {
                 -{discountPercent}% SALE
               </span>
             )}
+            {hasVariants && allOptionsSelected && selectedVariantOnSale && selectedVariantDiscountPct > 0 && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-600">
+                -{selectedVariantDiscountPct}% SALE
+              </span>
+            )}
+            {hasVariants && !allOptionsSelected && variants.some((v) => getVariantPayablePrice(v) < Number(v.price)) && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                Có biến thể đang giảm giá
+              </span>
+            )}
           </div>
 
           {/* Giá và Rating layout */}
@@ -320,6 +362,14 @@ const ProductDetailPage = () => {
               </div>
             ) : null}
 
+            {hasVariants && isSaleActive && (saleExpiresAt != null || saleStock != null) && (
+              <div className="flex flex-row gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100 w-full">
+                <span className="text-xs font-semibold text-slate-600 shrink-0">Flash sale chung</span>
+                <SaleCountdownBadge saleExpiresAt={saleExpiresAt} isSaleActive={isSaleActive} />
+                <SaleStockBadge saleStock={saleStock} saleRemaining={saleRemaining} isSaleActive={isSaleActive} />
+              </div>
+            )}
+
             {hasVariants ? (
               <div className="flex flex-col gap-1 min-h-[2.5rem]">
                 {!allOptionsSelected && variantPriceRange && (
@@ -329,7 +379,35 @@ const ProductDetailPage = () => {
                       : `${formatVND(variantPriceRange.min)} – ${formatVND(variantPriceRange.max)}`}
                   </span>
                 )}
-                {allOptionsSelected && selectedVariant && (
+                {allOptionsSelected && selectedVariant && selectedVariantOnSale && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-lg line-through text-gray-400">
+                      {formatVND(Number(selectedVariant.price))}
+                    </span>
+                    <span className="text-3xl font-bold text-red-500 tracking-tighter">
+                      {formatVND(displayFinalPrice)}
+                    </span>
+                    <span className="text-sm text-green-600 font-medium">
+                      Tiết kiệm {formatVND(Number(selectedVariant.price) - displayFinalPrice)} ({selectedVariantDiscountPct}%)
+                    </span>
+                    {selectedVariant.saleSource === 'variant' &&
+                      selectedVariant.saleExpiresAt != null &&
+                      selectedVariant.isSaleActive && (
+                        <div className="flex flex-wrap gap-2 items-center pt-1">
+                          <SaleCountdownBadge
+                            saleExpiresAt={selectedVariant.saleExpiresAt}
+                            isSaleActive={selectedVariant.isSaleActive}
+                          />
+                          <SaleStockBadge
+                            saleStock={selectedVariant.saleStock}
+                            saleRemaining={selectedVariant.saleRemaining}
+                            isSaleActive={selectedVariant.isSaleActive}
+                          />
+                        </div>
+                      )}
+                  </div>
+                )}
+                {allOptionsSelected && selectedVariant && !selectedVariantOnSale && (
                   <span className="text-3xl font-bold text-primary tracking-tighter">
                     {formatVND(displayFinalPrice)}
                   </span>
@@ -381,6 +459,7 @@ const ProductDetailPage = () => {
                       .sort((a, b) => a.position - b.position)
                       .map((val) => {
                         const selected = attrSelection[attr.id] === val.id;
+                        const saleLine = variantValueHasSaleLine(variants, val.id);
                         return (
                           <button
                             key={val.id}
@@ -388,13 +467,16 @@ const ProductDetailPage = () => {
                             onClick={() =>
                               setAttrSelection((prev) => ({ ...prev, [attr.id]: val.id }))
                             }
-                            className={`rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
+                            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium border transition-colors ${
                               selected
                                 ? 'border-apple-blue bg-apple-blue/10 text-apple-blue'
                                 : 'border-border bg-background hover:border-muted-foreground/30'
                             }`}
                           >
-                            {val.value}
+                            <span>{val.value}</span>
+                            {saleLine && (
+                              <span className="text-[10px] font-bold uppercase text-red-500">Sale</span>
+                            )}
                           </button>
                         );
                       })}

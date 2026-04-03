@@ -5,6 +5,8 @@ import useAuthStore from '@/stores/useAuthStore';
 import { useCart } from '@/features/cart/hooks/useCart';
 import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '@/features/cart/hooks/useCartMutations';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { formatVND } from '@/utils/price';
+import { VariantOptionBadges } from '@/components/product/VariantOptionBadges';
 import SearchDialog from '../common/SearchDialog';
 import MobileDrawer from './MobileDrawer';
 import { useMyFavorites } from '@/features/favorites';
@@ -148,8 +150,8 @@ const Header = () => {
                     >
                       <ShoppingCart size={22} strokeWidth={1.5} />
                       {cartItemCount > 0 && (
-                        <span className="absolute top-[2px] -right-[8px] bg-apple-blue text-white text-[10px] rounded-full w-[17px] h-[17px] flex items-center justify-center font-bold shadow-sm">
-                          {cartItemCount}
+                        <span className="absolute top-[2px] -right-[8px] bg-apple-blue text-white text-[10px] rounded-full min-w-[17px] h-[17px] flex items-center justify-center font-bold shadow-sm px-[3px]">
+                          {cartItemCount > 99 ? '99+' : cartItemCount}
                         </span>
                       )}
                     </button>
@@ -183,22 +185,34 @@ const Header = () => {
                           </div>
                         ) : (
                           <div className="flex flex-col gap-4 mb-5 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                            {cartItems.map(item => (
+                            {cartItems.map((item) => {
+                              const listUnit =
+                                item.originalUnitPrice != null && item.originalUnitPrice !== ''
+                                  ? Number(item.originalUnitPrice)
+                                  : Number(item.price);
+                              const finalU =
+                                item.finalPrice != null && item.finalPrice !== ''
+                                  ? Number(item.finalPrice)
+                                  : listUnit;
+                              const showSale =
+                                finalU < listUnit - 0.5 || (item.discountPercent ?? 0) > 0;
+                              return (
                               <div key={item.id} className="flex gap-3">
                                 <img 
                                   src={item.image || '/placeholder.png'} 
                                   alt={item.name} 
                                   className="w-14 h-14 object-cover rounded-md border border-border" 
                                 />
-                                <div className="flex-1 flex flex-col justify-between">
+                                <div className="flex-1 flex flex-col justify-between min-w-0">
                                   <Link 
                                     to={`/products/all/${item.productId}`} 
                                     className="text-[13px] font-semibold text-apple-dark line-clamp-2 hover:text-apple-blue transition-colors"
                                   >
                                     {item.name}
                                   </Link>
-                                  <div className="flex justify-between items-center mt-2 group/cart-controls">
-                                    <div className="flex items-center bg-[#f5f5f7] rounded-md overflow-hidden border border-[#d2d2d7]">
+                                  <VariantOptionBadges options={item.variantOptions} className="mt-1" />
+                                  <div className="flex justify-between items-center mt-2 group/cart-controls gap-2">
+                                    <div className="flex items-center bg-[#f5f5f7] rounded-md overflow-hidden border border-[#d2d2d7] shrink-0">
                                       <button 
                                         className="w-6 h-6 flex items-center justify-center hover:bg-[#e8e8ed] text-apple-dark transition-colors"
                                         onClick={() => item.quantity > 1 ? updateQuantity({ productId: item.productId, quantity: item.quantity - 1, variantId: item.variantId }) : removeItem({ productId: item.productId, variantId: item.variantId })}
@@ -216,10 +230,25 @@ const Header = () => {
                                         +
                                       </button>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[14px] font-bold text-apple-dark">{formatCurrency(item.price)}</span>
+                                    <div className="flex items-center gap-2 min-w-0 justify-end">
+                                      <div className="text-right min-w-0">
+                                        {showSale ? (
+                                          <span className="text-[13px] font-bold text-red-500 block leading-tight">
+                                            {formatVND(finalU)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-[14px] font-bold text-apple-dark block leading-tight">
+                                            {formatVND(finalU)}
+                                          </span>
+                                        )}
+                                        {showSale && (
+                                          <span className="text-[11px] line-through text-gray-400 block leading-tight">
+                                            {formatVND(listUnit)}
+                                          </span>
+                                        )}
+                                      </div>
                                       <button 
-                                        className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover/cart-controls:opacity-100 sm:opacity-100"
+                                        className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover/cart-controls:opacity-100 sm:opacity-100 shrink-0"
                                         onClick={() => removeItem({ productId: item.productId, variantId: item.variantId })}
                                         title="Xóa sản phẩm"
                                       >
@@ -229,7 +258,7 @@ const Header = () => {
                                   </div>
                                 </div>
                               </div>
-                            ))}
+                            );})}
                           </div>
                         )}
 

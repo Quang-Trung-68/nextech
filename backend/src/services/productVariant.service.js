@@ -136,6 +136,19 @@ async function upsertVariants(productId, { variants }) {
       const imageUrl =
         row.imageUrl === '' || row.imageUrl === undefined ? null : row.imageUrl ?? null;
 
+      let salePrice = row.salePrice != null && row.salePrice !== '' ? Number(row.salePrice) : null;
+      let saleExpiresAt =
+        row.saleExpiresAt && String(row.saleExpiresAt).trim() !== ''
+          ? new Date(row.saleExpiresAt)
+          : null;
+      let saleStock =
+        row.saleStock != null && row.saleStock !== '' ? parseInt(row.saleStock, 10) : null;
+      if (salePrice == null || salePrice <= 0) {
+        salePrice = null;
+        saleExpiresAt = null;
+        saleStock = null;
+      }
+
       const variant = await tx.productVariant.create({
         data: {
           productId,
@@ -143,6 +156,10 @@ async function upsertVariants(productId, { variants }) {
           price: row.price,
           stock: row.stock,
           imageUrl,
+          salePrice,
+          saleExpiresAt,
+          saleStock,
+          saleSoldCount: 0,
           values: {
             create: row.attributeValueIds.map((attributeValueId) => ({
               attributeValueId,
@@ -179,6 +196,12 @@ async function updateVariantByAdmin(productId, variantId, data) {
 
   const payload = { ...data };
   if (payload.imageUrl === '') payload.imageUrl = null;
+  if (payload.salePrice === null || payload.salePrice === '') {
+    payload.salePrice = null;
+    payload.saleExpiresAt = null;
+    payload.saleStock = null;
+    payload.saleSoldCount = 0;
+  }
 
   if (payload.sku && payload.sku !== variant.sku) {
     const taken = await prisma.productVariant.findUnique({ where: { sku: payload.sku } });

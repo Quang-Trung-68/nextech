@@ -53,21 +53,33 @@
                     if (!o || o <= 0 || p >= o) return 0;
                     return Math.round((1 - p / o) * 100);
                   }
+                  function couponRuleDescE(c) {
+                    if (!c) return '';
+                    if (c.type === 'PERCENTAGE') {
+                      var s = 'Giảm ' + Number(c.value) + '% trên tổng đơn';
+                      if (c.maxDiscountAmount != null) s += ' (tối đa ' + Number(c.maxDiscountAmount).toLocaleString('vi-VN') + 'đ)';
+                      return s;
+                    }
+                    return 'Giảm ' + Number(c.value).toLocaleString('vi-VN') + 'đ (cố định)';
+                  }
                 %>
                 <% order.items.forEach(function(item) {
                   const discountPercent = getDiscountPercentFromSnapshotEmail(item.price, item.originalPrice);
                 %>
                 <tr>
-                  <td style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#475569;">
+                  <td style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#475569;vertical-align:top;">
                     <%= item.name || (item.product ? item.product.name : 'Sản phẩm') %> <strong style="color:#1e293b;">x<%= item.quantity %></strong>
+                    <% if (item.variantSummary) { %>
+                      <p style="margin:6px 0 0 0;color:#64748b;font-size:12px;line-height:1.4;">Loại: <%= item.variantSummary %></p>
+                    <% } %>
                   </td>
-                  <td align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:bold;white-space:nowrap;">
+                  <td align="right" style="padding:12px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#1e293b;font-weight:bold;white-space:nowrap;vertical-align:top;">
                     <% if (discountPercent > 0) { %>
-                      <span style="text-decoration:line-through;color:#999;font-size:12px;">
-                        <%= item.originalPrice != null ? formatVNDEmail(item.originalPrice) : '' %>
-                      </span>
-                      <span style="color:#e53e3e;font-weight:bold;">
+                      <span style="color:#e53e3e;font-weight:bold;display:block;">
                         <%= formatVNDEmail(item.price) %>
+                      </span>
+                      <span style="text-decoration:line-through;color:#999;font-size:12px;display:block;">
+                        <%= item.originalPrice != null ? formatVNDEmail(item.originalPrice) : '' %>
                       </span>
                       <span style="color:#e53e3e;font-size:11px;"> (-<%= discountPercent %>%)</span>
                     <% } else { %>
@@ -87,8 +99,11 @@
                 </tr>
                 <% if (order.discountAmount > 0) { %>
                 <tr>
-                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;">
+                  <td style="font-size:14px;color:#64748b;padding-bottom:8px;vertical-align:top;">
                     Mã giảm giá <%= order.coupon ? '(' + order.coupon.code + ')' : '' %>:
+                    <% if (order.coupon) { %>
+                      <span style="display:block;font-size:12px;color:#64748b;font-weight:normal;margin-top:4px;"><%= couponRuleDescE(order.coupon) %></span>
+                    <% } %>
                   </td>
                   <td align="right" style="font-size:14px;color:#dc2626;padding-bottom:8px;font-weight:600;">
                     - <%= formatVNDEmail(order.discountAmount) %>

@@ -85,6 +85,20 @@ const validateCoupon = async ({ code, userId, orderAmount }) => {
   return { coupon, discountAmount };
 };
 
+/**
+ * Mô tả quy tắc giảm giá (hiển thị trên checkout / email).
+ */
+function formatCouponRuleDescription(coupon) {
+  if (coupon.type === 'PERCENTAGE') {
+    let s = `Giảm ${Number(coupon.value)}% trên tổng giá trị đơn`;
+    if (coupon.maxDiscountAmount != null) {
+      s += ` (tối đa ${Number(coupon.maxDiscountAmount).toLocaleString('vi-VN')}đ)`;
+    }
+    return s;
+  }
+  return `Giảm ${Number(coupon.value).toLocaleString('vi-VN')}đ (cố định)`;
+}
+
 // ─── Admin: CRUD ──────────────────────────────────────────────────────────────
 
 /**
@@ -148,6 +162,7 @@ const toggleCouponActive = async (id) => {
 
 module.exports = {
   validateCoupon,
+  formatCouponRuleDescription,
   createCoupon,
   listCoupons,
   deleteCoupon,

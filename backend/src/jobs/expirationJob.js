@@ -9,11 +9,12 @@ const expirationJob = cron.schedule('* * * * *', async () => {
     const expiredMinutes = 15;
     const expirationTime = new Date(Date.now() - expiredMinutes * 60 * 1000);
 
-    // Tìm các đơn hàng PENDING + UNPAID (Thường là Stripe/SePay) đã quá hạn 15 phút
+    // Chỉ đơn cần thanh toán online trước khi xử lý — COD không bị timeout 15p
     const expiredOrders = await prisma.order.findMany({
       where: {
         status: 'PENDING',
         paymentStatus: 'UNPAID',
+        paymentMethod: { in: ['STRIPE', 'SEPAY'] },
         createdAt: {
           lt: expirationTime,
         },

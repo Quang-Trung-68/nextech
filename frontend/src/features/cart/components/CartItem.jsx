@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatVND } from '@/utils/price';
 import { Link } from 'react-router-dom';
+import { VariantOptionBadges } from '@/components/product/VariantOptionBadges';
 
 const getOptimizedImage = (url, width) => {
   if (!url) return '/placeholder.png';
@@ -24,9 +25,28 @@ const getOptimizedImage = (url, width) => {
 };
 
 export function CartItem({ item, onUpdateQuantity, onRemove }) {
-  const { productId, variantId, name, price, finalPrice, discountPercent, image, stock, quantity, lineTotal, subtotal } = item;
+  const {
+    productId,
+    variantId,
+    name,
+    price,
+    finalPrice,
+    discountPercent,
+    image,
+    stock,
+    quantity,
+    lineTotal,
+    subtotal,
+    originalUnitPrice,
+    variantOptions,
+  } = item;
   const displayLineTotal = lineTotal ?? subtotal;
-  const displayFinalPrice = finalPrice ?? price;
+  const listUnit =
+    originalUnitPrice != null && originalUnitPrice !== ''
+      ? Number(originalUnitPrice)
+      : Number(price);
+  const displayFinalPrice = finalPrice != null ? Number(finalPrice) : listUnit;
+  const showSale = displayFinalPrice < listUnit - 0.5 || (discountPercent ?? 0) > 0;
   const itemImage = getOptimizedImage(image, 120);
 
   const handleInputChange = (e) => {
@@ -66,11 +86,12 @@ export function CartItem({ item, onUpdateQuantity, onRemove }) {
             <Link to={`/products/all/${productId}`} className="font-semibold text-sm sm:text-base text-apple-dark hover:text-apple-blue transition-colors line-clamp-2">
               {name}
             </Link>
+            <VariantOptionBadges options={variantOptions} className="mt-1" />
             <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
-              {discountPercent > 0 ? (
+              {showSale ? (
                 <>
                   <span className="font-bold text-sm sm:text-base text-red-500">{formatVND(displayFinalPrice)}</span>
-                  <span className="text-[11px] sm:text-sm line-through text-gray-400">{formatVND(price)}</span>
+                  <span className="text-[11px] sm:text-sm line-through text-gray-400">{formatVND(listUnit)}</span>
                 </>
               ) : (
                 <span className="font-bold text-sm sm:text-base text-primary">{formatVND(displayFinalPrice)}</span>

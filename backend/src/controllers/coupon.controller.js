@@ -1,4 +1,5 @@
 const couponService = require('../services/coupon.service');
+const { formatCouponRuleDescription } = couponService;
 
 // ─── User: Validate coupon ────────────────────────────────────────────────────
 
@@ -22,6 +23,14 @@ const validateCoupon = async (req, res, next) => {
       message: `Áp dụng mã thành công! Bạn được giảm ${discountAmount.toLocaleString('vi-VN')}đ`,
       couponId: coupon.id,
       discountAmount,
+      couponMeta: {
+        code: coupon.code,
+        type: coupon.type,
+        value: coupon.value,
+        maxDiscountAmount: coupon.maxDiscountAmount,
+        minOrderAmount: coupon.minOrderAmount,
+        description: formatCouponRuleDescription(coupon),
+      },
     });
   } catch (error) {
     next(error);

@@ -20,6 +20,9 @@ const variantUpsertRowSchema = z.object({
   price: z.coerce.number().positive(),
   stock: z.coerce.number().int().min(0),
   imageUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
+  salePrice: z.coerce.number().positive().optional().nullable(),
+  saleExpiresAt: z.union([z.string(), z.literal(''), z.null()]).optional(),
+  saleStock: z.coerce.number().int().min(1).optional().nullable(),
 });
 
 const upsertVariantsBodySchema = z.object({
@@ -32,6 +35,10 @@ const updateVariantBodySchema = z
     price: z.coerce.number().positive().optional(),
     stock: z.coerce.number().int().min(0).optional(),
     imageUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
+    salePrice: z.coerce.number().positive().optional().nullable(),
+    saleExpiresAt: z.union([z.string(), z.literal(''), z.null()]).optional(),
+    saleStock: z.coerce.number().int().min(1).optional().nullable(),
+    saleSoldCount: z.coerce.number().int().min(0).optional(),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'Cần ít nhất một trường để cập nhật' });
 

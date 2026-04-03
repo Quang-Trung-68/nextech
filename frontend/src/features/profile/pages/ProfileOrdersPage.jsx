@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { orderItemSummaryLine } from '@/utils/orderItemLabel';
 import { Link } from 'react-router-dom';
 
 const STATUS_LABELS = {
@@ -146,7 +147,7 @@ const ProfileOrdersPage = () => {
               </TableHeader>
               <TableBody>
                 {data.orders.map((order) => {
-                  const summaryNames = order.orderItems.map(item => item.product?.name || 'Sản phẩm').join(', ');
+                  const summaryNames = order.orderItems.map(orderItemSummaryLine).join(', ');
                   return (
                     <TableRow key={order.id} className="hover:bg-gray-50/50 transition-colors">
                       <TableCell className="font-mono text-xs font-semibold text-apple-dark pb-3 pt-3">

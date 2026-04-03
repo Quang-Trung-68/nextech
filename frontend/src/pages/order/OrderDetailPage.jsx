@@ -5,6 +5,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOrder, useCancelOrder } from '@/features/orders/hooks/useOrder';
 import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
 import { formatVND } from '@/utils/price';
+import { formatCouponRuleDescription } from '@/utils/couponDisplay';
+import { VariantOptionBadges } from '@/components/product/VariantOptionBadges';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -77,12 +79,17 @@ const OrderDetailPage = () => {
     setReviewModalOpen(true);
   };
 
-  // Clear cart only once when success page runs
+  // Sau redirect thanh toán — refetch giỏ (SePay xóa giỏ khi PAID; cần sync với server)
   useEffect(() => {
-    if (isSuccessPage) {
-      queryClient.invalidateQueries(['cart']);
-    }
+    if (!isSuccessPage) return;
+    queryClient.invalidateQueries({ queryKey: ['cart'] });
   }, [isSuccessPage, queryClient]);
+
+  useEffect(() => {
+    if (!isSuccessPage || order?.paymentStatus !== 'PAID') return;
+    queryClient.invalidateQueries({ queryKey: ['cart'] });
+    queryClient.refetchQueries({ queryKey: ['cart'] });
+  }, [isSuccessPage, order?.paymentStatus, queryClient]);
 
   /**
    * SePay: success_url chỉ đưa user về ?success=true; PAID trong DB đến từ IPN webhook.
@@ -103,6 +110,8 @@ const OrderDetailPage = () => {
         await axiosInstance.post(`/payments/sepay/sync/${id}`);
         await queryClient.invalidateQueries({ queryKey: ['order', id] });
         await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        await queryClient.invalidateQueries({ queryKey: ['cart'] });
+        await queryClient.refetchQueries({ queryKey: ['cart'] });
       } catch (e) {
         console.warn('[Order] SePay sync failed', e?.response?.data || e.message);
       }
@@ -284,14 +293,21 @@ const OrderDetailPage = () => {
                     <h3 className="font-semibold text-apple-dark line-clamp-2 md:text-lg leading-tight">
                       {item.product?.name || 'Sản phẩm không rõ'}
                     </h3>
+                    {item.variantOptions?.length ? (
+                      <VariantOptionBadges options={item.variantOptions} className="mt-1.5" />
+                    ) : item.variantSummary ? (
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        <span className="font-medium">Loại:</span> {item.variantSummary}
+                      </p>
+                    ) : null}
                     <p className="text-sm text-apple-secondary">SL: {item.quantity}</p>
                     
-                    {/* Giá theo snapshot */}
-                    <div className="flex items-center gap-2 mt-1">
+                    {/* Giá theo snapshot — giá sale trước, gạch giá gốc */}
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
                       {discountPercent > 0 && item.originalPrice != null ? (
                         <>
-                          <span className="text-sm line-through text-gray-400">{formatVND(item.originalPrice)}</span>
                           <span className="font-bold text-red-500">{formatVND(item.price)}</span>
+                          <span className="text-sm line-through text-gray-400">{formatVND(item.originalPrice)}</span>
                           <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-semibold">
                             -{discountPercent}%
                           </span>
@@ -413,16 +429,23 @@ const OrderDetailPage = () => {
                 <span className="font-medium text-apple-dark">{formatVND(Number(totalAmount) + Number(order.discountAmount || 0))}</span>
               </div>
               {order.discountAmount > 0 && (
-                <div className="flex justify-between items-center text-green-600">
-                  <span className="flex items-center gap-1">
-                    Giảm giá
+                <div className="flex justify-between items-start gap-3 text-green-600">
+                  <div className="min-w-0">
+                    <span className="flex flex-wrap items-center gap-1">
+                      Giảm giá
+                      {order.coupon && (
+                        <span className="font-mono text-[10px] bg-green-100 text-green-700 rounded px-1 py-0.5 font-bold tracking-wider">
+                          {order.coupon.code}
+                        </span>
+                      )}
+                    </span>
                     {order.coupon && (
-                      <span className="font-mono text-[10px] bg-green-100 text-green-700 rounded px-1 py-0.5 font-bold tracking-wider">
-                        {order.coupon.code}
-                      </span>
+                      <p className="text-xs text-green-800/90 font-normal mt-1 leading-snug">
+                        {formatCouponRuleDescription(order.coupon)}
+                      </p>
                     )}
-                  </span>
-                  <span className="font-medium">− {formatVND(order.discountAmount)}</span>
+                  </div>
+                  <span className="font-medium shrink-0">− {formatVND(order.discountAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center">

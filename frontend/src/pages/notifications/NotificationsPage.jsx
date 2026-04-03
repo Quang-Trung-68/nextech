@@ -28,7 +28,7 @@ const getActionUrl = (notification) => {
     case 'new_order':
       return `/admin/orders?orderId=${data?.orderId}`;
     case 'low_stock':
-      return `/admin/products?productId=${data?.productId}`;
+      return data?.productId ? `/admin/products/${data.productId}/edit` : '/admin/products';
     default:
       return '#';
   }

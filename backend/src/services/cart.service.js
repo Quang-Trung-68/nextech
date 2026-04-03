@@ -1,7 +1,20 @@
 const prisma = require('../utils/prisma');
-const { getFinalPrice, getDiscountPercent, addPriceFields } = require('../utils/price');
+const { getFinalPrice, getDiscountPercent, addPriceFields, getVariantEffectivePricing } = require('../utils/price');
+const { buildVariantDisplay } = require('../utils/variantLabel');
 const { NotFoundError, ConflictError, AppError } = require('../errors/AppError');
 const ERROR_CODES = require('../errors/errorCodes');
+
+const VARIANT_INCLUDE = {
+  include: {
+    values: {
+      include: {
+        attributeValue: {
+          include: { attribute: { select: { id: true, name: true, position: true } } },
+        },
+      },
+    },
+  },
+};
 
 const _getOrCreateCart = async (userId) => {
   return prisma.cart.upsert({
@@ -12,7 +25,7 @@ const _getOrCreateCart = async (userId) => {
       items: {
         include: {
           product: { include: { images: true } },
-          variant: true,
+          variant: VARIANT_INCLUDE,
         },
         orderBy: {
           createdAt: 'asc',
@@ -33,30 +46,43 @@ const _formatCart = (cart) => {
     let finalPrice;
     let stock;
     let discountPercent;
+    /** Giá niêm yết / gạch ngang (đơn vị): giá gốc biến thể hoặc giá gốc SP */
+    let originalUnitPrice;
 
     if (hasVariants && variant) {
-      finalPrice = Number(variant.price);
+      const vp = getVariantEffectivePricing(product, variant);
+      finalPrice = vp.finalPrice;
       stock = variant.stock;
-      discountPercent = getDiscountPercent(product.price, product.salePrice);
+      discountPercent = vp.discountPercent;
+      originalUnitPrice = parseFloat(variant.price);
     } else {
       finalPrice = getFinalPrice(product.price, product.salePrice);
       discountPercent = getDiscountPercent(product.price, product.salePrice);
       stock = product.stock;
+      originalUnitPrice = parseFloat(product.price);
     }
 
     const lineTotal = finalPrice * item.quantity;
     totalItems += item.quantity;
     cartTotal += lineTotal;
 
+    const { options: variantOptions, summary: variantSummary } =
+      hasVariants && variant ? buildVariantDisplay(variant) : { options: [], summary: '' };
+
     return {
       id: item.id,
       productId: item.productId,
       variantId: item.variantId,
       name: product.name,
+      /** Giá gốc sản phẩm (SP đơn) — giữ tương thích; với biến thể dùng originalUnitPrice để hiển thị */
       price: product.price,
       salePrice: product.salePrice,
       finalPrice,
+      /** Giá niêm yết từng dòng (biến thể: giá gốc biến thể; không biến thể: giá gốc SP) */
+      originalUnitPrice,
       discountPercent,
+      variantOptions,
+      variantSummary,
       image:
         variant?.imageUrl ||
         (product.images && product.images.length > 0 ? product.images[0].url : null),

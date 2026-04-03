@@ -1,6 +1,6 @@
 const prisma = require('../utils/prisma');
 const ApiFeatures = require('../utils/apiFeatures');
-const { addPriceFields } = require('../utils/price');
+const { addPriceFields, enrichVariantForStore } = require('../utils/price');
 const { NotFoundError } = require('../errors/AppError');
 
 const getProducts = async (queryParams) => {
@@ -69,7 +69,14 @@ const getProductById = async (id) => {
     throw new NotFoundError('Product');
   }
 
-  return addPriceFields(product);
+  const withPrices = addPriceFields(product);
+  if (withPrices.variants?.length) {
+    return {
+      ...withPrices,
+      variants: withPrices.variants.map((v) => enrichVariantForStore(withPrices, v)),
+    };
+  }
+  return withPrices;
 };
 
 const createProduct = async (data) => {

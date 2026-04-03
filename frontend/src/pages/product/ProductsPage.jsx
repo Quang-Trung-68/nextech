@@ -77,14 +77,14 @@ const ActionButtons = ({ product, viewMode }) => {
         onClick={handleAddToCart}
         disabled={(!product.hasVariants && product.stock === 0) || isAddingToCart || isBuying}
       >
-        {isAddingToCart ? 'Đang thêm...' : product.hasVariants ? 'Chọn tùy chọn' : product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+        {isAddingToCart ? 'Đang thêm...' : product.stock === 0 && !product.hasVariants ? 'Hết hàng' : 'Thêm vào giỏ'}
       </Button>
       <Button 
         className={`rounded-full bg-apple-blue hover:bg-apple-blue/90 text-white font-semibold shadow-sm transition-all active:scale-[0.98] px-0 ${viewMode === 'list' ? 'flex-1' : 'w-full'}`}
         onClick={handleBuyNow}
         disabled={(!product.hasVariants && product.stock === 0) || isAddingToCart || isBuying}
       >
-        {isBuying ? 'Đang xử lý...' : product.hasVariants ? 'Xem tùy chọn' : 'Mua ngay'}
+        {isBuying ? 'Đang xử lý...' : 'Mua ngay'}
       </Button>
     </div>
   );

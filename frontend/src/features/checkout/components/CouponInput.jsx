@@ -5,15 +5,16 @@ import { Tag, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { formatCouponRuleDescription } from '@/utils/couponDisplay';
 
 /**
  * CouponInput — standalone coupon widget cho Checkout.
  *
  * Props:
  *   orderAmount   {number}  — tổng tiền hiện tại để validate phía server
- *   onApply       {fn}      — callback({ code, discountAmount, couponId }) khi apply thành công
+ *   onApply       {fn}      — callback({ code, discountAmount, couponId, couponMeta }) khi apply thành công
  *   onRemove      {fn}      — callback() khi user hủy mã
- *   appliedCoupon {object|null} — { code, discountAmount, couponId } | null
+ *   appliedCoupon {object|null} — { code, discountAmount, couponId, couponMeta? } | null
  */
 export function CouponInput({ orderAmount, onApply, onRemove, appliedCoupon }) {
   const [inputValue, setInputValue] = useState('');
@@ -23,10 +24,17 @@ export function CouponInput({ orderAmount, onApply, onRemove, appliedCoupon }) {
     mutationFn: () => validateCoupon({ code: inputValue.trim(), orderAmount }),
     onSuccess: (data) => {
       setCouponError(null);
+      const meta = data.couponMeta;
       onApply({
         code: inputValue.trim().toUpperCase(),
         discountAmount: data.discountAmount,
         couponId: data.couponId,
+        couponMeta: meta
+          ? {
+              ...meta,
+              description: meta.description || formatCouponRuleDescription(meta),
+            }
+          : undefined,
       });
     },
     onError: (err) => {
@@ -56,6 +64,11 @@ export function CouponInput({ orderAmount, onApply, onRemove, appliedCoupon }) {
               <span className="font-extrabold text-green-800 text-base">
                 {appliedCoupon.discountAmount.toLocaleString('vi-VN')}đ
               </span>
+              {appliedCoupon.couponMeta?.description && (
+                <span className="block text-xs text-green-800/90 font-normal mt-1.5 leading-snug">
+                  {appliedCoupon.couponMeta.description}
+                </span>
+              )}
             </p>
           </div>
           <button

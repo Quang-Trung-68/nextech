@@ -2,14 +2,27 @@ const prisma = require('../utils/prisma');
 const cartService = require('./cart.service');
 const paymentService = require('./payment.service');
 const emailJob = require('../jobs/emailJob');
-const { getFinalPrice, getDiscountPercentFromSnapshot, addPriceFields } = require('../utils/price');
+const { getFinalPrice, getDiscountPercentFromSnapshot, addPriceFields, getVariantEffectivePricing } = require('../utils/price');
 const { AppError, NotFoundError, ConflictError, ForbiddenError } = require('../errors/AppError');
 const { validateCoupon } = require('./coupon.service');
 const ERROR_CODES = require('../errors/errorCodes');
 const { isSaleActive } = require('../utils/saleUtils');
 const notificationService = require('./notification.service');
+const { buildVariantDisplay } = require('../utils/variantLabel');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const VARIANT_ORDER_INCLUDE = {
+  include: {
+    values: {
+      include: {
+        attributeValue: {
+          include: { attribute: { select: { id: true, name: true, position: true } } },
+        },
+      },
+    },
+  },
+};
 
 const ORDER_DETAIL_INCLUDE = {
   orderItems: {
@@ -17,9 +30,7 @@ const ORDER_DETAIL_INCLUDE = {
       product: {
         select: { id: true, name: true, price: true, salePrice: true, images: true, hasVariants: true },
       },
-      variant: {
-        select: { id: true, sku: true, price: true },
-      },
+      variant: VARIANT_ORDER_INCLUDE,
     },
   },
   user: {
@@ -36,12 +47,31 @@ const _addOrderItemDiscounts = (order) => {
   if (!order || !order.orderItems) return order;
   return {
     ...order,
-    orderItems: order.orderItems.map((item) => ({
-      ...item,
-      discountPercent: getDiscountPercentFromSnapshot(item.price, item.originalPrice),
-    })),
+    orderItems: order.orderItems.map((item) => {
+      const { options: variantOptions, summary: variantSummary } = item.variant
+        ? buildVariantDisplay(item.variant)
+        : { options: [], summary: '' };
+      return {
+        ...item,
+        discountPercent: getDiscountPercentFromSnapshot(item.price, item.originalPrice),
+        variantOptions,
+        variantSummary,
+      };
+    }),
   };
 };
+
+/** Payload dòng sản phẩm cho email (kèm nhãn biến thể). */
+function mapOrderItemForEmail(oi) {
+  const { summary: variantSummary } = oi.variant ? buildVariantDisplay(oi.variant) : { summary: '' };
+  return {
+    name: oi.product?.name || 'Sản phẩm',
+    quantity: oi.quantity,
+    price: oi.price,
+    originalPrice: oi.originalPrice,
+    variantSummary,
+  };
+}
 
 const STATUS_FLOW = {
   PENDING: 'PROCESSING',
@@ -112,7 +142,39 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
             ERROR_CODES.PRODUCT.PRODUCT_OUT_OF_STOCK
           );
         }
-        const effectivePrice = Number(variant.price);
+        const vp = getVariantEffectivePricing(product, variant);
+        const effectivePrice = vp.finalPrice;
+
+        if (vp.saleSource === 'variant' && variant.saleStock != null) {
+          const updated = await tx.productVariant.updateMany({
+            where: {
+              id: variant.id,
+              saleSoldCount: { lt: variant.saleStock },
+            },
+            data: { saleSoldCount: { increment: item.quantity } },
+          });
+          if (updated.count === 0) {
+            throw new ConflictError(
+              'Biến thể đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
+              'SALE_SOLD_OUT'
+            );
+          }
+        } else if (vp.saleSource === 'product' && product.saleStock != null) {
+          const updated = await tx.product.updateMany({
+            where: {
+              id: product.id,
+              saleSoldCount: { lt: product.saleStock },
+            },
+            data: { saleSoldCount: { increment: item.quantity } },
+          });
+          if (updated.count === 0) {
+            throw new ConflictError(
+              'Sản phẩm đã hết suất giảm giá. Vui lòng đặt lại với giá gốc.',
+              'SALE_SOLD_OUT'
+            );
+          }
+        }
+
         await tx.productVariant.update({
           where: { id: variant.id },
           data: { stock: { decrement: item.quantity } },
@@ -122,7 +184,7 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
           variantId: item.variantId,
           quantity: item.quantity,
           price: effectivePrice,
-          originalPrice: parseFloat(product.price),
+          originalPrice: parseFloat(variant.price),
         });
         continue;
       }
@@ -356,7 +418,7 @@ const getMyOrders = async (userId, { status, search, page, limit }) => {
         orderItems: {
           include: {
             product: { select: { id: true, name: true, price: true, salePrice: true, images: true } },
-            variant: { select: { id: true, sku: true, price: true } },
+            variant: VARIANT_ORDER_INCLUDE,
           },
         },
       },
@@ -608,12 +670,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
         user: { name: cancelled.user.name },
         order: {
           id: cancelled.id,
-          items: cancelled.orderItems.map(oi => ({
-            name: oi.product?.name || 'Sản phẩm',
-            quantity: oi.quantity,
-            price: oi.price,
-            originalPrice: oi.originalPrice,
-          })),
+          items: cancelled.orderItems.map(mapOrderItemForEmail),
           totalAmount: cancelled.totalAmount,
           discountAmount: cancelled.discountAmount,
           coupon: cancelled.coupon,
@@ -679,7 +736,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       user: { name: updatedOrder.user.name },
       order: {
         id: updatedOrder.id,
-        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
+        items: updatedOrder.orderItems.map(mapOrderItemForEmail),
         totalAmount: updatedOrder.totalAmount,
         discountAmount: updatedOrder.discountAmount,
         coupon: updatedOrder.coupon,
@@ -691,7 +748,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       user: { name: updatedOrder.user.name },
       order: {
         id: updatedOrder.id,
-        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
+        items: updatedOrder.orderItems.map(mapOrderItemForEmail),
         totalAmount: updatedOrder.totalAmount,
         discountAmount: updatedOrder.discountAmount,
         coupon: updatedOrder.coupon,
@@ -718,7 +775,7 @@ const adminUpdateOrderStatus = async (orderId, newStatus) => {
       user: { name: updatedOrder.user.name },
       order: {
         id: updatedOrder.id,
-        items: updatedOrder.orderItems.map(oi => ({ name: oi.product.name, quantity: oi.quantity, price: oi.price, originalPrice: oi.originalPrice })),
+        items: updatedOrder.orderItems.map(mapOrderItemForEmail),
         totalAmount: updatedOrder.totalAmount,
         discountAmount: updatedOrder.discountAmount,
         coupon: updatedOrder.coupon,

@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import axiosInstance from '@/lib/axios';
+import { VariantOptionBadges } from '@/components/product/VariantOptionBadges';
+import { formatCouponRuleDescription } from '@/utils/couponDisplay';
 
 // ─── Status configs ────────────────────────────────────────────────────────────
 
@@ -462,16 +464,25 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                                         <p className="font-medium line-clamp-2 leading-snug">
                                           {item.product?.name || 'Sản phẩm đã xóa'}
                                         </p>
-                                        {item.originalPrice && Number(item.originalPrice) !== Number(item.price) && (
-                                          <p className="text-xs text-muted-foreground line-through mt-0.5">
-                                            {formatCurrency(item.originalPrice)}
-                                          </p>
-                                        )}
+                                        {item.variantOptions?.length ? (
+                                          <VariantOptionBadges options={item.variantOptions} className="mt-1" />
+                                        ) : item.variantSummary ? (
+                                          <p className="text-xs text-muted-foreground mt-1">Loại: {item.variantSummary}</p>
+                                        ) : null}
                                       </div>
                                     </div>
                                   </td>
                                   <td className="px-3 py-3 text-center font-medium">{item.quantity}</td>
-                                  <td className="px-4 py-3 text-right text-primary font-medium">{formatCurrency(item.price)}</td>
+                                  <td className="px-4 py-3 text-right">
+                                    {(item.discountPercent ?? 0) > 0 && item.originalPrice != null ? (
+                                      <div className="flex flex-col items-end gap-0.5">
+                                        <span className="font-medium text-red-600">{formatCurrency(item.price)}</span>
+                                        <span className="text-xs line-through text-muted-foreground">{formatCurrency(item.originalPrice)}</span>
+                                      </div>
+                                    ) : (
+                                      <span className="font-medium text-primary">{formatCurrency(item.price)}</span>
+                                    )}
+                                  </td>
                                   <td className="px-4 py-3 text-right font-semibold">{formatCurrency(Number(item.price) * item.quantity)}</td>
                                 </tr>
                               ))
@@ -496,17 +507,24 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                           <span>{formatCurrency(order.shippingFee || 0)}</span>
                         </div>
                         {order.discountAmount > 0 && (
-                          <div className="flex justify-between text-sm text-emerald-600">
-                            <span className="flex items-center gap-1.5">
-                              <Tag className="h-3 w-3" />
-                              Giảm giá
-                              {order.coupon?.code && (
-                                <code className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 rounded text-[10px] font-bold">
-                                  {order.coupon.code}
-                                </code>
+                          <div className="flex justify-between gap-3 text-sm text-emerald-600">
+                            <div className="min-w-0">
+                              <span className="flex flex-wrap items-center gap-1.5">
+                                <Tag className="h-3 w-3 shrink-0" />
+                                Giảm giá
+                                {order.coupon?.code && (
+                                  <code className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 rounded text-[10px] font-bold">
+                                    {order.coupon.code}
+                                  </code>
+                                )}
+                              </span>
+                              {order.coupon && (
+                                <p className="text-xs text-emerald-800/90 font-normal mt-1 leading-snug">
+                                  {formatCouponRuleDescription(order.coupon)}
+                                </p>
                               )}
-                            </span>
-                            <span className="font-semibold">−{formatCurrency(order.discountAmount)}</span>
+                            </div>
+                            <span className="font-semibold shrink-0">−{formatCurrency(order.discountAmount)}</span>
                           </div>
                         )}
                         <div className="border-t pt-2.5 mt-1 flex justify-between items-center">

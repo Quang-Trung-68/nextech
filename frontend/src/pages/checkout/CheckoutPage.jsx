@@ -59,7 +59,7 @@ const CheckoutPageForm = () => {
   const [pendingOrder, setPendingOrder] = useState(null);
 
   // ─── Coupon state (local only, không persist sang Zustand/localStorage) ───
-  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountAmount, couponId }
+  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountAmount, couponId, couponMeta? }
 
   // Form config
   const {

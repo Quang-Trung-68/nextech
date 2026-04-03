@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -19,12 +20,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import axiosInstance from '@/lib/axios';
-import { cartesianProduct } from '@/features/admin/components/VariantGrid';
 import { useQueryClient } from '@tanstack/react-query';
 import { adminKeys } from '@/features/admin/hooks/useAdmin';
+import { buildVariantsPayload } from '@/features/admin/utils/buildVariantsPayload';
 
 const AdminProductPage = () => {
   usePageTitle('Manage Products | Admin');
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [filterState, setFilterState] = useState({ page: 1, limit: 10, category: '' });
@@ -43,83 +45,24 @@ const AdminProductPage = () => {
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
   const [isSavingProduct, setIsSavingProduct] = useState(false);
 
-  const [activeModal, setActiveModal] = useState(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [serverError, setServerError] = useState(null);
 
-  const buildVariantsPayload = async (productId, attributeDraft, variantRows, fallbackPrice) => {
-    const attrsPayload = {
-      attributes: attributeDraft.map((a, i) => ({
-        name: a.name.trim(),
-        position: i,
-        values: a.values
-          .map((v) => String(v).trim())
-          .filter(Boolean)
-          .map((value, j) => ({ value, position: j })),
-      })),
-    };
-    await axiosInstance.put(`/admin/products/${productId}/attributes`, attrsPayload);
-    const { data: attrRes } = await axiosInstance.get(`/admin/products/${productId}/attributes`);
-    const attrs = attrRes.data ?? attrRes;
-    const sortedAttrs = [...attrs].sort((a, b) => a.position - b.position);
-    const arrs = sortedAttrs.map((at) =>
-      [...at.values].sort((p, q) => p.position - q.position).map((val) => val.value)
-    );
-    const combos = cartesianProduct(arrs);
-    const variants = combos.map((combo, idx) => {
-      const attributeValueIds = combo.map((val, i) => {
-        const v = sortedAttrs[i].values.find((x) => x.value === val);
-        return v?.id;
-      });
-      if (attributeValueIds.some((id) => !id)) {
-        throw new Error('Không map được giá trị thuộc tính');
-      }
-      const row = variantRows[idx] || {};
-      let imageUrl = row.imageUrl;
-      if (imageUrl === '' || imageUrl === undefined) imageUrl = null;
-      return {
-        attributeValueIds,
-        price: Number(row.price ?? fallbackPrice),
-        stock: Number(row.stock ?? 0),
-        imageUrl,
-      };
-    });
-    await axiosInstance.put(`/admin/products/${productId}/variants`, { variants });
-  };
-
-  const handleCreateOrUpdate = async (body, meta = {}) => {
+  const handleCreateProduct = async (body, meta = {}) => {
     const { attributeDraft = [], variantRows = [] } = meta;
     setServerError(null);
     setIsSavingProduct(true);
     try {
-      if (activeModal === 'create') {
-        const { data } = await axiosInstance.post('/admin/products', body);
-        const productId = data.product?.id;
-        if (body.hasVariants && attributeDraft.length && productId) {
-          await buildVariantsPayload(productId, attributeDraft, variantRows, body.price);
-        }
-        toast.success('Product created successfully');
-        queryClient.invalidateQueries({ queryKey: adminKeys.all });
-        setActiveModal(null);
-        return;
+      const { data } = await axiosInstance.post('/admin/products', body);
+      const productId = data.product?.id;
+      if (body.hasVariants && attributeDraft.length && productId) {
+        await buildVariantsPayload(productId, attributeDraft, variantRows, body.price);
       }
-
-      if (activeModal === 'edit' && selectedProduct) {
-        const { data } = await axiosInstance.patch(`/admin/products/${selectedProduct.id}`, body);
-        if (body.hasVariants && attributeDraft.length) {
-          await buildVariantsPayload(
-            selectedProduct.id,
-            attributeDraft,
-            variantRows,
-            body.price
-          );
-        }
-        void data;
-        toast.success('Product updated successfully');
-        queryClient.invalidateQueries({ queryKey: adminKeys.all });
-        setActiveModal(null);
-      }
+      toast.success('Product created successfully');
+      queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      setCreateModalOpen(false);
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || 'Thao tác thất bại';
       toast.error(msg);
@@ -195,11 +138,7 @@ const AdminProductPage = () => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => {
-              setSelectedProduct(row.original);
-              setActiveModal('edit');
-              setServerError(null);
-            }}
+            onClick={() => navigate(`/admin/products/${row.original.id}/edit`)}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -237,7 +176,7 @@ const AdminProductPage = () => {
         <h1 className="text-3xl font-bold tracking-tight">Manage Products</h1>
         <Button
           onClick={() => {
-            setActiveModal('create');
+            setCreateModalOpen(true);
             setServerError(null);
           }}
         >
@@ -272,14 +211,13 @@ const AdminProductPage = () => {
       )}
 
       <ProductModal
-        isOpen={!!activeModal}
+        isOpen={createModalOpen}
         onClose={() => {
-          setActiveModal(null);
-          setSelectedProduct(null);
+          setCreateModalOpen(false);
           setServerError(null);
         }}
-        onSubmit={handleCreateOrUpdate}
-        initialData={activeModal === 'edit' ? selectedProduct : null}
+        onSubmit={handleCreateProduct}
+        initialData={null}
         isLoading={isSavingProduct}
         serverError={serverError}
       />

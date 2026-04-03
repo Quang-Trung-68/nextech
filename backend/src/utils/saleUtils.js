@@ -31,6 +31,32 @@ function isSaleActive(product) {
   return true;
 }
 
+/**
+ * Flash sale riêng từng biến thể (cùng quy tắc thời hạn / suất như sản phẩm).
+ */
+function isVariantSaleActive(variant) {
+  if (variant.salePrice == null) {
+    return false;
+  }
+
+  if (variant.saleExpiresAt != null) {
+    const expiry = new Date(variant.saleExpiresAt);
+    if (expiry <= new Date()) {
+      return false;
+    }
+  }
+
+  if (variant.saleStock != null) {
+    const sold = variant.saleSoldCount ?? 0;
+    if (sold >= variant.saleStock) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 module.exports = {
   isSaleActive,
+  isVariantSaleActive,
 };

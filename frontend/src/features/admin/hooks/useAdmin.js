@@ -29,6 +29,7 @@ export const adminKeys = {
   stats: () => [...adminKeys.all, 'stats'],
   revenue: (year, month) => [...adminKeys.all, 'revenue', year, month],
   products: (params) => [...adminKeys.all, 'products', params],
+  product: (id) => [...adminKeys.all, 'products', 'detail', id],
   productAttributes: (productId) => [...adminKeys.all, 'products', productId, 'attributes'],
   productVariants: (productId) => [...adminKeys.all, 'products', productId, 'variants'],
   orders: (params) => [...adminKeys.all, 'orders', params],
@@ -83,6 +84,20 @@ export function useAdminProducts(params) {
       return data;
     },
     placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * GET /api/admin/products/:id — Chi tiết sản phẩm (admin)
+ */
+export function useAdminProduct(productId) {
+  return useQuery({
+    queryKey: adminKeys.product(productId),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/admin/products/${productId}`);
+      return data.product ?? data;
+    },
+    enabled: !!productId,
   });
 }
 

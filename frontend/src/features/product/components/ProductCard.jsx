@@ -148,7 +148,7 @@ export function ProductCard({ product }) {
             onClick={handleAddToCart}
             disabled={(!hasVariants && stock === 0) || isAddingToCart}
           >
-            {isAddingToCart ? 'Đang thêm...' : hasVariants ? 'Chọn tùy chọn' : 'Thêm vào giỏ'}
+            {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
         </Button>
         
         {/* Rating & Favorite */}

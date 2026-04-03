@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useCancelOrder } from '@/features/profile/hooks/useCancelOrder';
 import { toast } from 'sonner';
+import { VariantOptionBadges } from '@/components/product/VariantOptionBadges';
+import { orderItemSummaryLine } from '@/utils/orderItemLabel';
 
 const OrderCard = ({ order, isExpanded, onToggle }) => {
   const { id, status, totalAmount, orderItems, createdAt } = order;
@@ -44,8 +46,7 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
     });
   };
 
-  // Truncate product names for summary
-  const summaryNames = orderItems.map(item => item.product?.name || 'Sản phẩm').join(', ');
+  const summaryNames = orderItems.map(orderItemSummaryLine).join(', ');
 
   return (
     <div 
@@ -148,11 +149,25 @@ const OrderCard = ({ order, isExpanded, onToggle }) => {
                     <p className="text-sm font-medium text-apple-dark line-clamp-1 leading-tight">
                       {item.product?.name || 'Sản phẩm'}
                     </p>
+                    {item.variantOptions?.length ? (
+                      <VariantOptionBadges options={item.variantOptions} className="mt-1" />
+                    ) : item.variantSummary ? (
+                      <p className="text-[11px] text-apple-secondary mt-1">
+                        Loại: {item.variantSummary}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-apple-secondary mt-1">Số lượng: {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-semibold text-apple-dark shrink-0">
-                    {formatCurrency(item.price)}
-                  </p>
+                  <div className="shrink-0 text-right">
+                    {(item.discountPercent ?? 0) > 0 && item.originalPrice != null ? (
+                      <>
+                        <span className="block text-sm font-semibold text-red-600">{formatCurrency(item.price)}</span>
+                        <span className="block text-xs line-through text-muted-foreground">{formatCurrency(item.originalPrice)}</span>
+                      </>
+                    ) : (
+                      <span className="text-sm font-semibold text-apple-dark">{formatCurrency(item.price)}</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

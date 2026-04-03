@@ -168,15 +168,19 @@ model ProductAttributeValue {
 }
 
 model ProductVariant {
-  id        String    @id @default(cuid())
-  productId String
-  sku       String    @unique
-  price     Decimal   @db.Decimal(15, 2)
-  stock     Int       @default(0)
-  imageUrl  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  id              String    @id @default(cuid())
+  productId       String
+  sku             String    @unique
+  price           Decimal   @db.Decimal(15, 2)
+  stock           Int       @default(0)
+  imageUrl        String?
+  salePrice       Decimal?  @db.Decimal(15, 2)
+  saleExpiresAt   DateTime?
+  saleStock       Int?
+  saleSoldCount   Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
   product    Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
   values     ProductVariantValue[]
