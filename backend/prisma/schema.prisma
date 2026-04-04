@@ -138,6 +138,8 @@ model Product {
   saleSoldCount   Int                 @default(0)
   hasVariants       Boolean             @default(false)
   lowStockThreshold Int                 @default(5)
+  /// Thông số hiển thị dạng bảng (không phải tùy chọn variant) — từ crawl JSON `specs`
+  specsJson         Json?
   cartItems         CartItem[]
   favorites         Favorite[]
   orderItems        OrderItem[]

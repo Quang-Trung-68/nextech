@@ -8,6 +8,7 @@ const CATEGORY_CODE_MAP = {
   Laptop: 'LT',
   'Máy tính bảng': 'MTB',
   'Phụ kiện': 'PK',
+  'Tai nghe': 'TN',
 };
 
 /**

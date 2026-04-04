@@ -50,7 +50,7 @@ export function ProductGallery({ images = [], productName = 'Hình ảnh sản p
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 w-full max-w-[min(100%,380px)] sm:max-w-[min(100%,420px)] mx-auto">
       
       {/* ─── MOBILE CAROUSEL (< md) ─── */}
       <div className="md:hidden w-full relative -mx-4 px-4 w-[calc(100%+2rem)] max-w-[100vw]">
@@ -62,13 +62,13 @@ export function ProductGallery({ images = [], productName = 'Hình ảnh sản p
           {images.map((img, index) => (
             <div 
               key={index} 
-              className="w-full flex-shrink-0 snap-center bg-white border rounded-2xl overflow-hidden aspect-square flex items-center justify-center"
+              className="w-full flex-shrink-0 snap-center bg-white border rounded-2xl overflow-hidden aspect-square max-h-[min(72vw,360px)] flex items-center justify-center"
               onClick={() => setIsFullscreen(true)}
             >
               <img
                 src={getOptimizedImage(img.url, 800)}
                 alt={`${productName} - ${index + 1}`}
-                className="w-full h-full object-contain p-4"
+                className="w-full h-full max-h-[min(72vw,360px)] object-contain p-3"
                 loading={index === 0 ? "eager" : "lazy"}
               />
             </div>
@@ -98,13 +98,13 @@ export function ProductGallery({ images = [], productName = 'Hình ảnh sản p
       <div className="hidden md:flex flex-col gap-4">
         {/* Ảnh chính */}
         <div
-          className="w-full aspect-square bg-white border rounded-2xl overflow-hidden cursor-zoom-in relative group"
+          className="w-full aspect-square max-h-[400px] bg-white border rounded-2xl overflow-hidden cursor-zoom-in relative group"
           onClick={() => setIsFullscreen(true)}
         >
           <img
             src={selectedImage}
             alt={productName}
-            className="object-contain w-full h-full p-4 transition-transform duration-500 group-hover:scale-105"
+            className="object-contain w-full h-full max-h-[400px] p-3 transition-transform duration-500 group-hover:scale-105"
             loading="eager"
             fetchPriority="high"
           />

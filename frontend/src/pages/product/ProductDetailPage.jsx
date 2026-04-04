@@ -19,6 +19,7 @@ import {
 import { useProductBySlug } from "@/features/product/hooks/useProduct";
 import { useAddToCart } from "@/features/cart/hooks/useCartMutations";
 import { ProductGallery } from "@/features/product/components/ProductGallery";
+import { ProductSpecsButton } from "@/features/product/components/ProductSpecsDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -254,6 +255,7 @@ const ProductDetailPage = () => {
     isSaleActive,
     saleStock,
     saleRemaining,
+    specsJson,
   } = product;
 
   // Xử lý tăng giảm số lượng input
@@ -545,6 +547,8 @@ const ProductDetailPage = () => {
                 ({numReviews} đánh giá)
               </span>
             </div>
+
+            <ProductSpecsButton specsJson={specsJson} productName={name} />
           </div>
 
           {/* Biến thể — chọn thuộc tính */}
