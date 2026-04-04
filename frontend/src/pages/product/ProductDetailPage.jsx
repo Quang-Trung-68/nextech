@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import SaleCountdownBadge from "@/components/product/SaleCountdownBadge";
 import SaleStockBadge from "@/components/product/SaleStockBadge";
 import ProductReviews from "@/features/reviews/ProductReviews";
+import { RelatedProducts } from "@/features/product/components/RelatedProducts";
 
 function findVariantForSelection(variants, attributes, selection) {
   if (!variants?.length || !attributes?.length) return null;
@@ -786,6 +787,8 @@ const ProductDetailPage = () => {
       <div className="mt-14 pt-10 border-t border-[#f5f5f7]">
         <ProductReviews productId={product.id} />
       </div>
+
+      <RelatedProducts productId={product.id} />
     </div>
   );
 };

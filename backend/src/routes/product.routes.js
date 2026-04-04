@@ -29,6 +29,12 @@ router.get(
   reviewController.getProductReviews
 );
 
+router.get(
+  '/:id/related',
+  validate(productParamsSchema, 'params'),
+  productController.getRelatedProducts,
+);
+
 router.get('/:id', validate(productParamsSchema, 'params'), productController.getProductById);
 
 router.post('/', protect, restrictTo('ADMIN'), validate(createProductSchema), productController.createProduct);

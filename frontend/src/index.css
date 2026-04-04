@@ -5,6 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Same behavior as tailwind-scrollbar-hide plugin — avoids extra dependency in Docker */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

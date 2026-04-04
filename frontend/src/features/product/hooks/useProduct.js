@@ -51,3 +51,16 @@ export function useProductBySlug(slug) {
     enabled: !!slug,
   });
 }
+
+/** Sản phẩm liên quan (tối đa 6) — GET /products/:id/related */
+export function useRelatedProducts(productId) {
+  return useQuery({
+    queryKey: ['products', productId, 'related'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get(`/products/${productId}/related`);
+      return data.products ?? [];
+    },
+    enabled: !!productId,
+    staleTime: 5 * 60 * 1000,
+  });
+}

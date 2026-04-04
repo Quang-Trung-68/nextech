@@ -36,6 +36,15 @@ const getProductById = async (req, res, next) => {
   }
 };
 
+const getRelatedProducts = async (req, res, next) => {
+  try {
+    const products = await productService.getRelatedProducts(req.params.id);
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createProduct = async (req, res, next) => {
   try {
     const product = await productService.createProduct(req.body);
@@ -68,6 +77,7 @@ module.exports = {
   getBrandsByType,
   getProductBySlug,
   getProductById,
+  getRelatedProducts,
   createProduct,
   updateProduct,
   deleteProduct,

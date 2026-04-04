@@ -219,11 +219,73 @@ const deleteProduct = async (id) => {
   });
 };
 
+const RELATED_LIST_INCLUDE = { images: true, ...BRAND_INCLUDE };
+
+const getRelatedProducts = async (productId) => {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+  });
+
+  if (!product) {
+    throw new NotFoundError('Product');
+  }
+
+  const exclude = [productId];
+  let results = [];
+
+  // Priority 1: cùng category + cùng brand
+  if (product.brandId) {
+    const p1 = await prisma.product.findMany({
+      where: {
+        category: product.category,
+        brandId: product.brandId,
+        id: { notIn: exclude },
+      },
+      orderBy: [{ saleSoldCount: 'desc' }, { rating: 'desc' }],
+      take: 6,
+      include: RELATED_LIST_INCLUDE,
+    });
+    results = p1;
+    p1.forEach((p) => exclude.push(p.id));
+  }
+
+  // Priority 2: cùng category + price ±30%
+  if (results.length < 6) {
+    const price = Number(product.price);
+    const p2 = await prisma.product.findMany({
+      where: {
+        category: product.category,
+        price: { gte: price * 0.7, lte: price * 1.3 },
+        id: { notIn: exclude },
+      },
+      orderBy: { saleSoldCount: 'desc' },
+      take: 6 - results.length,
+      include: RELATED_LIST_INCLUDE,
+    });
+    results = [...results, ...p2];
+    p2.forEach((p) => exclude.push(p.id));
+  }
+
+  // Priority 3: fill đủ 6 cùng category
+  if (results.length < 6) {
+    const p3 = await prisma.product.findMany({
+      where: { category: product.category, id: { notIn: exclude } },
+      orderBy: [{ saleSoldCount: 'desc' }, { rating: 'desc' }],
+      take: 6 - results.length,
+      include: RELATED_LIST_INCLUDE,
+    });
+    results = [...results, ...p3];
+  }
+
+  return results.map(addPriceFields);
+};
+
 module.exports = {
   getProducts,
   getProductById,
   getProductBySlug,
   getBrandsByType,
+  getRelatedProducts,
   createProduct,
   updateProduct,
   deleteProduct,
