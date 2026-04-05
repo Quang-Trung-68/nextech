@@ -211,7 +211,8 @@ cp .env.example .env
 # Run database migrations
 npx prisma migrate dev
 
-# (Optional) Seed sample data
+# (Optional) Seed từ prisma/seeds/data/products.json + posts (TRUNCATE DB trước)
+# Hoặc chỉ demo 80 SP (picsum): npm run db:seed:demo
 npm run db:seed
 
 # Start the dev server

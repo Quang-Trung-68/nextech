@@ -10,7 +10,7 @@
  *   3. ../../products.json (root repo)
  *   4. ../products.json (cạnh backend)
  *
- * Chạy: npm run db:seed:products (từ backend)
+ * Chạy: npm run db:seed (hoặc npx prisma db seed) — từ thư mục backend
  */
 const fs = require('fs');
 const path = require('path');

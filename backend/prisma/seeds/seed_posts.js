@@ -2,7 +2,7 @@
 /**
  * Seed bài viết từ posts.json — **xóa hết Post + Tag** trước, rồi tạo lại (không xóa Category).
  *
- * Điều kiện: đã có user ADMIN (npm run db:seed) và posts.json tồn tại.
+ * Điều kiện: đã có user ADMIN (sau npm run db:seed / seed_products) và posts.json tồn tại.
  *
  * Chạy local:  cd backend && node prisma/seeds/seed_posts.js
  * Docker:      docker compose exec backend node prisma/seeds/seed_posts.js
@@ -175,7 +175,7 @@ async function main() {
   const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
   if (!admin) {
     throw new Error(
-      'Không tìm thấy user ADMIN. Chạy trước: npm run db:seed (hoặc tạo admin thủ công).',
+      'Không tìm thấy user ADMIN. Chạy trước: npm run db:seed (products.json) hoặc tạo admin thủ công.',
     );
   }
 

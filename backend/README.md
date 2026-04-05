@@ -160,7 +160,8 @@ PUSHER_USE_TLS=false
 # Apply database schema migrations
 npx prisma migrate dev
 
-# (Optional) Seed sample data for testing
+# (Optional) Seed từ products.json (TRUNCATE) — cần file prisma/seeds/data/products.json
+# Demo nhanh (ảnh placeholder): npm run db:seed:demo
 npm run db:seed
 ```
 

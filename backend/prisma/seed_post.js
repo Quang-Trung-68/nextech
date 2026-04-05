@@ -3,7 +3,7 @@
  * Seed 2 danh mục (upsert) + 20 bài viết PUBLISHED mới mỗi lần chạy.
  * Slug luôn unique (có mã lô) — không xóa bài cũ, không trùng slug.
  *
- * Chạy local:  npm run db:seed:posts   (từ thư mục backend)
+ * Chạy local:  npm run db:seed:demo-posts   (từ thư mục backend)
  * Docker:      xem prisma/SEED_POST.md
  */
 const path = require('path');

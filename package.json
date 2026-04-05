@@ -5,6 +5,7 @@
   "scripts": {
     "deploy": "bash scripts/deploy.sh",
     "seed:all": "bash scripts/seed-all.sh",
+    "seed:reset": "bash scripts/reset-and-seed.sh",
     "docker:up": "docker compose -f docker-compose.prod.yml up -d",
     "docker:down": "docker compose -f docker-compose.prod.yml down",
     "docker:logs": "docker compose -f docker-compose.prod.yml logs -f",

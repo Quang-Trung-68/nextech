@@ -9,7 +9,7 @@
 
 ```bash
 cd backend
-npm run db:seed:sforum
+npm run db:seed:blog
 # hoặc: node prisma/seeds/seed_posts.js
 ```
 
@@ -26,7 +26,7 @@ Mỗi lần seed có **mã lô** (`runId`) — slug dạng `nex-seed-<runId>-c1-
 
 Tiêu đề có hậu tố `[<runId>]` để dễ phân biệt trong admin.
 
-**Điều kiện:** đã có ít nhất một user **ADMIN** (thường tạo bằng `npm run db:seed` trong `prisma/seed.js`).
+**Điều kiện:** đã có ít nhất một user **ADMIN** (thường tạo bằng `npm run db:seed` — `seed_products.js` + `products.json`).
 
 ---
 
@@ -34,7 +34,7 @@ Tiêu đề có hậu tố `[<runId>]` để dễ phân biệt trong admin.
 
 ```bash
 cd backend
-npm run db:seed:posts
+npm run db:seed:demo-posts
 ```
 
 ---
@@ -52,7 +52,7 @@ npm run db:seed:posts
 3. Chạy seed **bên trong container backend**:
 
    ```bash
-   docker compose exec backend node prisma/seed_post.js
+   docker compose exec backend npm run db:seed:demo-posts
    ```
 
 4. `DATABASE_URL` trong container đã trỏ tới service `postgres` (xem `docker-compose.yml`).

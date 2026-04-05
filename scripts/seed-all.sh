@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
-# NexTech — seed DB: main prisma seed + blog posts from prisma/seeds/data/posts.json
+# NexTech — seed đầy đủ (một luồng duy nhất):
+#   1) seed_products.js — TRUNCATE toàn bộ bảng + shop/users/brands/sản phẩm từ prisma/seeds/data/products.json
+#   2) seed_posts.js — bài viết từ prisma/seeds/data/posts.json
+#
+# Không chạy prisma/seed.js (demo 80 SP ảnh picsum) — dùng db:seed:demo nếu cần thử nhanh.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-# Local dev: docker-compose.yml  |  VPS production: COMPOSE_FILE=docker-compose.prod.yml
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
 
-echo "🌱 Seeding NexTech (compose: $COMPOSE_FILE)..."
+echo "🌱 NexTech seed-all (compose: $COMPOSE_FILE)"
+echo ""
 
-echo "📦 [1/2] prisma db seed (categories, brands, products, users, …)..."
-docker compose -f "$COMPOSE_FILE" exec -T backend npx prisma db seed
-
-echo "📰 [2/2] Blog posts (seed_posts.js)..."
-docker compose -f "$COMPOSE_FILE" exec -T backend node prisma/seeds/seed_posts.js
+echo "📦 [1/2] Sản phẩm + shop + users (TRUNCATE + products.json)..."
+docker compose -f "$COMPOSE_FILE" exec -T backend npm run db:seed
 
 echo ""
-echo "✅ Seed complete. Tip: docker compose -f \"$COMPOSE_FILE\" exec backend npx prisma studio"
+echo "📰 [2/2] Bài viết blog (posts.json)..."
+docker compose -f "$COMPOSE_FILE" exec -T backend npm run db:seed:blog
+
+echo ""
+echo "✅ Hoàn tất. Kiểm tra: docker compose -f \"$COMPOSE_FILE\" exec backend npx prisma studio"

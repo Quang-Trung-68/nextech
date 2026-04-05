@@ -5,7 +5,14 @@
 - File compose: **`docker-compose.prod.yml`** — Postgres, Soketi, backend (image production), frontend (build static + Nginx), reverse proxy **Nginx** (80/443), **Certbot** (renew).
 - Deploy một lệnh: **`bash scripts/deploy.sh`** (git pull → build → up → `prisma migrate deploy`).
 - SSL lần đầu: **`bash init-letsencrypt.sh`**, sau đó `bash scripts/deploy.sh`.
-- Seed: **`COMPOSE_FILE=docker-compose.prod.yml bash scripts/seed-all.sh`**
+- **Seed dữ liệu (sản phẩm từ `products.json` + blog từ `posts.json`):**
+  ```bash
+  COMPOSE_FILE=docker-compose.prod.yml bash scripts/seed-all.sh
+  ```
+- **Làm sạch volume Postgres + seed lại (demo — xóa hết DB trong Docker):**
+  ```bash
+  COMPOSE_FILE=docker-compose.prod.yml FORCE=1 bash scripts/reset-and-seed.sh
+  ```
 - Chi tiết: **[VPS_DEPLOY_GUIDE.md](./VPS_DEPLOY_GUIDE.md)**
 
 ---
@@ -43,14 +50,12 @@ Có thể tạo file `.env` ở **root** repo (cạnh `docker-compose.yml`) — 
 
 ## Migrate & seed
 
-- Mỗi lần container backend khởi động: `prisma migrate deploy`, sau đó seed **chỉ khi** bảng `Product` còn trống (tránh nhân đôi dữ liệu khi `docker compose restart`).
-- Nếu seed lỗi khi start, backend **vẫn chạy** (xem log `[docker] Cảnh báo: seed...`). Chạy tay:
-  ```bash
-  docker compose exec backend npx prisma db seed
-  ```
-- **Ép chạy lại seed:** đặt `SEED_FORCE=true` trong `backend/.env` (và xóa dữ liệu cũ nếu cần).
-- **Tắt seed:** `SEED_ON_START=false` trong `backend/.env`.
-- **DB sạch hoàn toàn:** `docker compose down -v` (xóa volume `postgres_data`).
+- Mỗi lần container backend khởi động: **`prisma migrate deploy`**. **Không** tự động chạy seed khi start — seed chạy **thủ công** bằng **`bash scripts/seed-all.sh`** (từ thư mục gốc repo).
+- **`seed-all.sh`** gọi lần lượt:
+  1. `npm run db:seed` trong container → **`prisma/seed_products.js`** (TRUNCATE toàn bộ bảng liên quan + nạp `prisma/seeds/data/products.json`).
+  2. `npm run db:seed:blog` → **`prisma/seeds/seed_posts.js`** (bài viết từ `posts.json`).
+- **Chỉ thử nhanh 80 SP demo (ảnh picsum):** trong container `npm run db:seed:demo` — không dùng trong luồng production thông thường.
+- **DB sạch hoàn toàn (xóa volume Postgres):** `docker compose down -v` rồi `up -d`, hoặc dùng **`bash scripts/reset-and-seed.sh`** (có hỏi xác nhận, trừ khi `FORCE=1`).
 
 ## Soketi / Pusher (WebSocket)
 

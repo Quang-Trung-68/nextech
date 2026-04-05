@@ -219,6 +219,13 @@ async function createProductWithVariants(tx, def, brandId) {
       hasVariants: true,
       isNewArrival: true,
       isBestseller: false,
+      // Frontend chỉ hiện nút "Xem thông số" khi specsJson có ít nhất một key khác rỗng
+      specsJson: {
+        'Danh mục': def.category,
+        'Nguồn dữ liệu': 'Seed demo (prisma/seed.js)',
+        'Ghi chú':
+          'Ảnh dùng picsum.photos (placeholder). Để có ảnh & spec thật: npm run db:seed (products.json) hoặc nhập qua admin.',
+      },
       images: {
         create: [
           {

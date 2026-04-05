@@ -12,15 +12,7 @@ npx prisma generate
 echo "[docker] prisma migrate deploy..."
 npx prisma migrate deploy
 
-echo "[docker] Kiểm tra seed..."
-# Seed lỗi không được chặn khởi động server (set -e sẽ dừng cả container)
-set +e
-node scripts/docker-seed.js
-SEED_EXIT=$?
-set -e
-if [ "$SEED_EXIT" -ne 0 ]; then
-  echo "[docker] Cảnh báo: seed thoát mã $SEED_EXIT — API vẫn chạy. Chạy lại: docker compose exec backend npx prisma db seed"
-fi
+# Seed dữ liệu: chạy thủ công từ host — bash scripts/seed-all.sh (không auto-seed khi start)
 
 # Production image CMD không truyền tham số — mặc định chạy API
 if [ "$#" -eq 0 ]; then

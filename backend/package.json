@@ -10,10 +10,10 @@
     "soketi": "soketi start --config=soketi.json",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "node prisma/seed.js",
-    "db:seed:posts": "node prisma/seed_post.js",
-    "db:seed:sforum": "node prisma/seeds/seed_posts.js",
-    "db:seed:products": "node prisma/seed_products.js"
+    "db:seed": "node prisma/seed_products.js",
+    "db:seed:blog": "node prisma/seeds/seed_posts.js",
+    "db:seed:demo": "node prisma/seed.js",
+    "db:seed:demo-posts": "node prisma/seed_post.js"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
@@ -52,6 +52,6 @@
     "prisma": "^7.5.0"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed_products.js"
   }
 }

@@ -17,7 +17,7 @@ Trong Docker production, mount thư mục `./backend/prisma/seeds/data` → `/ap
 **Local (từ thư mục `backend`):**
 
 ```bash
-npm run db:seed:sforum
+npm run db:seed:blog
 # hoặc
 node prisma/seeds/seed_posts.js
 ```
@@ -42,5 +42,5 @@ COMPOSE_FILE=docker-compose.prod.yml bash scripts/seed-all.sh
 
 ## Điều kiện
 
-- Đã chạy migrate và có user **ADMIN** (ví dụ `npx prisma db seed` trước đó).
+- Đã chạy migrate và có user **ADMIN** (sau `npm run db:seed` / `bash scripts/seed-all.sh`).
 - Script **xóa toàn bộ Post + Tag** rồi import lại từ JSON.
