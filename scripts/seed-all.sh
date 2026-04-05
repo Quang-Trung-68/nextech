@@ -15,11 +15,12 @@ echo "🌱 NexTech seed-all (compose: $COMPOSE_FILE)"
 echo ""
 
 echo "📦 [1/2] Sản phẩm + shop + users (TRUNCATE + products.json)..."
-docker compose -f "$COMPOSE_FILE" exec -T backend npm run db:seed
+# Gọi node trực tiếp — không phụ thuộc npm script (image cũ có thể thiếu db:seed trong package.json)
+docker compose -f "$COMPOSE_FILE" exec -T backend node prisma/seed_products.js
 
 echo ""
 echo "📰 [2/2] Bài viết blog (posts.json)..."
-docker compose -f "$COMPOSE_FILE" exec -T backend npm run db:seed:blog
+docker compose -f "$COMPOSE_FILE" exec -T backend node prisma/seeds/seed_posts.js
 
 echo ""
 echo "✅ Hoàn tất. Kiểm tra: docker compose -f \"$COMPOSE_FILE\" exec backend npx prisma studio"
