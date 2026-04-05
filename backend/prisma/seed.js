@@ -285,6 +285,9 @@ async function main() {
   const adminPass = process.env.SEED_ADMIN_PASSWORD || 'Admin123!';
   const userPassPlain = 'User123!';
 
+  // Tránh trùng `serial` khi chạy seed lần 2+ (SerialUnit @unique) — tiếp nối sau serial đã có
+  serialCounter = await prisma.serialUnit.count();
+
   await prisma.shopSettings.upsert({
     where: { id: 'singleton' },
     create: {
