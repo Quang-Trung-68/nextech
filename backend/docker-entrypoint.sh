@@ -22,4 +22,8 @@ if [ "$SEED_EXIT" -ne 0 ]; then
   echo "[docker] Cảnh báo: seed thoát mã $SEED_EXIT — API vẫn chạy. Chạy lại: docker compose exec backend npx prisma db seed"
 fi
 
+# Production image CMD không truyền tham số — mặc định chạy API
+if [ "$#" -eq 0 ]; then
+  set -- node server.js
+fi
 exec "$@"

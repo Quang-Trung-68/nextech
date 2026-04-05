@@ -2,7 +2,8 @@
 
 # init-letsencrypt.sh
 # Run this script ONCE on your VPS to obtain the initial SSL certificates.
-# After running, start the full stack with: docker compose up -d --build
+# Requires: .env (copy from .env.deploy.template), DNS pointing to this server.
+# After success, deploy the full stack: bash scripts/deploy.sh
 
 set -e
 
@@ -11,13 +12,18 @@ if ! [ -x "$(command -v docker)" ]; then
   exit 1
 fi
 
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
+
 RSA_KEY_SIZE=4096
 DATA_PATH="./certbot"
 STAGING=0 # Set to 1 to test without hitting Let's Encrypt rate limits
 
 # --- Load .env ---
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
 else
   echo "ERROR: .env file not found! Copy .env.deploy.template to .env first."
   exit 1
@@ -56,7 +62,7 @@ fi
 for primary_domain in "${!CERT_GROUPS[@]}"; do
   echo "### Creating dummy certificate for $primary_domain ..."
   mkdir -p "$DATA_PATH/conf/live/$primary_domain"
-  docker compose run --rm --entrypoint \
+  docker compose -f "$COMPOSE_FILE" run --rm --entrypoint \
     "openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
       -keyout /etc/letsencrypt/live/$primary_domain/privkey.pem \
       -out /etc/letsencrypt/live/$primary_domain/fullchain.pem \
@@ -65,16 +71,16 @@ for primary_domain in "${!CERT_GROUPS[@]}"; do
   echo "### Done."
 done
 
-# 3. Start Nginx with dummy certs (so ACME webroot challenge can be answered)
-echo "### Starting nginx ..."
-docker compose up --force-recreate -d nginx
-sleep 3
-echo "### Nginx started."
+# 3. Start stack so nginx can resolve upstreams (frontend, backend, soketi)
+echo "### Starting postgres, soketi, backend, frontend, nginx (build if needed) ..."
+docker compose -f "$COMPOSE_FILE" up --force-recreate -d --build postgres soketi backend frontend nginx
+sleep 5
+echo "### Stack started."
 
 # 4. Delete dummy certificates
 for primary_domain in "${!CERT_GROUPS[@]}"; do
   echo "### Deleting dummy certificate for $primary_domain ..."
-  docker compose run --rm --entrypoint \
+  docker compose -f "$COMPOSE_FILE" run --rm --entrypoint \
     "rm -Rf /etc/letsencrypt/live/$primary_domain \
        /etc/letsencrypt/archive/$primary_domain \
        /etc/letsencrypt/renewal/$primary_domain.conf" \
@@ -95,7 +101,7 @@ for primary_domain in "${!CERT_GROUPS[@]}"; do
   domain_args="${CERT_GROUPS[$primary_domain]}"
   echo "### Requesting cert for: $domain_args ..."
 
-  docker compose run --rm --entrypoint \
+  docker compose -f "$COMPOSE_FILE" run --rm --entrypoint \
     "certbot certonly --webroot -w /var/www/certbot \
       $STAGING_FLAG \
       --email $EMAIL \
@@ -111,8 +117,8 @@ done
 
 # 6. Reload Nginx with real certs
 echo "### Reloading nginx ..."
-docker compose exec nginx nginx -s reload
+docker compose -f "$COMPOSE_FILE" exec nginx nginx -s reload
 
 echo ""
 echo "✅ SSL certificates obtained successfully!"
-echo "   Now start the full stack: docker compose up -d --build"
+echo "   Start / refresh full stack: bash scripts/deploy.sh"

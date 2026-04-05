@@ -1,4 +1,21 @@
-# Seed bài viết mẫu (`seed_post.js`)
+# Seed bài viết
+
+## Import từ crawler Sforum (`seed_posts.js`)
+
+Để **upsert** bài từ `posts.json` (ưu tiên đặt tại `prisma/seeds/data/posts.json`) — 5 danh mục Sforum (`tin-cong-nghe`, `tu-van`, …), **idempotent** theo `slug`, xem:
+
+- Script: `prisma/seeds/seed_posts.js`
+- Hướng dẫn Docker/local: [`SEED_POSTS_GUIDE.md`](./SEED_POSTS_GUIDE.md)
+
+```bash
+cd backend
+npm run db:seed:sforum
+# hoặc: node prisma/seeds/seed_posts.js
+```
+
+---
+
+## Seed bài viết mẫu (`seed_post.js`)
 
 Script **upsert** 2 danh mục cố định (theo slug) và **tạo thêm 20 bài** `PUBLISHED` mỗi lần chạy:
 

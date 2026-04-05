@@ -12,6 +12,7 @@
     "db:studio": "prisma studio",
     "db:seed": "node prisma/seed.js",
     "db:seed:posts": "node prisma/seed_post.js",
+    "db:seed:sforum": "node prisma/seeds/seed_posts.js",
     "db:seed:products": "node prisma/seed_products.js"
   },
   "dependencies": {

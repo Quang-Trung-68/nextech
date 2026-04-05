@@ -1,6 +1,16 @@
-# Chạy NexTech bằng Docker (dev)
+# Chạy NexTech bằng Docker
 
-## Yêu cầu
+## Production (VPS)
+
+- File compose: **`docker-compose.prod.yml`** — Postgres, Soketi, backend (image production), frontend (build static + Nginx), reverse proxy **Nginx** (80/443), **Certbot** (renew).
+- Deploy một lệnh: **`bash scripts/deploy.sh`** (git pull → build → up → `prisma migrate deploy`).
+- SSL lần đầu: **`bash init-letsencrypt.sh`**, sau đó `bash scripts/deploy.sh`.
+- Seed: **`COMPOSE_FILE=docker-compose.prod.yml bash scripts/seed-all.sh`**
+- Chi tiết: **[VPS_DEPLOY_GUIDE.md](./VPS_DEPLOY_GUIDE.md)**
+
+---
+
+## Development (local) — yêu cầu
 
 - Docker Engine + plugin Compose (`docker compose` hoặc `docker-compose`)
 - File `backend/.env` và `frontend/.env` (copy từ `.env.example` và điền secret). `DATABASE_URL` trong `backend/.env` **sẽ bị override** bởi `docker-compose.yml` để trỏ tới container `postgres`.

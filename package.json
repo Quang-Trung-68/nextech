@@ -1,0 +1,15 @@
+{
+  "name": "nextech",
+  "private": true,
+  "description": "NexTech monorepo — backend + frontend (scripts delegate to Docker Compose)",
+  "scripts": {
+    "deploy": "bash scripts/deploy.sh",
+    "seed:all": "bash scripts/seed-all.sh",
+    "docker:up": "docker compose -f docker-compose.prod.yml up -d",
+    "docker:down": "docker compose -f docker-compose.prod.yml down",
+    "docker:logs": "docker compose -f docker-compose.prod.yml logs -f",
+    "docker:dev": "docker compose up -d",
+    "docker:dev:down": "docker compose down",
+    "docker:reset": "docker compose down -v && docker compose up -d"
+  }
+}

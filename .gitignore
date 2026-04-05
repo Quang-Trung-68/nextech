@@ -9,3 +9,10 @@ build/
 coverage/
 *.log
 certbot/
+
+# Docker named volume data (if bind-mounted locally)
+postgres_data/
+redis_data/
+
+# Crawled / heavy seed JSON (keep .gitkeep only)
+backend/prisma/seeds/data/*.json

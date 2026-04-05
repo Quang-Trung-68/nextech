@@ -63,8 +63,7 @@ services:
     volumes:
       - ./backend:/app
       - backend_node_modules:/app/node_modules
-      # Seed: prisma/seed_products.js đọc /app/products.json (cùng tên file ở root repo)
-      - ./products.json:/app/products.json:ro
+      # products.json / posts.json: prisma/seeds/data/ (bind mount ./backend đã bao gồm)
     env_file:
       - ./backend/.env
     environment:

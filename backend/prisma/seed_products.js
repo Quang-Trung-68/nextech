@@ -4,10 +4,11 @@
  * - TRUNCATE toàn bộ bảng (CASCADE)
  * - ShopSettings, Users, Supplier, Brands, Products (2×2 variants + specsJson), StockImport, sample Orders/Review
  *
- * Thứ tự tìm file (ưu tiên root repo khi chạy local; Docker vẫn dùng /app/products.json):
+ * Thứ tự tìm file:
  *   1. PRODUCTS_JSON_PATH
- *   2. ../../products.json (root repo)
- *   3. ../products.json (cạnh backend → trong Docker = /app/products.json)
+ *   2. prisma/seeds/data/products.json
+ *   3. ../../products.json (root repo)
+ *   4. ../products.json (cạnh backend)
  *
  * Chạy: npm run db:seed:products (từ backend)
  */
@@ -24,6 +25,7 @@ const { createDraftInvoice, issueInvoice } = require('../src/services/invoice.se
 function loadProductsData() {
   const candidates = [
     process.env.PRODUCTS_JSON_PATH,
+    path.join(__dirname, 'seeds/data/products.json'),
     path.join(__dirname, '../../products.json'),
     path.join(__dirname, '../products.json'),
   ].filter(Boolean);
