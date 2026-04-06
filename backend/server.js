@@ -2,6 +2,7 @@ require('dotenv').config();
 require('./src/jobs/scheduledEmailJob');
 require('./src/jobs/expirationJob');
 require('./src/jobs/lowStockJob');
+require('./src/jobs/lowOrderAlertJob');
 require('./src/jobs/publishScheduledPostsJob');
 require('./src/configs/passport.config'); // Register OAuth strategies (side-effect import)
 const express = require('express');

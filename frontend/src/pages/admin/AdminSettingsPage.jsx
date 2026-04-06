@@ -6,7 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/lib/toast';
 import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 import { Loader2, Save } from 'lucide-react';
+
+const LOW_ORDER_INTERVAL_OPTIONS = [
+  { value: 'HOURLY', label: 'Mỗi giờ' },
+  { value: 'DAILY', label: 'Mỗi ngày' },
+  { value: 'MONTHLY', label: 'Mỗi tháng' },
+];
 
 export default function AdminSettingsPage() {
   usePageTitle('Cài đặt | Quản trị');
@@ -19,6 +27,9 @@ export default function AdminSettingsPage() {
     phone: '',
     email: '',
     vatRate: 10,
+    lowOrderAlertEnabled: false,
+    lowOrderAlertInterval: 'DAILY',
+    lowOrderAlertThreshold: 5,
   });
 
   useEffect(() => {
@@ -34,6 +45,12 @@ export default function AdminSettingsPage() {
           phone: data.phone || '',
           email: data.email || '',
           vatRate: (data.vatRate !== undefined ? Number(data.vatRate) * 100 : 10),
+          lowOrderAlertEnabled: Boolean(data.lowOrderAlertEnabled),
+          lowOrderAlertInterval: ['HOURLY', 'DAILY', 'MONTHLY'].includes(data.lowOrderAlertInterval)
+            ? data.lowOrderAlertInterval
+            : 'DAILY',
+          lowOrderAlertThreshold:
+            data.lowOrderAlertThreshold != null ? Number(data.lowOrderAlertThreshold) : 5,
         });
       } catch {
         toast.error('Không thể tải cài đặt');
@@ -53,6 +70,11 @@ export default function AdminSettingsPage() {
       const payload = {
         ...settings,
         vatRate: Number(settings.vatRate) / 100,
+        lowOrderAlertInterval: settings.lowOrderAlertInterval,
+        lowOrderAlertThreshold: Math.max(
+          0,
+          Math.min(999999, Number(settings.lowOrderAlertThreshold) || 0),
+        ),
       };
       await axiosInstance.patch('/admin/settings', payload);
       toast.success('Lưu cài đặt thành công');
@@ -148,6 +170,82 @@ export default function AdminSettingsPage() {
                     onChange={handleChange} 
                     placeholder="VD: contact@nextech.vn"
                   />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Section: Thông báo */}
+        <Card className="border shadow-sm">
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4">Thông báo</h3>
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border/80 bg-muted/20 p-4">
+                <div className="space-y-1 flex-1">
+                  <Label htmlFor="lowOrderAlert" className="text-base font-medium">
+                    Cảnh báo đơn hàng thấp
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Bật để định kỳ kiểm tra số đơn (theo tần suất và ngưỡng bên dưới) và gửi thông báo cho
+                    quản trị viên khi số đơn trong kỳ vừa qua thấp hơn ngưỡng.
+                  </p>
+                </div>
+                <Switch
+                  id="lowOrderAlert"
+                  checked={settings.lowOrderAlertEnabled}
+                  onCheckedChange={(checked) =>
+                    setSettings((prev) => ({ ...prev, lowOrderAlertEnabled: checked }))
+                  }
+                  className="shrink-0"
+                />
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 max-w-2xl">
+                <div className="space-y-2">
+                  <Label htmlFor="lowOrderAlertInterval">Kiểm tra số lượng mỗi</Label>
+                  <select
+                    id="lowOrderAlertInterval"
+                    name="lowOrderAlertInterval"
+                    value={settings.lowOrderAlertInterval}
+                    onChange={handleChange}
+                    disabled={!settings.lowOrderAlertEnabled}
+                    className={cn(
+                      'h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none md:text-sm',
+                      'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+                      'disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50',
+                      'dark:bg-input/30 dark:disabled:bg-input/80',
+                    )}
+                  >
+                    {LOW_ORDER_INTERVAL_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Mỗi giờ:</strong> đếm đơn trong giờ trước (chạy đầu mỗi giờ).{' '}
+                    <strong>Mỗi ngày:</strong> cả ngày hôm qua (00:05 hàng ngày).{' '}
+                    <strong>Mỗi tháng:</strong> cả tháng trước (00:05 ngày 1).
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lowOrderAlertThreshold">Ngưỡng số lượng</Label>
+                  <Input
+                    id="lowOrderAlertThreshold"
+                    name="lowOrderAlertThreshold"
+                    type="number"
+                    min={0}
+                    max={999999}
+                    step={1}
+                    value={settings.lowOrderAlertThreshold}
+                    onChange={handleChange}
+                    disabled={!settings.lowOrderAlertEnabled}
+                    placeholder="VD: 5"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Nếu số đơn trong kỳ (không tính đơn đã hủy) thấp hơn ngưỡng này, hệ thống gửi cảnh báo
+                    (tối đa một lần mỗi kỳ).
+                  </p>
                 </div>
               </div>
             </div>

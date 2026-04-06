@@ -480,6 +480,13 @@ enum InvoiceStatus {
   CANCELLED
 }
 
+/// Tần suất job đếm đơn so với ngưỡng (múi giờ Asia/Ho_Chi_Minh)
+enum LowOrderAlertInterval {
+  HOURLY
+  DAILY
+  MONTHLY
+}
+
 model ShopSettings {
   id          String   @id @default("singleton")
   shopName    String   @default("NexTech")
@@ -489,6 +496,12 @@ model ShopSettings {
   phone       String?
   email       String?
   vatRate     Decimal  @default(0.10) @db.Decimal(4, 3)
+  /// Cảnh báo khi số đơn (theo kỳ theo dõi) thấp hơn ngưỡng — dùng cho job/thông báo admin
+  lowOrderAlertEnabled  Boolean @default(false)
+  lowOrderAlertThreshold Int     @default(5)
+  lowOrderAlertInterval LowOrderAlertInterval @default(DAILY)
+  /// Khóa kỳ đã gửi cảnh báo (tránh spam trùng kỳ)
+  lowOrderAlertLastPeriodKey String?
   updatedAt   DateTime @updatedAt
 
   @@map("shop_settings")
