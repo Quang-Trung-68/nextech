@@ -30,6 +30,7 @@ export default function AdminSettingsPage() {
     lowOrderAlertEnabled: false,
     lowOrderAlertInterval: 'DAILY',
     lowOrderAlertThreshold: 5,
+    lowStockAlertEnabled: true,
   });
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function AdminSettingsPage() {
             : 'DAILY',
           lowOrderAlertThreshold:
             data.lowOrderAlertThreshold != null ? Number(data.lowOrderAlertThreshold) : 5,
+          lowStockAlertEnabled: data.lowStockAlertEnabled !== false,
         });
       } catch {
         toast.error('Không thể tải cài đặt');
@@ -183,12 +185,34 @@ export default function AdminSettingsPage() {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border/80 bg-muted/20 p-4">
                 <div className="space-y-1 flex-1">
+                  <Label htmlFor="lowStockAlert" className="text-base font-medium">
+                    Cảnh báo tồn kho thấp (serial / IMEI)
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Khi bật, hệ thống kiểm tra định kỳ (mỗi giờ) số serial còn trong kho so với ngưỡng từng
+                    sản phẩm/biến thể và gửi thông báo + Soketi cho quản trị viên. Tắt nếu không muốn nhận loại
+                    cảnh báo này.
+                  </p>
+                </div>
+                <Switch
+                  id="lowStockAlert"
+                  checked={settings.lowStockAlertEnabled}
+                  onCheckedChange={(checked) =>
+                    setSettings((prev) => ({ ...prev, lowStockAlertEnabled: checked }))
+                  }
+                  className="shrink-0"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-border/80 bg-muted/20 p-4">
+                <div className="space-y-1 flex-1">
                   <Label htmlFor="lowOrderAlert" className="text-base font-medium">
                     Cảnh báo đơn hàng thấp
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Bật để định kỳ kiểm tra số đơn (theo tần suất và ngưỡng bên dưới) và gửi thông báo cho
-                    quản trị viên khi số đơn trong kỳ vừa qua thấp hơn ngưỡng.
+                    Bật để định kỳ kiểm tra <strong>số đơn đặt</strong> (theo tần suất và ngưỡng bên dưới) và
+                    gửi thông báo cho quản trị viên khi số đơn trong kỳ vừa qua thấp hơn ngưỡng —{' '}
+                    <span className="text-muted-foreground/90">không liên quan tồn kho serial.</span>
                   </p>
                 </div>
                 <Switch

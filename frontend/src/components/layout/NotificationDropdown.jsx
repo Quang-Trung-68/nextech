@@ -192,14 +192,19 @@ const NotificationDropdown = ({ variant = 'default' }) => {
               setIsOpen((prev) => !prev);
             }
           }}
-          className="hover:text-apple-blue transition-colors relative flex items-center justify-center rounded-md py-2 min-h-[44px] min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="hover:text-apple-blue transition-colors relative inline-flex items-center justify-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Bell size={22} strokeWidth={1.5} />
-          {unreadCount > 0 && (
-            <span className="absolute top-[2px] -right-[8px] bg-red-500 text-white text-[10px] rounded-full min-w-[17px] h-[17px] flex items-center justify-center font-bold shadow-sm px-[3px]">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
+          {/* Box cố định: badge neo tâm tại góc trên-phải (một phần tràn ra ngoài), không che thân chuông */}
+          <span className="relative inline-flex h-5 w-5 shrink-0 items-center justify-center">
+            <Bell size={20} strokeWidth={1.5} className="pointer-events-none" aria-hidden />
+            {unreadCount > 0 && (
+              <span
+                className="pointer-events-none absolute right-0 top-0 z-[1] inline-flex min-h-[17px] min-w-[17px] translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-red-500 px-[3px] py-px text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white tabular-nums"
+              >
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </span>
         </button>
       </div>
 

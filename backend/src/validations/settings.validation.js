@@ -20,6 +20,7 @@ const shopSettingsSchema = z.object({
     .max(999999, 'Ngưỡng quá lớn')
     .optional(),
   lowOrderAlertInterval: z.enum(['HOURLY', 'DAILY', 'MONTHLY']).optional(),
+  lowStockAlertEnabled: z.boolean().optional(),
 });
 
 module.exports = {

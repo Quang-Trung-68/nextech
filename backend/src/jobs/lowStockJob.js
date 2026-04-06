@@ -6,6 +6,13 @@ const inventoryService = require('../services/inventory.service');
 // Mỗi giờ — kiểm tra tồn serial IN_STOCK so với ngưỡng
 const lowStockJob = cron.schedule('0 * * * *', async () => {
   try {
+    const settings = await prisma.shopSettings.findUnique({
+      where: { id: 'singleton' },
+    });
+    if (settings && settings.lowStockAlertEnabled === false) {
+      return;
+    }
+
     const { alerts } = await inventoryService.getLowStockReport();
     if (!alerts.length) return;
 

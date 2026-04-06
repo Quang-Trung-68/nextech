@@ -134,6 +134,10 @@ const productBrandsQuerySchema = z.object({
   type: z.enum(['phone', 'laptop', 'tablet', 'accessories']).optional(),
 });
 
+const productBrandsTopQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(20).optional().default(4),
+});
+
 module.exports = {
   createProductSchema,
   updateProductSchema,
@@ -141,4 +145,5 @@ module.exports = {
   productParamsSchema,
   productSlugParamsSchema,
   productBrandsQuerySchema,
+  productBrandsTopQuerySchema,
 };

@@ -112,6 +112,25 @@ const TYPE_TO_CATEGORY = {
   accessories: 'Phụ kiện',
 };
 
+/**
+ * Top brands by number of products (for homepage).
+ */
+const getTopBrandsByProductCount = async (limit = 4) => {
+  const take = Math.min(Math.max(Number(limit) || 4, 1), 20);
+  const rows = await prisma.brand.findMany({
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logo: true,
+      _count: { select: { products: true } },
+    },
+    orderBy: { products: { _count: 'desc' } },
+    take: take * 2,
+  });
+  return rows.filter((r) => r._count.products > 0).slice(0, take);
+};
+
 const getBrandsByType = async (type) => {
   if (type == null || type === '') {
     return prisma.brand.findMany({
@@ -285,6 +304,7 @@ module.exports = {
   getProductById,
   getProductBySlug,
   getBrandsByType,
+  getTopBrandsByProductCount,
   getRelatedProducts,
   createProduct,
   updateProduct,

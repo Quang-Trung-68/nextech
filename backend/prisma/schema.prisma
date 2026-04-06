@@ -115,29 +115,47 @@ model Brand {
   @@map("brands")
 }
 
+model Banner {
+  id        String    @id @default(cuid())
+  title     String
+  subtitle  String?
+  imageUrl  String
+  linkUrl   String
+  bgColor   String    @default("#f5f5f7")
+  textColor String    @default("#1d1d1f")
+  isActive  Boolean   @default(true)
+  order     Int       @default(0)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("banners")
+}
+
 model Product {
-  id              String              @id @default(cuid())
-  name            String
-  slug            String              @unique
-  description     String
-  price           Decimal             @db.Decimal(15, 2)
-  stock           Int
-  category        String
-  rating          Float               @default(0)
-  numReviews      Int                 @default(0)
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  brandId         String?
-  brand           Brand?              @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  isBestseller    Boolean             @default(false)
-  isNewArrival    Boolean             @default(true)
-  manufactureYear Int?
-  salePrice       Decimal?            @db.Decimal(15, 2)
-  saleExpiresAt   DateTime?
-  saleStock       Int?
-  saleSoldCount   Int                 @default(0)
-  hasVariants       Boolean             @default(false)
-  lowStockThreshold Int                 @default(5)
+  id                String             @id @default(cuid())
+  name              String
+  slug              String             @unique
+  description       String
+  price             Decimal            @db.Decimal(15, 2)
+  stock             Int
+  category          String
+  rating            Float              @default(0)
+  numReviews        Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  brandId           String?
+  brand             Brand?             @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  isBestseller      Boolean            @default(false)
+  isNewArrival      Boolean            @default(true)
+  manufactureYear   Int?
+  salePrice         Decimal?           @db.Decimal(15, 2)
+  saleExpiresAt     DateTime?
+  saleStock         Int?
+  saleSoldCount     Int                @default(0)
+  hasVariants       Boolean            @default(false)
+  lowStockThreshold Int                @default(5)
   /// Thông số hiển thị dạng bảng (không phải tùy chọn variant) — từ crawl JSON `specs`
   specsJson         Json?
   cartItems         CartItem[]
@@ -178,11 +196,11 @@ model ProductAttribute {
 }
 
 model ProductAttributeValue {
-  id          String                @id @default(cuid())
-  attributeId String
-  value       String
-  position    Int                   @default(0)
-  attribute   ProductAttribute      @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  id            String                @id @default(cuid())
+  attributeId   String
+  value         String
+  position      Int                   @default(0)
+  attribute     ProductAttribute      @relation(fields: [attributeId], references: [id], onDelete: Cascade)
   variantValues ProductVariantValue[]
 
   @@index([attributeId])
@@ -190,22 +208,22 @@ model ProductAttributeValue {
 }
 
 model ProductVariant {
-  id              String    @id @default(cuid())
-  productId       String
-  sku             String    @unique
-  price           Decimal   @db.Decimal(15, 2)
-  stock           Int       @default(0)
-  imageUrl        String?
-  salePrice       Decimal?  @db.Decimal(15, 2)
-  saleExpiresAt   DateTime?
-  saleStock       Int?
-  saleSoldCount   Int       @default(0)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  productId         String
+  sku               String    @unique
+  price             Decimal   @db.Decimal(15, 2)
+  stock             Int       @default(0)
+  imageUrl          String?
+  salePrice         Decimal?  @db.Decimal(15, 2)
+  saleExpiresAt     DateTime?
+  saleStock         Int?
+  saleSoldCount     Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?
   lowStockThreshold Int       @default(5)
 
-  product      Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product      Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
   values       ProductVariantValue[]
   orderItems   OrderItem[]
   cartItems    CartItem[]
@@ -253,12 +271,12 @@ model Order {
   // VAT Invoice request (user điền tại checkout)
   vatInvoiceRequested    Boolean       @default(false)
   vatBuyerType           VatBuyerType? // null nếu vatInvoiceRequested = false
-  vatBuyerName           String?       // Cá nhân: tên trên HĐ / Công ty: tên người đại diện
-  vatBuyerAddress        String?       // Cá nhân: địa chỉ trên HĐ
-  vatBuyerEmail          String?       // Công ty: email nhận hóa đơn
-  vatBuyerCompany        String?       // Tên công ty
-  vatBuyerTaxCode        String?       // Mã số thuế (10 hoặc 13 số)
-  vatBuyerCompanyAddress String?       // Địa chỉ công ty (có thể khác shipping address)
+  vatBuyerName           String? // Cá nhân: tên trên HĐ / Công ty: tên người đại diện
+  vatBuyerAddress        String? // Cá nhân: địa chỉ trên HĐ
+  vatBuyerEmail          String? // Công ty: email nhận hóa đơn
+  vatBuyerCompany        String? // Tên công ty
+  vatBuyerTaxCode        String? // Mã số thuế (10 hoặc 13 số)
+  vatBuyerCompanyAddress String? // Địa chỉ công ty (có thể khác shipping address)
 
   @@map("orders")
 }
@@ -351,18 +369,18 @@ model Favorite {
 }
 
 model Coupon {
-  id                Int              @id @default(autoincrement())
-  code              String           @unique
+  id                Int                @id @default(autoincrement())
+  code              String             @unique
   type              CouponDiscountType
   value             Float
   maxDiscountAmount Float?
   minOrderAmount    Float
   maxUsage          Int
-  usedCount         Int              @default(0)
+  usedCount         Int                @default(0)
   expiresAt         DateTime
-  isActive          Boolean          @default(true)
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   orders            Order[]
   couponUsages      CouponUsage[]
 
@@ -390,7 +408,7 @@ enum Role {
 
 enum VatBuyerType {
   INDIVIDUAL // Cá nhân
-  COMPANY    // Doanh nghiệp
+  COMPANY // Doanh nghiệp
 }
 
 enum CouponDiscountType {
@@ -422,48 +440,48 @@ enum PaymentStatus {
 }
 
 model Invoice {
-  id             String        @id @default(cuid())
-  invoiceNumber  String        @unique
-  orderId        String        @unique
-  order          Order         @relation(fields: [orderId], references: [id])
-  status         InvoiceStatus @default(DRAFT)
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  orderId       String        @unique
+  order         Order         @relation(fields: [orderId], references: [id])
+  status        InvoiceStatus @default(DRAFT)
 
   // Snapshot người mua tại thời điểm đặt hàng
-  buyerName      String
-  buyerEmail     String
-  buyerPhone     String?
-  buyerAddress   String
-  buyerCompany   String?
-  buyerTaxCode   String?
+  buyerName    String
+  buyerEmail   String
+  buyerPhone   String?
+  buyerAddress String
+  buyerCompany String?
+  buyerTaxCode String?
 
   // Snapshot người bán tại thời điểm đặt hàng
-  sellerName     String
-  sellerAddress  String
-  sellerTaxCode  String
+  sellerName    String
+  sellerAddress String
+  sellerTaxCode String
 
   // Tài chính (VND — không có xu)
-  subtotal       Decimal  @db.Decimal(12, 0)
-  discountAmount Decimal  @default(0) @db.Decimal(12, 0)
-  vatRate        Decimal  @default(0.10) @db.Decimal(4, 3)
-  vatAmount      Decimal  @db.Decimal(12, 0)
-  totalAmount    Decimal  @db.Decimal(12, 0)
+  subtotal       Decimal @db.Decimal(12, 0)
+  discountAmount Decimal @default(0) @db.Decimal(12, 0)
+  vatRate        Decimal @default(0.10) @db.Decimal(4, 3)
+  vatAmount      Decimal @db.Decimal(12, 0)
+  totalAmount    Decimal @db.Decimal(12, 0)
 
   // Email
-  emailSentAt    DateTime?
+  emailSentAt DateTime?
 
-  issuedAt       DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  issuedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  items          InvoiceItem[]
+  items InvoiceItem[]
 
   @@map("invoices")
 }
 
 model InvoiceItem {
-  id          String  @id @default(cuid())
-  invoiceId   String
-  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   productName String
   sku         String?
@@ -488,21 +506,23 @@ enum LowOrderAlertInterval {
 }
 
 model ShopSettings {
-  id          String   @id @default("singleton")
-  shopName    String   @default("NexTech")
-  shopAddress String   @default("")
-  taxCode     String   @default("")
-  bankAccount String?
-  phone       String?
-  email       String?
-  vatRate     Decimal  @default(0.10) @db.Decimal(4, 3)
+  id                         String                @id @default("singleton")
+  shopName                   String                @default("NexTech")
+  shopAddress                String                @default("")
+  taxCode                    String                @default("")
+  bankAccount                String?
+  phone                      String?
+  email                      String?
+  vatRate                    Decimal               @default(0.10) @db.Decimal(4, 3)
   /// Cảnh báo khi số đơn (theo kỳ theo dõi) thấp hơn ngưỡng — dùng cho job/thông báo admin
-  lowOrderAlertEnabled  Boolean @default(false)
-  lowOrderAlertThreshold Int     @default(5)
-  lowOrderAlertInterval LowOrderAlertInterval @default(DAILY)
+  lowOrderAlertEnabled       Boolean               @default(false)
+  lowOrderAlertThreshold     Int                   @default(5)
+  lowOrderAlertInterval      LowOrderAlertInterval @default(DAILY)
   /// Khóa kỳ đã gửi cảnh báo (tránh spam trùng kỳ)
   lowOrderAlertLastPeriodKey String?
-  updatedAt   DateTime @updatedAt
+  /// Gửi thông báo admin khi serial/IMEI IN_STOCK dưới ngưỡng (job lowStockJob)
+  lowStockAlertEnabled       Boolean               @default(true)
+  updatedAt                  DateTime              @updatedAt
 
   @@map("shop_settings")
 }
@@ -510,10 +530,10 @@ model ShopSettings {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // "order_status_changed" | "payment_result" | "new_order" | "low_stock"
+  type      String // "order_status_changed" | "payment_result" | "new_order" | "low_stock"
   title     String
   message   String
-  data      Json?    // { orderId, productId, productName, newStatus, ... }
+  data      Json? // { orderId, productId, productName, newStatus, ... }
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -547,17 +567,17 @@ model Post {
   id          Int        @id @default(autoincrement())
   title       String
   slug        String     @unique
-  content     String     // HTML from rich text editor
-  excerpt     String?    // Short summary, max 300 chars
-  coverImage  String?    // Cloudinary URL
+  content     String // HTML from rich text editor
+  excerpt     String? // Short summary, max 300 chars
+  coverImage  String? // Cloudinary URL
   status      PostStatus @default(DRAFT)
-  readTime    Int?       // Estimated minutes
+  readTime    Int? // Estimated minutes
   publishedAt DateTime?
   scheduledAt DateTime? // When SCHEDULED — publish at this time (scheduler flips to PUBLISHED)
   viewCount   Int        @default(0)
 
-  author     User      @relation(fields: [authorId], references: [id])
-  authorId   String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
 
   category   Category? @relation(fields: [categoryId], references: [id])
   categoryId Int?

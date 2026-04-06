@@ -18,6 +18,7 @@ import {
   Truck,
   Barcode,
   Newspaper,
+  Image,
 } from 'lucide-react';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
 
@@ -63,6 +64,7 @@ const Sidebar = ({ isMobile }) => {
     { name: 'Người dùng', to: '/admin/users', icon: Users },
     { name: 'Mã giảm giá', to: '/admin/coupons', icon: Tag },
     { name: 'Tin tức', to: '/admin/news', icon: Newspaper },
+    { name: 'Banner', to: '/admin/banners', icon: Image },
     { name: 'Danh mục tin', to: '/admin/news/categories', icon: Newspaper },
     { name: 'Cài đặt', to: '/admin/settings', icon: Settings },
   ];

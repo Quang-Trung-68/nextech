@@ -18,6 +18,15 @@ const getBrandsByType = async (req, res, next) => {
   }
 };
 
+const getTopBrandsByProductCount = async (req, res, next) => {
+  try {
+    const brands = await productService.getTopBrandsByProductCount(req.query.limit);
+    res.status(200).json({ success: true, brands });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getProductBySlug = async (req, res, next) => {
   try {
     const product = await productService.getProductBySlug(req.params.slug);
@@ -75,6 +84,7 @@ const deleteProduct = async (req, res, next) => {
 module.exports = {
   getProducts,
   getBrandsByType,
+  getTopBrandsByProductCount,
   getProductBySlug,
   getProductById,
   getRelatedProducts,

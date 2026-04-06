@@ -11,6 +11,7 @@ const {
   productParamsSchema,
   productSlugParamsSchema,
   productBrandsQuerySchema,
+  productBrandsTopQuerySchema,
 } = require('../validations/product.validation');
 const {
   getProductReviewsQuerySchema,
@@ -18,6 +19,11 @@ const {
 } = require('../validations/review.validation');
 
 router.get('/', validate(productQuerySchema, 'query'), productController.getProducts);
+router.get(
+  '/brands/top',
+  validate(productBrandsTopQuerySchema, 'query'),
+  productController.getTopBrandsByProductCount
+);
 router.get('/brands', validate(productBrandsQuerySchema, 'query'), productController.getBrandsByType);
 router.get('/by-slug/:slug', validate(productSlugParamsSchema, 'params'), productController.getProductBySlug);
 

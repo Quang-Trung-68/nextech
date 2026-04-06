@@ -75,6 +75,7 @@ const NewsDetailPage = lazy(() => import('@/pages/news/NewsDetailPage'));
 const AdminNewsPage = lazy(() => import('@/pages/admin/AdminNewsPage'));
 const AdminNewsFormPage = lazy(() => import('@/pages/admin/AdminNewsFormPage'));
 const AdminNewsCategoriesPage = lazy(() => import('@/pages/admin/AdminNewsCategoriesPage'));
+const BannersAdminPage = lazy(() => import('@/features/admin/banners/BannersAdminPage'));
 
 const routes = [
   {
@@ -271,6 +272,10 @@ const routes = [
           {
             path: 'news',
             element: <AdminNewsPage />,
+          },
+          {
+            path: 'banners',
+            element: <BannersAdminPage />,
           },
         ],
       },

@@ -38,7 +38,7 @@ export function ProductSpecsButton({ specsJson, productName }) {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] gap-6 overflow-y-auto pt-6 sm:max-w-lg">
+        <DialogContent className="left-1/2 top-20 max-h-[calc(100vh-6rem)] -translate-x-1/2 translate-y-0 gap-6 overflow-y-auto pt-6 sm:max-w-lg sm:top-22">
           <DialogHeader className="space-y-1 pb-1 text-left sm:text-left">
             <DialogTitle className="text-left leading-snug pr-10">
               Thông số kỹ thuật
