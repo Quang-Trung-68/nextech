@@ -57,3 +57,26 @@ bash scripts/seed-all.sh
 ```
 
 Trên VPS production luôn set `COMPOSE_FILE=docker-compose.prod.yml` cho các lệnh trên.
+
+---
+
+## SePay (demo / test trên VPS)
+
+**Triệu chứng:** thanh toán SePay chạy trên localhost nhưng không chạy trên production.
+
+**Nguyên nhân thường gặp**
+
+1. **Sandbox vs production:** Backend dùng SDK SePay với `env: sandbox` hoặc `production`. Key test (`SP-TEST-...`, `spsk_test_...`) chỉ hợp lệ với **sandbox**. Trước đây `NODE_ENV=production` trên VPS khiến SDK gọi nhầm **production** → lỗi. Code hiện **tự nhận diện key test**; có thể ép bằng `SEPAY_ENV=sandbox` trong `backend/.env`.
+2. **`FRONTEND_URL` / `CLIENT_URL`:** `success_url` của SePay lấy từ `FRONTEND_URL` (ví dụ `https://nextech.io.vn`). Phải đúng domain frontend (HTTPS), không để `http://localhost:5173` trên VPS.
+3. **Webhook IPN:** SePay gọi `POST https://api.<domain>/api/payments/sepay/webhook`. Domain API phải public, HTTPS ổn định, Nginx proxy tới backend. Kiểm tra nhanh (từ máy bất kỳ):
+
+   ```bash
+   curl -sS -o /dev/null -w "%{http_code}\n" -X POST https://api.nextech.io.vn/api/payments/sepay/webhook \
+     -H "Content-Type: application/json" -d '{}'
+   ```
+
+   (Có thể trả 500 do body rỗng — quan trọng là không 404/502.)
+
+4. **Debug:** Trong `backend/.env` tạm thời thêm `SEPAY_DEBUG=1`, restart backend, xem log `[SePay] SDK env=sandbox|production` khi có request tạo checkout.
+
+5. **CORS:** Checkout mở trang SePay (POST form); sau redirect về `FRONTEND_URL`. Nếu chỉ lỗi sau khi về trang đơn hàng, xem Network tab request `POST /api/payments/sepay/sync/:orderId` (cookie JWT / 401).

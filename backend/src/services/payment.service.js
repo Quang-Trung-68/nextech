@@ -175,9 +175,38 @@ const createPaymentIntent = async (amount, currency, metadata) => {
 
 // ─── SEPAY (VietQR) ──────────────────────────────────────────────────────────
 
+/**
+ * sandbox: key test (SP-TEST-..., spsk_test_...) — phải khớp SDK.
+ * production: key live.
+ * Local thường NODE_ENV=development → sandbox. Trên VPS NODE_ENV=production nhưng vẫn dùng key test
+ * → bắt buộc sandbox (hoặc đặt SEPAY_ENV=sandbox). Tự nhận diện key test nếu không set SEPAY_ENV.
+ */
+function resolveSepayEnv() {
+  const explicit = (process.env.SEPAY_ENV || "").toLowerCase().trim();
+  if (explicit === "sandbox" || explicit === "production") {
+    return explicit;
+  }
+  const mid = process.env.SEPAY_MERCHANT_ID || "";
+  const sk = process.env.SEPAY_SECRET_KEY || "";
+  const looksLikeTest =
+    /TEST/i.test(mid) ||
+    /^spsk_test/i.test(sk) ||
+    /sandbox/i.test(mid);
+  if (looksLikeTest) {
+    return "sandbox";
+  }
+  return process.env.NODE_ENV === "production" ? "production" : "sandbox";
+}
+
 const getSepayClient = () => {
+  const env = resolveSepayEnv();
+  if (process.env.SEPAY_DEBUG === "1") {
+    console.log(
+      `[SePay] SDK env=${env} (NODE_ENV=${process.env.NODE_ENV}, SEPAY_ENV=${process.env.SEPAY_ENV || "unset"})`,
+    );
+  }
   return new SePayPgClient({
-    env: process.env.NODE_ENV === "production" ? "production" : "sandbox",
+    env,
     merchant_id: process.env.SEPAY_MERCHANT_ID || "sandbox_merchant",
     secret_key: process.env.SEPAY_SECRET_KEY || "sandbox_secret",
   });
