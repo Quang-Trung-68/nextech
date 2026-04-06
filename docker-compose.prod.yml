@@ -5,7 +5,8 @@
 #   3. Seed:       COMPOSE_FILE=docker-compose.prod.yml bash scripts/seed-all.sh
 #
 # Chỉ Nginx mở cổng 80/443 ra internet. Backend / frontend / Soketi / Postgres chỉ trong mạng Docker.
-# Biến POSTGRES_*, VITE_*, CLIENT_URL, … lấy từ file .env ở thư mục gốc (cùng cấp compose).
+# Biến POSTGRES_*, VITE_*, CLIENT_URL, GHCR_PREFIX, … lấy từ file .env ở thư mục gốc (cùng cấp compose).
+# GHCR_PREFIX: bắt buộc cho pull image CI — ví dụ ghcr.io/mygithubuser (chữ thường, trùng GitHub owner đẩy lên ghcr).
 
 services:
   postgres:
@@ -28,8 +29,7 @@ services:
       retries: 10
 
   soketi:
-    # CI pushes to ghcr.io — set GHCR_PREFIX in root .env (e.g. ghcr.io/yourgithubuser)
-    image: ${GHCR_PREFIX:-ghcr.io/your-github-org}/nextech-soketi:latest
+    image: ${GHCR_PREFIX:?Set GHCR_PREFIX in root .env to match CI e.g. ghcr.io/yourgithubuser}/nextech-soketi:latest
     build:
       context: ./backend
       dockerfile: Dockerfile.soketi
@@ -40,7 +40,7 @@ services:
       - ./backend/soketi.json:/app/soketi.json:ro
 
   backend:
-    image: ${GHCR_PREFIX:-ghcr.io/your-github-org}/nextech-backend:latest
+    image: ${GHCR_PREFIX:?Set GHCR_PREFIX in root .env to match CI e.g. ghcr.io/yourgithubuser}/nextech-backend:latest
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -80,7 +80,7 @@ services:
       start_period: 120s
 
   frontend:
-    image: ${GHCR_PREFIX:-ghcr.io/your-github-org}/nextech-frontend:latest
+    image: ${GHCR_PREFIX:?Set GHCR_PREFIX in root .env to match CI e.g. ghcr.io/yourgithubuser}/nextech-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
