@@ -3,7 +3,7 @@
 ## Production (VPS)
 
 - File compose: **`docker-compose.prod.yml`** — Postgres, Soketi, backend (image production), frontend (build static + Nginx), reverse proxy **Nginx** (80/443), **Certbot** (renew).
-- Deploy một lệnh: **`bash scripts/deploy.sh`** (git pull → build → up → `prisma migrate deploy`).
+- Deploy một lệnh: **`bash scripts/deploy.sh`** (git pull → build → up → `prisma generate` → `prisma migrate deploy`).
 - SSL lần đầu: **`bash init-letsencrypt.sh`**, sau đó `bash scripts/deploy.sh`.
 - **Seed dữ liệu (sản phẩm từ `products.json` + blog từ `posts.json`):**
   ```bash
@@ -14,6 +14,7 @@
   COMPOSE_FILE=docker-compose.prod.yml FORCE=1 bash scripts/reset-and-seed.sh
   ```
 - Chi tiết: **[VPS_DEPLOY_GUIDE.md](./VPS_DEPLOY_GUIDE.md)**
+- **CI/CD (GitHub Actions + ghcr.io):** workflow [`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml) — lint → build & push 3 image (`nextech-backend`, `nextech-soketi`, `nextech-frontend`) → SSH deploy (pull, `up --no-build`, `prisma generate`, `prisma migrate deploy`). Trên VPS, đặt `GHCR_PREFIX` trong `.env` gốc (cùng cấp compose) khớp với `ghcr.io/<github-owner-thường>` và cấu hình Secrets trong repo (xem workflow). Deploy thủ công vẫn dùng `bash scripts/deploy.sh` (build local).
 
 ---
 

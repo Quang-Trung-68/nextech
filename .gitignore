@@ -1,6 +1,7 @@
 node_modules/
 scripts/.venv/
 .env
+.venv
 !.env.example
 dist/
 build/
@@ -16,3 +17,7 @@ redis_data/
 
 # Crawled / heavy seed JSON (keep .gitkeep only)
 backend/prisma/seeds/data/*.json
+
+# Documentation
+DOCKER.md
+VPS_DEPLOY_GUIDE.md

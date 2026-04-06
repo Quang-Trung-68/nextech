@@ -27,7 +27,8 @@ until docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready -U "$PG_USER
   sleep 2
 done
 
-echo "📦 Running Prisma migrations..."
+echo "📦 Prisma generate + migrate (same order as CI/CD)..."
+docker compose -f "$COMPOSE_FILE" exec -T backend npx prisma generate
 docker compose -f "$COMPOSE_FILE" exec -T backend npx prisma migrate deploy
 
 echo "✅ Deploy finished. Services:"
