@@ -11,7 +11,8 @@ const getProducts = async (req, res, next) => {
 
 const getBrandsByType = async (req, res, next) => {
   try {
-    const brands = await productService.getBrandsByType(req.query.type);
+    const carousel = req.query.carousel === '1' || req.query.carousel === 'true';
+    const brands = await productService.getBrandsByType(req.query.type, { carousel });
     res.status(200).json({ success: true, brands });
   } catch (error) {
     next(error);

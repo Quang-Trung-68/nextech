@@ -168,7 +168,13 @@ const AdminDashboardPage = () => {
                 <span className="text-xs text-muted-foreground mb-1">Tháng</span>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger className="w-[110px]">
-                    <SelectValue placeholder="Tháng" />
+                    <SelectValue placeholder="Tháng">
+                      {(v) => {
+                        if (v === 'All') return 'Cả năm';
+                        if (v != null && v !== '') return `Tháng ${v}`;
+                        return 'Tháng';
+                      }}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="All">Cả năm</SelectItem>

@@ -98,15 +98,27 @@ const AdminProductPage = () => {
             setFilterState((prev) => ({ ...prev, category: value !== 'all' ? value : '', page: 1 }))
           }
         >
-          <SelectTrigger className="w-[140px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
-            <SelectValue placeholder="Danh mục (tất cả)" />
+          <SelectTrigger className="w-[160px] text-sm bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0">
+            <SelectValue placeholder="Danh mục (tất cả)">
+              {(v) => {
+                const val = v || 'all';
+                if (val === 'all') return 'Danh mục (tất cả)';
+                const vi = {
+                  laptop: 'Laptop',
+                  smartphone: 'Điện thoại',
+                  tablet: 'Máy tính bảng',
+                  accessory: 'Phụ kiện',
+                };
+                return vi[val] ?? val;
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Danh mục (tất cả)</SelectItem>
             <SelectItem value="laptop">Laptop</SelectItem>
-            <SelectItem value="smartphone">Smartphone</SelectItem>
-            <SelectItem value="tablet">Tablet</SelectItem>
-            <SelectItem value="accessory">Accessory</SelectItem>
+            <SelectItem value="smartphone">Điện thoại</SelectItem>
+            <SelectItem value="tablet">Máy tính bảng</SelectItem>
+            <SelectItem value="accessory">Phụ kiện</SelectItem>
           </SelectContent>
         </Select>
       ),

@@ -503,7 +503,9 @@ export default function AdminSerialsPage() {
                 }}
               >
                 <SelectTrigger className="w-full min-w-0 sm:w-[220px]">
-                  <SelectValue placeholder="Tất cả trạng thái" />
+                  <SelectValue placeholder="Tất cả trạng thái">
+                    {(v) => (v === 'all' || v == null || v === '' ? 'Tất cả' : STATUS_LABEL[v] ?? v)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả</SelectItem>
@@ -524,7 +526,13 @@ export default function AdminSerialsPage() {
                 }}
               >
                 <SelectTrigger className="h-auto min-h-9 w-full min-w-0 py-2 [&_[data-slot=select-value]]:line-clamp-2 [&_[data-slot=select-value]]:whitespace-normal">
-                  <SelectValue placeholder="Tất cả sản phẩm" />
+                  <SelectValue placeholder="Tất cả sản phẩm">
+                    {(v) => {
+                      if (v === 'all' || v == null || v === '') return 'Tất cả';
+                      const p = products.find((x) => String(x.id) === String(v));
+                      return p?.name ?? String(v);
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   <SelectItem value="all">Tất cả</SelectItem>

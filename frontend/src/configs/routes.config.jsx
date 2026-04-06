@@ -72,10 +72,12 @@ const AdminStockImportPage = lazy(() => import('@/pages/admin/inventory/AdminSto
 const AdminSerialsPage = lazy(() => import('@/pages/admin/inventory/AdminSerialsPage'));
 const NewsPage = lazy(() => import('@/pages/news/NewsPage'));
 const NewsDetailPage = lazy(() => import('@/pages/news/NewsDetailPage'));
+const AdminNewsLayout = lazy(() => import('@/pages/admin/AdminNewsLayout'));
 const AdminNewsPage = lazy(() => import('@/pages/admin/AdminNewsPage'));
 const AdminNewsFormPage = lazy(() => import('@/pages/admin/AdminNewsFormPage'));
 const AdminNewsCategoriesPage = lazy(() => import('@/pages/admin/AdminNewsCategoriesPage'));
 const BannersAdminPage = lazy(() => import('@/features/admin/banners/BannersAdminPage'));
+const BrandsAdminPage = lazy(() => import('@/features/admin/brands/BrandsAdminPage'));
 
 const routes = [
   {
@@ -258,24 +260,34 @@ const routes = [
             element: <AdminSettingsPage />,
           },
           {
-            path: 'news/categories',
-            element: <AdminNewsCategoriesPage />,
-          },
-          {
-            path: 'news/create',
-            element: <AdminNewsFormPage />,
-          },
-          {
-            path: 'news/:id/edit',
-            element: <AdminNewsFormPage />,
-          },
-          {
             path: 'news',
-            element: <AdminNewsPage />,
+            element: <AdminNewsLayout />,
+            children: [
+              {
+                index: true,
+                element: <AdminNewsPage />,
+              },
+              {
+                path: 'categories',
+                element: <AdminNewsCategoriesPage />,
+              },
+              {
+                path: 'create',
+                element: <AdminNewsFormPage />,
+              },
+              {
+                path: ':id/edit',
+                element: <AdminNewsFormPage />,
+              },
+            ],
           },
           {
             path: 'banners',
             element: <BannersAdminPage />,
+          },
+          {
+            path: 'brands',
+            element: <BrandsAdminPage />,
           },
         ],
       },

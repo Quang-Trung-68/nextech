@@ -132,6 +132,8 @@ const productSlugParamsSchema = z.object({
 
 const productBrandsQuerySchema = z.object({
   type: z.enum(['phone', 'laptop', 'tablet', 'accessories']).optional(),
+  /** 1 / true: carousel trang chủ (thứ tự + logo/link từ seed) */
+  carousel: z.enum(['1', '0', 'true', 'false']).optional(),
 });
 
 const productBrandsTopQuerySchema = z.object({

@@ -8,7 +8,6 @@ import {
   Package, 
   ShoppingCart, 
   Users, 
-  ArrowLeft, 
   LogOut, 
   ChevronLeft, 
   ChevronRight,
@@ -19,6 +18,7 @@ import {
   Barcode,
   Newspaper,
   Image,
+  Award,
 } from 'lucide-react';
 import NotificationDropdown from '@/components/layout/NotificationDropdown';
 
@@ -65,7 +65,7 @@ const Sidebar = ({ isMobile }) => {
     { name: 'Mã giảm giá', to: '/admin/coupons', icon: Tag },
     { name: 'Tin tức', to: '/admin/news', icon: Newspaper },
     { name: 'Banner', to: '/admin/banners', icon: Image },
-    { name: 'Danh mục tin', to: '/admin/news/categories', icon: Newspaper },
+    { name: 'Thương hiệu', to: '/admin/brands', icon: Award },
     { name: 'Cài đặt', to: '/admin/settings', icon: Settings },
   ];
 
@@ -132,15 +132,12 @@ const Sidebar = ({ isMobile }) => {
           <NavLink
             key={link.to}
             to={link.to}
-            end={link.to === '/admin/overview' || link.to === '/admin/news/categories'}
+            end={link.to === '/admin/overview'}
             title={!isMobile && collapsed ? link.name : undefined}
             className={({ isActive }) => {
               let active = isActive;
               if (link.to === '/admin/news') {
-                active =
-                  pathname === '/admin/news' ||
-                  pathname.startsWith('/admin/news/create') ||
-                  /^\/admin\/news\/\d+\/edit$/.test(pathname);
+                active = pathname.startsWith('/admin/news');
               }
               return cn(
                 'flex items-center rounded-md font-medium transition-colors',
@@ -156,22 +153,6 @@ const Sidebar = ({ isMobile }) => {
           </NavLink>
         ))}
 
-        <div className="my-2 border-t border-border" />
-
-        <NavLink
-          to="/"
-          end
-          title={!isMobile && collapsed ? 'Về cửa hàng' : undefined}
-          className={() => cn(
-            'flex items-center rounded-md font-medium transition-colors',
-            !isMobile && collapsed ? 'justify-center p-2' : 'gap-3 py-1.5 px-2 text-sm',
-            'text-muted-foreground hover:bg-muted hover:text-foreground'
-          )}
-        >
-          <ArrowLeft size={20} className="flex-shrink-0" />
-          {(!collapsed || isMobile) && <span className="truncate">Về cửa hàng</span>}
-        </NavLink>
-        
         <button
           onClick={() => logout()}
           title={!isMobile && collapsed ? 'Đăng xuất' : undefined}

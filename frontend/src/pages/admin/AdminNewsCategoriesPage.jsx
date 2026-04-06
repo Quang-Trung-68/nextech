@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import axiosInstance from '@/lib/axios';
@@ -27,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import usePageTitle from '@/hooks/usePageTitle';
-import { ArrowLeft, Loader2, Pencil, Trash2, Plus } from 'lucide-react';
+import { Loader2, Pencil, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 const columnHelper = createColumnHelper();
@@ -135,16 +134,11 @@ export default function AdminNewsCategoriesPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="w-full min-w-0 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin/news">
-              <ArrowLeft size={18} className="mr-1" />
-              Tin tức
-            </Link>
-          </Button>
+        <div>
           <h1 className="text-2xl font-bold">Danh mục tin</h1>
+          <p className="text-sm text-muted-foreground">Nhóm bài viết theo chủ đề</p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus size={18} className="mr-2" />

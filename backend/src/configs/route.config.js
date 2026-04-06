@@ -47,6 +47,7 @@ const apiRoutes = [
   { prefix: '/api/admin/posts', router: require('../routes/admin.news.routes') }, // News / blog posts (trước /api/admin)
   { prefix: '/api/admin/tags', router: require('../routes/admin.tag.routes') }, // Admin tag search (trước /api/admin)
   { prefix: '/api/admin/banners', router: require('../routes/admin.banner.routes') },
+  { prefix: '/api/admin/brands', router: require('../routes/admin.brand.routes') },
   { prefix: '/api/banners', router: require('../routes/banner.routes') },
   { prefix: '/api/admin',        router: require('../routes/admin.routes') },       // Stats, Products, Users
   { prefix: '/api/payments',     router: require('../routes/payment.routes') }, // GET intent/status

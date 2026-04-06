@@ -103,15 +103,22 @@ model OAuthAccount {
 }
 
 model Brand {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
-  logo        String?
-  description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  products    Product[]
+  id                     String    @id @default(cuid())
+  name                   String    @unique
+  slug                   String    @unique
+  logo                   String?
+  description            String?
+  /// Thứ tự trên carousel trang chủ; null = không hiển thị khi đã có ít nhất một brand được gán thứ tự (seed).
+  carouselOrder          Int?
+  /// Link ngoài (site hãng); nếu có, carousel mở tab mới thay vì /danh-mục?brand=
+  websiteUrl             String?
+  /// Slug danh mục nội bộ khi không dùng websiteUrl: phone | laptop | tablet | accessories
+  carouselCategorySlug   String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  products               Product[]
 
+  @@index([carouselOrder])
   @@map("brands")
 }
 

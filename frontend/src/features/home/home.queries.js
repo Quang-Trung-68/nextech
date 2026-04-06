@@ -12,12 +12,12 @@ export const activeBannersQueryOptions = () =>
     staleTime: 60_000,
   });
 
-/** GET /products/brands — all brands for marquee */
+/** GET /products/brands?carousel=1 — carousel trang chủ (thứ tự + link/logo từ seed) */
 export const brandsCarouselQueryOptions = () =>
   queryOptions({
     queryKey: ['products', 'brands', 'carousel'],
     queryFn: async () => {
-      const { data } = await axiosPublic.get('/products/brands');
+      const { data } = await axiosPublic.get('/products/brands', { params: { carousel: 1 } });
       return data.brands ?? [];
     },
     staleTime: 5 * 60_000,

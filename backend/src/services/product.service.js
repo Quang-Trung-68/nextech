@@ -131,7 +131,50 @@ const getTopBrandsByProductCount = async (limit = 4) => {
   return rows.filter((r) => r._count.products > 0).slice(0, take);
 };
 
-const getBrandsByType = async (type) => {
+const CAROUSEL_BRAND_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  logo: true,
+  websiteUrl: true,
+  carouselCategorySlug: true,
+};
+
+/** Chỉ brand có URL logo thật (không null, không rỗng) — tránh ô trống trên carousel. */
+const whereHasLogo = {
+  AND: [{ logo: { not: null } }, { NOT: { logo: { equals: '' } } }],
+};
+
+/**
+ * Carousel trang chủ: nếu có ít nhất một brand có carouselOrder (sau seed), chỉ hiển thị các brand đó theo thứ tự.
+ * Ngược lại (chưa seed carousel) — tất cả brand có logo, sắp xếp tên.
+ */
+const getCarouselBrands = async () => {
+  const anyOrdered = await prisma.brand.findFirst({
+    where: { carouselOrder: { not: null } },
+    select: { id: true },
+  });
+  if (anyOrdered) {
+    return prisma.brand.findMany({
+      where: {
+        AND: [{ carouselOrder: { not: null } }, ...whereHasLogo.AND],
+      },
+      orderBy: { carouselOrder: 'asc' },
+      select: CAROUSEL_BRAND_SELECT,
+    });
+  }
+  return prisma.brand.findMany({
+    where: whereHasLogo,
+    orderBy: { name: 'asc' },
+    select: CAROUSEL_BRAND_SELECT,
+  });
+};
+
+const getBrandsByType = async (type, options = {}) => {
+  if (options.carousel) {
+    return getCarouselBrands();
+  }
+
   if (type == null || type === '') {
     return prisma.brand.findMany({
       orderBy: { name: 'asc' },

@@ -45,12 +45,13 @@ const FacebookIcon = () => (
 const LoginPage = () => {
   usePageTitle('Đăng nhập');
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
   const [searchParams] = useSearchParams();
   const oauthError = searchParams.get('error');
 
-  // Nếu đã đăng nhập → redirect về trang chủ ngay
+  // Nếu đã đăng nhập → redirect theo vai trò
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={user?.role === 'ADMIN' ? '/admin' : '/'} replace />;
   }
 
   /**

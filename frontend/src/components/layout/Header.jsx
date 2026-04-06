@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Heart, User, ShoppingCart, Menu, X, LogOut, Package, ShieldCheck } from 'lucide-react';
+import { Search, Heart, User, ShoppingCart, Menu, X, LogOut, Package } from 'lucide-react';
 import useAuthStore from '@/stores/useAuthStore';
 import { useCart } from '@/features/cart/hooks/useCart';
 import { useUpdateCartItem, useRemoveCartItem, useClearCart } from '@/features/cart/hooks/useCartMutations';
@@ -342,13 +342,6 @@ const Header = () => {
 
                             {/* Links */}
                             <div className="p-2 flex flex-col gap-0.5">
-                              {user?.role === 'ADMIN' && (
-                                <Link to="/admin" className="px-3 py-2 text-[14px] text-apple-dark hover:bg-apple-gray rounded-xl transition-colors flex items-center gap-3 font-medium">
-                                  <ShieldCheck size={18} className="text-apple-blue" />
-                                  Theo dõi quản trị
-                                </Link>
-                              )}
-                              
                               <Link to="/profile" className="px-3 py-2 text-[14px] text-apple-dark hover:bg-apple-gray rounded-xl transition-colors flex items-center gap-3 font-medium">
                                 <User size={18} className="text-[#86868b]" />
                                 Tài khoản của tôi

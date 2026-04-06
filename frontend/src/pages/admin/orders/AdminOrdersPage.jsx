@@ -21,6 +21,24 @@ import {
 import { Copy } from 'lucide-react';
 import OrderDetailModal from './components/OrderDetailModal';
 
+const PAYMENT_FILTER_LABEL = {
+  all: 'Thanh toán (tất cả)',
+  UNPAID: 'Chưa thanh toán',
+  PAID: 'Đã thanh toán',
+  REFUNDED: 'Đã hoàn tiền',
+};
+
+const ORDER_STATUS_FILTER_LABEL = {
+  all: 'Trạng thái (tất cả)',
+  PENDING: 'Chờ xác nhận',
+  CONFIRMED: 'Đã xác nhận',
+  PACKING: 'Đang đóng gói',
+  SHIPPING: 'Đang vận chuyển',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
+  RETURNED: 'Đã hoàn trả',
+};
+
 const AdminOrdersPage = () => {
   usePageTitle('Đơn hàng | Quản trị');
 
@@ -130,8 +148,10 @@ const AdminOrdersPage = () => {
           value={params.paymentStatus || 'all'}
           onValueChange={(value) => setFilterState((prev) => ({ ...prev, paymentStatus: value !== 'all' ? value : '', page: 1 }))}
         >
-          <SelectTrigger className="w-[130px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
-            <SelectValue placeholder="Thanh toán (tất cả)" />
+          <SelectTrigger className="w-[180px] text-sm bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
+            <SelectValue placeholder="Thanh toán (tất cả)">
+              {(v) => PAYMENT_FILTER_LABEL[v || 'all'] ?? PAYMENT_FILTER_LABEL.all}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent onClick={e => e.stopPropagation()}>
             <SelectItem value="all">Thanh toán (tất cả)</SelectItem>
@@ -154,8 +174,10 @@ const AdminOrdersPage = () => {
           value={params.status || 'all'}
           onValueChange={(value) => setFilterState((prev) => ({ ...prev, status: value !== 'all' ? value : '', page: 1 }))}
         >
-          <SelectTrigger className="w-[120px] text-sm capitalize bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
-            <SelectValue placeholder="Trạng thái (tất cả)" />
+          <SelectTrigger className="w-[160px] text-sm bg-transparent border-none shadow-none font-medium p-0 -ml-1 focus:ring-0 focus-visible:ring-0" onClick={e => e.stopPropagation()}>
+            <SelectValue placeholder="Trạng thái (tất cả)">
+              {(v) => ORDER_STATUS_FILTER_LABEL[v || 'all'] ?? ORDER_STATUS_FILTER_LABEL.all}
+            </SelectValue>
           </SelectTrigger>
             <SelectContent onClick={e => e.stopPropagation()}>
             <SelectItem value="all">Trạng thái (tất cả)</SelectItem>

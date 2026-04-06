@@ -1,24 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { activeBannersQueryOptions } from '../home.queries';
 import { cn } from '@/lib/utils';
 
-const AUTO_MS = 4500;
+const AUTO_MS = 5000;
 const SWIPE_THRESHOLD = 50;
 
-function BannerLink({ href, className, children }) {
+function BannerLink({ href, className, children, style }) {
   const external = /^https?:\/\//i.test(href);
   if (external) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} style={style}>
         {children}
       </a>
     );
   }
   return (
-    <Link to={href} className={className}>
+    <Link to={href} className={className} style={style}>
       {children}
     </Link>
   );
@@ -26,36 +26,108 @@ function BannerLink({ href, className, children }) {
 
 export function HeroBannerSlider() {
   const { data: banners = [], isLoading, isError } = useQuery(activeBannersQueryOptions());
-  const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [loaded, setLoaded] = useState({});
+
+  const containerRef = useRef(null);
+  const [slideW, setSlideW] = useState(0);
+  /** Vị trí trong dãy mở rộng: 0 = clone cuối, 1..n = thật, n+1 = clone đầu */
+  const positionRef = useRef(1);
+  const [position, setPosition] = useState(1);
+  const [noTransition, setNoTransition] = useState(false);
+
   const intervalRef = useRef(null);
   const touchStartX = useRef(null);
 
   const n = banners.length;
 
-  const clear = () => {
+  const extended = useMemo(() => {
+    if (n <= 1) return banners;
+    return [banners[n - 1], ...banners, banners[0]];
+  }, [banners, n]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+    const measure = () => setSlideW(el.offsetWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const clearIntervalIfAny = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
   };
 
-  const go = (dir) => {
-    if (n <= 0) return;
-    setIndex((i) => (dir === 'next' ? (i + 1) % n : (i - 1 + n) % n));
+  const snapAfterClone = useCallback(() => {
+    const p = positionRef.current;
+    if (n <= 1) return;
+    if (p === n + 1) {
+      setNoTransition(true);
+      positionRef.current = 1;
+      setPosition(1);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setNoTransition(false));
+      });
+    } else if (p === 0) {
+      setNoTransition(true);
+      positionRef.current = n;
+      setPosition(n);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setNoTransition(false));
+      });
+    }
+  }, [n]);
+
+  const goNext = useCallback(() => {
+    if (n <= 1) return;
+    const p = positionRef.current;
+    if (p === n + 1) return;
+    const next = p + 1;
+    positionRef.current = next;
+    setPosition(next);
+  }, [n]);
+
+  const goPrev = useCallback(() => {
+    if (n <= 1) return;
+    const p = positionRef.current;
+    if (p === 0) return;
+    const next = p === 1 ? 0 : p - 1;
+    positionRef.current = next;
+    setPosition(next);
+  }, [n]);
+
+  const onTrackTransitionEnd = (e) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.propertyName !== 'transform') return;
+    snapAfterClone();
   };
 
   useEffect(() => {
     if (n <= 1 || paused) {
-      clear();
+      clearIntervalIfAny();
       return undefined;
     }
     intervalRef.current = setInterval(() => {
-      setIndex((i) => (i + 1) % n);
+      goNext();
     }, AUTO_MS);
-    return () => clear();
-  }, [n, paused]);
+    return () => clearIntervalIfAny();
+  }, [n, paused, goNext]);
+
+  const bannerIds = banners.map((b) => b.id).join(',');
+  useEffect(() => {
+    if (n <= 1) {
+      positionRef.current = 0;
+      setPosition(0);
+      return;
+    }
+    positionRef.current = 1;
+    setPosition(1);
+  }, [n, bannerIds]);
 
   if (isError) {
     return (
@@ -75,6 +147,16 @@ export function HeroBannerSlider() {
 
   if (!banners.length) return null;
 
+  const translatePx = slideW > 0 && n > 1 ? -position * slideW : 0;
+  const dotActive =
+    n <= 1
+      ? 0
+      : position === 0
+        ? n - 1
+        : position === n + 1
+          ? 0
+          : position - 1;
+
   return (
     <section
       key={banners.map((b) => b.id).join('-')}
@@ -90,17 +172,24 @@ export function HeroBannerSlider() {
         if (start == null) return;
         const end = e.changedTouches[0]?.clientX ?? start;
         const dx = end - start;
-        if (dx < -SWIPE_THRESHOLD) go('next');
-        else if (dx > SWIPE_THRESHOLD) go('prev');
+        if (dx < -SWIPE_THRESHOLD) goNext();
+        else if (dx > SWIPE_THRESHOLD) goPrev();
       }}
     >
-      <div className="relative h-[240px] w-full overflow-hidden md:h-[400px]">
+      <div ref={containerRef} className="relative h-[240px] w-full overflow-hidden md:h-[400px]">
         <div
-          className="flex h-full transition-transform duration-500 ease-out"
-          style={{ transform: `translateX(-${index * 100}%)` }}
+          className={cn(
+            'flex h-full',
+            !noTransition && 'transition-transform duration-500 ease-out'
+          )}
+          style={{
+            transform: `translate3d(${translatePx}px, 0, 0)`,
+            willChange: 'transform',
+          }}
+          onTransitionEnd={onTrackTransitionEnd}
         >
-          {banners.map((b) => (
-            <div key={b.id} className="h-full min-w-full flex-shrink-0">
+          {(n <= 1 ? banners : extended).map((b, i) => (
+            <div key={`${i}-${b.id}`} className="h-full w-full min-w-full flex-shrink-0">
               <BannerLink
                 href={b.linkUrl}
                 className="relative flex h-full w-full flex-col md:flex-row"
@@ -120,7 +209,7 @@ export function HeroBannerSlider() {
                   <img
                     src={b.imageUrl}
                     alt=""
-                    loading="lazy"
+                    loading={i <= 1 ? 'eager' : 'lazy'}
                     className={cn(
                       'h-full w-full object-cover transition-opacity duration-500',
                       loaded[b.id] ? 'opacity-100' : 'opacity-0'
@@ -141,7 +230,7 @@ export function HeroBannerSlider() {
               className="absolute left-2 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-black/10 bg-white/90 p-2 shadow md:flex"
               onClick={(e) => {
                 e.preventDefault();
-                go('prev');
+                goPrev();
               }}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -152,7 +241,7 @@ export function HeroBannerSlider() {
               className="absolute right-2 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-black/10 bg-white/90 p-2 shadow md:flex"
               onClick={(e) => {
                 e.preventDefault();
-                go('next');
+                goNext();
               }}
             >
               <ChevronRight className="h-5 w-5" />
@@ -165,11 +254,14 @@ export function HeroBannerSlider() {
                   aria-label={`Slide ${i + 1}`}
                   className={cn(
                     'h-2 rounded-full transition-all',
-                    i === index ? 'w-6 bg-[#0071e3]' : 'w-2 bg-black/25'
+                    i === dotActive ? 'w-6 bg-[#0071e3]' : 'w-2 bg-black/25'
                   )}
                   onClick={(e) => {
                     e.preventDefault();
-                    setIndex(i);
+                    if (n <= 1) return;
+                    const target = i + 1;
+                    positionRef.current = target;
+                    setPosition(target);
                   }}
                 />
               ))}
