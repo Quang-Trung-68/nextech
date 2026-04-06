@@ -54,14 +54,16 @@ export const VatInvoiceForm = ({ register, watch, errors, setValue, getValues })
 
   useEffect(() => {
     if (isVatRequested) {
-      if (!vatBuyerType) {
-        setValue('vatBuyerType', 'INDIVIDUAL', { shouldValidate: false });
-        setLocalType('INDIVIDUAL');
-      } else {
-        setLocalType(vatBuyerType);
-      }
+      queueMicrotask(() => {
+        if (!vatBuyerType) {
+          setValue('vatBuyerType', 'INDIVIDUAL', { shouldValidate: false });
+          setLocalType('INDIVIDUAL');
+        } else {
+          setLocalType(vatBuyerType);
+        }
+      });
     }
-  }, [isVatRequested]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isVatRequested, vatBuyerType, setValue]);
 
   useEffect(() => {
     if (isVatRequested && localType === 'INDIVIDUAL') {
@@ -107,7 +109,7 @@ export const VatInvoiceForm = ({ register, watch, errors, setValue, getValues })
       setValue('vatBuyerCompany',        undefined, { shouldValidate: false });
       setValue('vatBuyerTaxCode',        undefined, { shouldValidate: false });
       setValue('vatBuyerCompanyAddress', undefined, { shouldValidate: false });
-      setLocalType('INDIVIDUAL');
+      queueMicrotask(() => setLocalType('INDIVIDUAL'));
     }
   }, [isVatRequested, setValue]);
 

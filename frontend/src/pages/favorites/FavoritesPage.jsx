@@ -14,7 +14,7 @@ const getOptimizedImage = (url, width) => {
 };
 
 const FavoriteProductCard = ({ product }) => {
-  const { id, slug, category, name, images, finalPrice, price, discountPercent, brand } = product;
+  const { slug, category, name, images, finalPrice, price, discountPercent, brand } = product;
 
   const firstImage = getOptimizedImage(images?.[0]?.url, 400);
   const displayPrice = finalPrice ?? price;

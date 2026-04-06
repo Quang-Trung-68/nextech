@@ -78,29 +78,31 @@ export function BrandForm({ open, onOpenChange, brand, onSubmit, isSubmitting })
 
   useEffect(() => {
     if (!open) return;
-    setServerError('');
-    if (brand) {
-      reset({
-        name: brand.name ?? '',
-        slug: brand.slug ?? '',
-        description: brand.description ?? '',
-        logo: brand.logo ?? '',
-        websiteUrl: brand.websiteUrl ?? '',
-        carouselOrder:
-          brand.carouselOrder != null && brand.carouselOrder !== '' ? String(brand.carouselOrder) : '',
-        carouselCategorySlug: brand.carouselCategorySlug ?? '',
-      });
-    } else {
-      reset({
-        name: '',
-        slug: '',
-        description: '',
-        logo: '',
-        websiteUrl: '',
-        carouselOrder: '',
-        carouselCategorySlug: '',
-      });
-    }
+    queueMicrotask(() => {
+      setServerError('');
+      if (brand) {
+        reset({
+          name: brand.name ?? '',
+          slug: brand.slug ?? '',
+          description: brand.description ?? '',
+          logo: brand.logo ?? '',
+          websiteUrl: brand.websiteUrl ?? '',
+          carouselOrder:
+            brand.carouselOrder != null && brand.carouselOrder !== '' ? String(brand.carouselOrder) : '',
+          carouselCategorySlug: brand.carouselCategorySlug ?? '',
+        });
+      } else {
+        reset({
+          name: '',
+          slug: '',
+          description: '',
+          logo: '',
+          websiteUrl: '',
+          carouselOrder: '',
+          carouselCategorySlug: '',
+        });
+      }
+    });
   }, [open, brand, reset]);
 
   const submit = handleSubmit(async (values) => {

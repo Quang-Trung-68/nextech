@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 /**
  * StarRating — hiển thị sao tĩnh (read-only) theo giá trị rating.
  * Hỗ trợ sao nửa bằng cách dùng SVG clipPath.
@@ -8,6 +10,7 @@
  *   color   — màu fill sao (default #f59e0b amber-400)
  */
 const StarRating = ({ rating = 0, size = 20, color = '#f59e0b' }) => {
+  const idBase = useId().replace(/:/g, '');
   const stars = [1, 2, 3, 4, 5];
 
   return (
@@ -15,7 +18,7 @@ const StarRating = ({ rating = 0, size = 20, color = '#f59e0b' }) => {
       {stars.map((star) => {
         // Tỉ lệ fill: 0 → 1 (0 = rỗng, 0.5 = nửa, 1 = đầy)
         const fill = Math.min(1, Math.max(0, rating - star + 1));
-        const clipId = `star-clip-${star}-${Math.random().toString(36).slice(2, 6)}`;
+        const clipId = `star-clip-${star}-${idBase}`;
 
         return (
           <svg

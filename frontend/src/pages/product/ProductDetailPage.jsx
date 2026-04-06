@@ -79,8 +79,10 @@ const ProductDetailPage = () => {
   const [attrSelection, setAttrSelection] = useState({});
 
   useEffect(() => {
-    setAttrSelection({});
-    setQuantity(1);
+    queueMicrotask(() => {
+      setAttrSelection({});
+      setQuantity(1);
+    });
   }, [slug]);
 
   const product = response?.product;
@@ -123,7 +125,9 @@ const ProductDetailPage = () => {
   useEffect(() => {
     if (!hasVariants || !selectedVariant) return;
     const max = Math.max(0, Number(selectedVariant.stock));
-    setQuantity((q) => Math.min(Math.max(1, q), Math.max(1, max)));
+    queueMicrotask(() =>
+      setQuantity((q) => Math.min(Math.max(1, q), Math.max(1, max))),
+    );
   }, [hasVariants, selectedVariant?.id, selectedVariant?.stock]);
 
   const displayFinalPrice = useMemo(() => {

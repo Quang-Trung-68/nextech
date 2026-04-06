@@ -9,7 +9,6 @@ import { formatVND } from '@/utils/price';
 import { VariantOptionBadges } from '@/components/product/VariantOptionBadges';
 import SearchDialog from '../common/SearchDialog';
 import MobileDrawer from './MobileDrawer';
-import { useMyFavorites } from '@/features/favorites';
 import NotificationDropdown from './NotificationDropdown';
 import { getSlugByCategory } from '@/constants/category';
 
@@ -30,19 +29,18 @@ const Header = () => {
   const { totalItems, cartItems, totalPrice } = useCart();
   const cartItemCount = totalItems || 0;
 
-  const { data: favorites = [], isLoading: isFavoritesLoading } = useMyFavorites();
-  const favoriteCount = favorites.length;
-  
   const { mutate: updateQuantity } = useUpdateCartItem();
   const { mutate: removeItem } = useRemoveCartItem();
   const { mutate: clearCart } = useClearCart();
 
-  // Đóng các dropdown khi redirect trang
+  // Đóng các dropdown khi redirect trang (defer setState để tránh set-state đồng bộ trong effect)
   useEffect(() => {
-    setIsSearchOpen(false);
-    setIsCartOpen(false);
-    setIsMobileMenuOpen(false);
-    setIsUserMenuOpen(false);
+    queueMicrotask(() => {
+      setIsSearchOpen(false);
+      setIsCartOpen(false);
+      setIsMobileMenuOpen(false);
+      setIsUserMenuOpen(false);
+    });
   }, [location.pathname]);
 
   // Click outside handlers

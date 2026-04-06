@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, createElement } from 'react';
 import { Phone, Mail, Clock, MessageCircle } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,13 +73,13 @@ export default function SupportContact() {
 
         {/* Contact info grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
-          {contactInfo.map(({ icon: Icon, label, value }) => (
+          {contactInfo.map(({ icon, label, value }) => (
             <div
               key={label}
               className="flex items-start gap-4 bg-white rounded-2xl p-6"
             >
               <div className="w-10 h-10 rounded-xl bg-[#e8f0fe] flex items-center justify-center shrink-0">
-                <Icon size={18} className="text-[#0071e3]" />
+                {createElement(icon, { size: 18, className: 'text-[#0071e3]' })}
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-[13px] text-[#6e6e73] font-medium mb-0.5">

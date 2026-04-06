@@ -370,7 +370,7 @@ export default function AdminSerialsPage() {
 
   useEffect(() => {
     const t = searchParams.get('tab');
-    if (t === 'low') setView('low');
+    if (t === 'low') queueMicrotask(() => setView('low'));
   }, [searchParams]);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');

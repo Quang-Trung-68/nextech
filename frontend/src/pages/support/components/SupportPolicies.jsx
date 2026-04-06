@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import { RotateCcw, Shield, Truck } from 'lucide-react';
 
 const policies = [
@@ -33,14 +34,14 @@ export default function SupportPolicies() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {policies.map(({ icon: Icon, title, highlight, description }) => (
+          {policies.map(({ icon, title, highlight, description }) => (
             <div
               key={title}
               className="group flex flex-col border border-[#d2d2d7] rounded-[20px] p-8 transition-all duration-200 hover:border-[#0071e3] hover:shadow-[0_4px_20px_rgba(0,113,227,0.1)] cursor-default"
             >
               {/* Icon */}
               <div className="mb-5">
-                <Icon size={36} className="text-[#0071e3]" />
+                {createElement(icon, { size: 36, className: 'text-[#0071e3]' })}
               </div>
 
               {/* Highlight */}

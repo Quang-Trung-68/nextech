@@ -47,11 +47,11 @@ export function useCountdown(expiresAt) {
 
   useEffect(() => {
     if (!expiresAt) {
-      setTimeLeft(calcTimeLeft(null));
+      queueMicrotask(() => setTimeLeft(calcTimeLeft(null)));
       return;
     }
 
-    setTimeLeft(calcTimeLeft(expiresAt));
+    queueMicrotask(() => setTimeLeft(calcTimeLeft(expiresAt)));
 
     const intervalId = setInterval(() => {
       const computed = calcTimeLeft(expiresAt);

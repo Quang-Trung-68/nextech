@@ -73,9 +73,10 @@ const AdminOrdersPage = () => {
 
   useEffect(() => {
     if (queryOrderId) {
-      setSelectedOrderId(queryOrderId);
-      setIsModalOpen(true);
-      
+      queueMicrotask(() => {
+        setSelectedOrderId(queryOrderId);
+        setIsModalOpen(true);
+      });
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('orderId');
       setSearchParams(newParams, { replace: true });
@@ -88,7 +89,7 @@ const AdminOrdersPage = () => {
   );
 
   useEffect(() => {
-    setFilterState(prev => ({ ...prev, page: 1 }));
+    queueMicrotask(() => setFilterState((prev) => ({ ...prev, page: 1 })));
   }, [debouncedSearch]);
 
   const { data, isLoading } = useAdminOrders(params);
@@ -196,7 +197,7 @@ const AdminOrdersPage = () => {
     {
       id: 'actions',
       header: 'Thao tác',
-      cell: ({ row }) => (
+      cell: () => (
         <span className="text-xs text-muted-foreground" onClick={(e) => e.stopPropagation()}>
           Mở chi tiết để xử lý
         </span>

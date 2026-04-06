@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import usePageTitle from '@/hooks/usePageTitle';
 import { useSearchParams, Link, Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';

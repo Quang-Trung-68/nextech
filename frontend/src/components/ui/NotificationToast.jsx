@@ -22,7 +22,7 @@ const getIconForType = (type) => {
   }
 };
 
-function ToastContent({ notification, toastId, onNavigate }) {
+function ToastContent({ notification, onNavigate }) {
   const [paused, setPaused] = useState(false);
 
   return (
@@ -77,7 +77,6 @@ export function showNotificationToast(notification, url, onNavigate) {
     (t) => (
       <ToastContent
         notification={notification}
-        toastId={t}
         onNavigate={() => {
           toast.dismiss(t);
           onNavigate(url);

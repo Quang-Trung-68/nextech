@@ -11,9 +11,10 @@ function Accordion({
   /** Radix-style — map sang `multiple` (Base UI không có prop này) */
   type,
   /** không chuyển xuống DOM */
-  collapsible: _collapsible,
+  collapsible,
   ...props
 }) {
+  void collapsible;
   const resolvedMultiple =
     multiple ?? openMultiple ?? (type === 'multiple');
   return (

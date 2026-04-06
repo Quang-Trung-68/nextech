@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Bell, ShoppingCart, CreditCard, Package, AlertTriangle, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';

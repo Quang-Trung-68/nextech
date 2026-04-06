@@ -120,13 +120,15 @@ export function HeroBannerSlider() {
 
   const bannerIds = banners.map((b) => b.id).join(',');
   useEffect(() => {
-    if (n <= 1) {
-      positionRef.current = 0;
-      setPosition(0);
-      return;
-    }
-    positionRef.current = 1;
-    setPosition(1);
+    queueMicrotask(() => {
+      if (n <= 1) {
+        positionRef.current = 0;
+        setPosition(0);
+        return;
+      }
+      positionRef.current = 1;
+      setPosition(1);
+    });
   }, [n, bannerIds]);
 
   if (isError) {
