@@ -19,5 +19,4 @@ redis_data/
 backend/prisma/seeds/data/*.json
 
 # Documentation
-DOCKER.md
 VPS_DEPLOY_GUIDE.md
