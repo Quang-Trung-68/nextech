@@ -15,6 +15,7 @@
   ```
 - Chi tiết: **[VPS_DEPLOY_GUIDE.md](./VPS_DEPLOY_GUIDE.md)**
 - **CI/CD (GitHub Actions + ghcr.io):** workflow [`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml) — lint → build & push 3 image (`nextech-backend`, `nextech-soketi`, `nextech-frontend`) → SSH deploy (pull, `up --no-build`, `prisma generate`, `prisma migrate deploy`). Trên VPS, đặt `GHCR_PREFIX` trong `.env` gốc (cùng cấp compose) khớp với `ghcr.io/<github-owner-thường>` và cấu hình Secrets trong repo (xem workflow). Deploy thủ công vẫn dùng `bash scripts/deploy.sh` (build local).
+- **Gỡ lỗi SSH deploy (`unable to authenticate` / `no supported methods remain`):** Secret `VPS_SSH_KEY` phải là **toàn bộ private key** (có dòng `-----BEGIN … PRIVATE KEY-----` … `-----END …-----`), không dán nhầm **public key** (`ssh-ed25519` / `ssh-rsa` một dòng). Public key tương ứng phải có trong `~/.ssh/authorized_keys` của đúng user `VPS_USER` trên VPS (`chmod 700 ~/.ssh`, `chmod 600 ~/.ssh/authorized_keys`). Thử từ máy bạn: `ssh -i /path/to/private_key VPS_USER@VPS_HOST`. Private key có **passphrase** thì cần thêm input `passphrase` vào `appleboy/ssh-action` (secret riêng) hoặc dùng key **không passphrase** chỉ cho CI. SSH **cổng khác 22** thì thêm input `port` vào action.
 
 ---
 
