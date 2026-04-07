@@ -113,6 +113,9 @@ services:
       - frontend
       - backend
       - soketi
+    networks:
+      - default
+      - shared_proxy
 
   certbot:
     image: certbot/certbot
@@ -128,3 +131,6 @@ volumes:
 networks:
   default:
     name: nextech-network
+  shared_proxy:
+    name: shared-proxy-network
+    external: true
