@@ -23,3 +23,5 @@ backend/prisma/seeds/data/*.json
 DOCKER.md
 VPS_DEPLOY_GUIDE.md
 docs
+
+test.md
