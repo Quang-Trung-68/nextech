@@ -30,7 +30,6 @@ export function HeroBannerSlider() {
   const [loaded, setLoaded] = useState({});
 
   const containerRef = useRef(null);
-  const [slideW, setSlideW] = useState(0);
   /** Vị trí trong dãy mở rộng: 0 = clone cuối, 1..n = thật, n+1 = clone đầu */
   const positionRef = useRef(1);
   const [position, setPosition] = useState(1);
@@ -46,15 +45,8 @@ export function HeroBannerSlider() {
     return [banners[n - 1], ...banners, banners[0]];
   }, [banners, n]);
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return undefined;
-    const measure = () => setSlideW(el.offsetWidth);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  /** Số slide trong track (có clone). translate % phải tính trên chiều rộng track đầy đủ — flex mặc định chỉ rộng = viewport nên cần width: trackLen*100% + mỗi slide 100%/trackLen. */
+  const trackLen = n <= 1 ? n : extended.length;
 
   const clearIntervalIfAny = () => {
     if (intervalRef.current) {
@@ -149,7 +141,12 @@ export function HeroBannerSlider() {
 
   if (!banners.length) return null;
 
-  const translatePx = slideW > 0 && n > 1 ? -position * slideW : 0;
+  const translateX =
+    n <= 1 || trackLen === 0
+      ? '0'
+      : `calc(-${position} * 100% / ${trackLen})`;
+  const trackWidthPercent = n <= 1 ? '100%' : `${trackLen * 100}%`;
+  const slideBasisPercent = n <= 1 ? '100%' : `${100 / trackLen}%`;
   const dotActive =
     n <= 1
       ? 0
@@ -185,13 +182,18 @@ export function HeroBannerSlider() {
             !noTransition && 'transition-transform duration-500 ease-out'
           )}
           style={{
-            transform: `translate3d(${translatePx}px, 0, 0)`,
+            width: trackWidthPercent,
+            transform: `translate3d(${translateX}, 0, 0)`,
             willChange: 'transform',
           }}
           onTransitionEnd={onTrackTransitionEnd}
         >
           {(n <= 1 ? banners : extended).map((b, i) => (
-            <div key={`${i}-${b.id}`} className="h-full w-full min-w-full flex-shrink-0">
+            <div
+              key={`${i}-${b.id}`}
+              className="h-full flex-shrink-0"
+              style={{ flex: `0 0 ${slideBasisPercent}` }}
+            >
               <BannerLink
                 href={b.linkUrl}
                 className="relative flex h-full w-full flex-col md:flex-row"
