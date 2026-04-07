@@ -1,4 +1,4 @@
-.agents/
+.agents
 node_modules/
 scripts/.venv/
 .env
