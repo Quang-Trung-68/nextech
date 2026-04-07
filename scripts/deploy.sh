@@ -16,6 +16,8 @@ fi
 docker compose -f "$COMPOSE_FILE" down
 docker compose -f "$COMPOSE_FILE" build --no-cache
 docker compose -f "$COMPOSE_FILE" up -d
+# Force-recreate nginx để pick up inode mới của nginx.conf sau git pull
+docker compose -f "$COMPOSE_FILE" up -d --force-recreate nginx
 
 echo "⏳ Waiting for PostgreSQL..."
 set +u

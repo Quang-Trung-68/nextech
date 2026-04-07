@@ -128,6 +128,8 @@ jobs:
             echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker compose -f docker-compose.prod.yml pull backend frontend soketi
             docker compose -f docker-compose.prod.yml up -d --no-build
+            # Force-recreate nginx to pick up new nginx.conf inode after git pull
+            docker compose -f docker-compose.prod.yml up -d --force-recreate nginx
             set +u
             [ -f .env ] && . ./.env
             set -u
