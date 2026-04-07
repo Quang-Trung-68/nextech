@@ -1,0 +1,74 @@
+# Ghép sau khi đã có: /etc/letsencrypt/live/chat.nextech.io.vn/{fullchain.pem,privkey.pem}
+# (certbot: certonly --webroot -w /var/www/certbot -d chat.nextech.io.vn -d api.chat.nextech.io.vn)
+#
+# Cách dùng: copy thành chat-ssl.conf, thêm vào docker-compose.prod.yml service nginx:
+#   volumes:
+#     - ./nginx/chat-ssl.conf:/etc/nginx/conf.d/chat-ssl.conf:ro
+# Rồi trong 2 server listen 80 bên dưới, đổi location / thành return 301 https://$host$request_uri;
+# (hoặc giữ proxy HTTP nội bộ — tùy bạn).
+
+# HTTP → HTTPS (bật khi đã có block 443 tương ứng)
+# server {
+#     listen 80;
+#     server_name chat.nextech.io.vn;
+#     location /.well-known/acme-challenge/ { root /var/www/certbot; }
+#     location / { return 301 https://$host$request_uri; }
+# }
+# server {
+#     listen 80;
+#     server_name api.chat.nextech.io.vn;
+#     location /.well-known/acme-challenge/ { root /var/www/certbot; }
+#     location / { return 301 https://$host$request_uri; }
+# }
+
+# server {
+#     listen 443 ssl;
+#     server_name chat.nextech.io.vn;
+#     ssl_certificate /etc/letsencrypt/live/chat.nextech.io.vn/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/chat.nextech.io.vn/privkey.pem;
+#     include /etc/letsencrypt/options-ssl-nginx.conf;
+#     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+#     gzip on;
+#     gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
+#     location / {
+#         set $chat_client "chat-client:80";
+#         proxy_pass http://$chat_client;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#     }
+# }
+#
+# server {
+#     listen 443 ssl;
+#     server_name api.chat.nextech.io.vn;
+#     ssl_certificate /etc/letsencrypt/live/chat.nextech.io.vn/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/chat.nextech.io.vn/privkey.pem;
+#     include /etc/letsencrypt/options-ssl-nginx.conf;
+#     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+#     client_max_body_size 20M;
+#     location /ws {
+#         set $chat_server "chat-server:5000";
+#         proxy_pass http://$chat_server;
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection "Upgrade";
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_read_timeout 300s;
+#         proxy_send_timeout 300s;
+#     }
+#     location / {
+#         set $chat_server_api "chat-server:5000";
+#         proxy_pass http://$chat_server_api;
+#         proxy_http_version 1.1;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_read_timeout 60s;
+#     }
+# }
