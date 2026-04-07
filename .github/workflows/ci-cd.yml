@@ -96,6 +96,7 @@ jobs:
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
             VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+            VITE_SOKETI_ENABLED=true
             VITE_SOKETI_APP_KEY=${{ secrets.VITE_SOKETI_APP_KEY }}
             VITE_SOKETI_HOST=${{ secrets.VITE_SOKETI_HOST }}
             VITE_SOKETI_PORT=${{ secrets.VITE_SOKETI_PORT }}
