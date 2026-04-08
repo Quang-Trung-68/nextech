@@ -24,5 +24,6 @@ DOCKER.md
 VPS_DEPLOY_GUIDE.md
 docs
 
-test.md
-test.txt
+*.pem
+*.key
+*.crt

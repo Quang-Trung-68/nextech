@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import usePageTitle from '@/hooks/usePageTitle';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAdminBrands } from './hooks/useAdminBrands';
-import { useAdminBrandMutations } from './hooks/useAdminBrandMutations';
-import { BrandList } from './components/BrandList';
-import { BrandForm } from './components/BrandForm';
+import { useState } from "react";
+import usePageTitle from "@/hooks/usePageTitle";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+import { useAdminBrands } from "./hooks/useAdminBrands";
+import { useAdminBrandMutations } from "./hooks/useAdminBrandMutations";
+import { BrandList } from "./components/BrandList";
+import { BrandForm } from "./components/BrandForm";
 
 export default function BrandsAdminPage() {
-  usePageTitle('Thương hiệu | Admin');
+  usePageTitle("Thương hiệu | Admin");
   const { data: brands = [], isLoading } = useAdminBrands();
   const { createBrand, updateBrand, deleteBrand } = useAdminBrandMutations();
 
@@ -29,10 +29,10 @@ export default function BrandsAdminPage() {
   const handleFormSubmit = async ({ formData, isEdit, id }) => {
     if (isEdit) {
       await updateBrand.mutateAsync({ id, formData });
-      toast.success('Đã cập nhật thương hiệu');
+      toast.success("Đã cập nhật thương hiệu");
     } else {
       await createBrand.mutateAsync(formData);
-      toast.success('Đã tạo thương hiệu');
+      toast.success("Đã tạo thương hiệu");
     }
   };
 
@@ -44,8 +44,9 @@ export default function BrandsAdminPage() {
         : `Xoá thương hiệu "${b.name}"?`;
     if (!window.confirm(msg)) return;
     deleteBrand.mutate(b.id, {
-      onSuccess: () => toast.success('Đã xoá thương hiệu'),
-      onError: (e) => toast.error(e.response?.data?.message || 'Không xoá được'),
+      onSuccess: () => toast.success("Đã xoá thương hiệu"),
+      onError: (e) =>
+        toast.error(e.response?.data?.message || "Không xoá được"),
     });
   };
 
@@ -57,7 +58,7 @@ export default function BrandsAdminPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Thương hiệu</h1>
           <p className="text-sm text-muted-foreground">
-            CRUD logo (Cloudinary), slug, carousel và link website. Ảnh upload trước khi lưu form.
+            Các thương hiệu hiển thị tại trang chủ.
           </p>
         </div>
         <Button onClick={openCreate}>
