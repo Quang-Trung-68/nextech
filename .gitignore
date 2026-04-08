@@ -27,3 +27,5 @@ docs
 *.pem
 *.key
 *.crt
+
+skills-lock.json
