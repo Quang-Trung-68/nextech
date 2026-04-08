@@ -93,6 +93,38 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for auth flows, payment flows, real-tim
 
 ---
 
+## Demo accounts (for reviewers)
+
+These accounts are created when you run the Prisma seed ([`backend/prisma/seed.js`](./backend/prisma/seed.js)). **They apply to a freshly seeded local or self-hosted database**, not necessarily to the public live site.
+
+**1. Seed the database**
+
+```bash
+cd backend
+npx prisma migrate deploy   # or: npx prisma migrate dev
+npx prisma db seed
+```
+
+With Docker (from repo root):
+
+```bash
+docker compose exec backend npx prisma db seed
+```
+
+**2. Log in**
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Admin** | `admin@nextech.com` | `Admin123!` |
+| **Customer** | `user1@nextech.com` | `User123!` |
+| **Customer** | `user2@nextech.com` | `User123!` |
+
+You can override the admin email and password at seed time with `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (see `seed.js`). The full product catalog seed (`seed_products.js`) uses the same defaults unless those env vars are set.
+
+> **Note:** If [nextech.io.vn](https://nextech.io.vn) was deployed without this seed or with different credentials, use a local Docker setup above or contact the maintainer for demo access.
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -295,6 +327,44 @@ The GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) automates this on ev
 ├── docker-compose.yml            # Development stack
 ├── docker-compose.prod.yml       # Production stack
 └── .env.deploy.template          # Environment variable template
+```
+
+---
+
+## Database backup (PostgreSQL in Docker)
+
+Replace user, database, and compose file if your `.env` differs from the defaults (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` — default `nextech` / `nextech` / `nextech` in [`docker-compose.yml`](./docker-compose.yml)).
+
+**Plain SQL (good for reading or importing with `psql`):**
+
+```bash
+# Development stack (service name: postgres)
+docker compose exec -T postgres \
+  pg_dump -U nextech nextech \
+  > nextech-backup-$(date +%Y-%m-%d).sql
+```
+
+**Custom format (recommended for large DBs — restore with `pg_restore`):**
+
+```bash
+docker compose exec -T postgres \
+  pg_dump -U nextech -Fc nextech \
+  > nextech-backup-$(date +%Y-%m-%d).dump
+```
+
+**Production compose file:**
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T postgres \
+  pg_dump -U "${POSTGRES_USER:-nextech}" -Fc "${POSTGRES_DB:-nextech}" \
+  > nextech-prod-backup-$(date +%Y-%m-%d).dump
+```
+
+If `pg_dump` asks for a password non-interactively, pass it once (avoid committing this line to git):
+
+```bash
+docker compose exec -T -e PGPASSWORD=your_db_password postgres \
+  pg_dump -U nextech -Fc nextech > backup.dump
 ```
 
 ---
