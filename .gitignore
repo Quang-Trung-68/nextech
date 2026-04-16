@@ -10,6 +10,7 @@ build/
 .DS_Store
 coverage/
 *.log
+*.test
 certbot/
 
 # Docker named volume data (if bind-mounted locally)
