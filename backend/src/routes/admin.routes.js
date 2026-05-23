@@ -11,6 +11,7 @@ const {
   adminProductQuerySchema,
   adminCreateProductSchema,
   adminUpdateProductSchema,
+  adminGenerateDescriptionSchema,
   adminProductParamsSchema,
   adminUserQuerySchema,
   adminUserParamsSchema,
@@ -19,6 +20,13 @@ const {
 
 // Tất cả routes dưới đây đều yêu cầu đăng nhập + role ADMIN
 router.use(protect, restrictTo('ADMIN'));
+
+// POST /api/admin/products/generate-description
+router.post(
+  '/products/generate-description',
+  validate(adminGenerateDescriptionSchema),
+  adminController.generateAiDescription
+);
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 

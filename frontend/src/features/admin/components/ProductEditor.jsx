@@ -23,7 +23,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ImageUploadGrid } from "./ImageUploadGrid";
 import { AttributeManager } from "./AttributeManager";
 import { VariantGrid, cartesianProduct } from "./VariantGrid";
-import { AlertCircle, Tag, Sparkles, Calendar, ChevronDown, Clock, Hash, Trash2 } from "lucide-react";
+import { AlertCircle, Tag, Sparkles, Calendar, ChevronDown, Clock, Hash, Trash2, Plus, X } from "lucide-react";
 import { getFinalPrice, getDiscountPercent, formatVND } from "@/utils/price";
 import { toast } from "@/lib/toast";
 
@@ -108,6 +108,10 @@ export function ProductEditor({
   const [attributeDraft, setAttributeDraft] = useState([]);
   const [variantRows, setVariantRows] = useState([]);
 
+  // ── Specs Manager state ───────────────────────────────────────────────────────
+  const [specsList, setSpecsList] = useState([]); // [{key: "", value: ""}]
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
+
   const { data: brands = [] } = useQuery({
     queryKey: ["product-brands", "admin-all"],
     queryFn: async () => {
@@ -186,6 +190,14 @@ export function ProductEditor({
         if (initialData.salePrice != null) {
           setIsFlashSaleOpen(true);
         }
+        // ── Load specsJson vào specsList khi edit ─────────────────────────────
+        if (initialData.specsJson && typeof initialData.specsJson === 'object') {
+          setSpecsList(
+            Object.entries(initialData.specsJson).map(([key, value]) => ({ key, value: String(value) }))
+          );
+        } else {
+          setSpecsList([]);
+        }
         setAttributeDraft([]);
         setVariantRows([]);
       } else {
@@ -206,6 +218,7 @@ export function ProductEditor({
           hasVariants: false,
         });
         setIsFlashSaleOpen(false);
+        setSpecsList([]);
         setAttributeDraft([]);
         setVariantRows([]);
       }
@@ -295,6 +308,45 @@ export function ProductEditor({
     });
   }, [attributeDraft, watchedHasVariants, watchedPrice]);
 
+  // ── Specs Manager helpers ─────────────────────────────────────────────────────
+  const addSpecRow = () => setSpecsList((prev) => [...prev, { key: "", value: "" }]);
+
+  const updateSpecRow = (index, field, val) => {
+    setSpecsList((prev) => prev.map((row, i) => (i === index ? { ...row, [field]: val } : row)));
+  };
+
+  const removeSpecRow = (index) => {
+    setSpecsList((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // ── AI Description generator ──────────────────────────────────────────────────
+  const handleGenerateDescription = async () => {
+    const name = watch("name");
+    if (!name || name.trim().length < 2) {
+      toast.error("Vui lòng nhập tên sản phẩm trước khi tạo mô tả bằng AI");
+      return;
+    }
+    setIsGeneratingDesc(true);
+    try {
+      const specs = specsList.reduce((acc, { key, value }) => {
+        if (key.trim()) acc[key.trim()] = value;
+        return acc;
+      }, {});
+      const { data } = await axiosInstance.post("/admin/products/generate-description", {
+        name: name.trim(),
+        specs,
+      });
+      if (data.success) {
+        setValue("description", data.description);
+        toast.success("Đã tạo mô tả bằng AI thành công!");
+      }
+    } catch {
+      toast.error("Không thể tạo mô tả bằng AI, vui lòng thử lại");
+    } finally {
+      setIsGeneratingDesc(false);
+    }
+  };
+
   const onFormSubmit = async (data) => {
     if (data.hasVariants) {
       const okAttr =
@@ -342,6 +394,14 @@ export function ProductEditor({
     if (cleaned.hasVariants) {
       cleaned.stock = 0;
     }
+
+    // ── Gắn specsJson từ specsList trước khi submit ───────────────────────────
+    const specsJson = specsList.reduce((acc, { key, value }) => {
+      if (key.trim()) acc[key.trim()] = value;
+      return acc;
+    }, {});
+    cleaned.specsJson = Object.keys(specsJson).length > 0 ? specsJson : null;
+
     const meta = {
       attributeDraft,
       variantRows,
@@ -645,13 +705,82 @@ export function ProductEditor({
             </CollapsibleContent>
           </Collapsible>
 
+          {/* ── Thông số kỹ thuật (Specs Manager) ─────────────────────────────── */}
+          <div className="space-y-3 p-4 bg-blue-50/40 border border-blue-100 rounded-xl">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-1.5 text-blue-800 font-semibold text-sm">
+                <Hash className="w-4 h-4" />
+                Thông số kỹ thuật
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addSpecRow}
+                className="h-7 px-2 text-xs border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Thêm thông số
+              </Button>
+            </div>
+
+            {specsList.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic text-center py-2">
+                Chưa có thông số kỹ thuật — thêm để AI tạo mô tả chính xác hơn
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {specsList.map((row, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <Input
+                      placeholder="Tên thông số (VD: RAM)"
+                      value={row.key}
+                      onChange={(e) => updateSpecRow(idx, "key", e.target.value)}
+                      className="flex-1 h-8 text-sm"
+                    />
+                    <Input
+                      placeholder="Giá trị (VD: 8GB)"
+                      value={row.value}
+                      onChange={(e) => updateSpecRow(idx, "value", e.target.value)}
+                      className="flex-1 h-8 text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSpecRow(idx)}
+                      className="h-8 w-8 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ── Description + AI Button ──────────────────────────────────────── */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">Mô tả sản phẩm</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateDescription}
+                disabled={isGeneratingDesc}
+                className="h-7 px-3 text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1.5"
+              >
+                <Sparkles className={`w-3.5 h-3.5 ${isGeneratingDesc ? "animate-spin" : ""}`} />
+                {isGeneratingDesc ? "Đang tạo…" : "Viết mô tả bằng AI"}
+              </Button>
+            </div>
             <Textarea
               id="description"
-              rows={4}
+              rows={6}
               {...register("description")}
               className={errors.description ? "border-red-500" : ""}
+              placeholder="Nhập mô tả sản phẩm, hoặc nhấn 'Viết mô tả bằng AI' để tạo tự động…"
             />
             {errors.description && <p className="text-red-500 text-xs">{errors.description.message}</p>}
           </div>

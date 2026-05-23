@@ -58,6 +58,7 @@ const adminProductBaseSchema = z.object({
     z.number().int().min(2000).max(2100).nullable().optional()
   ),
   hasVariants: z.boolean().optional(),
+  specsJson: z.record(z.string(), z.any()).nullable().optional(),
 });
 
 const flashSaleRefine = (data, ctx) => {
@@ -81,7 +82,10 @@ const adminUpdateProductSchema = adminProductBaseSchema.partial().superRefine((d
   flashSaleRefine(data, ctx);
 });
 
-
+const adminGenerateDescriptionSchema = z.object({
+  name: z.string().min(2),
+  specs: z.record(z.string(), z.any()).optional().nullable(),
+});
 
 const adminProductParamsSchema = z.object({
   id: z.string().cuid('ID sản phẩm không hợp lệ'),
@@ -114,6 +118,7 @@ module.exports = {
   adminProductQuerySchema,
   adminCreateProductSchema,
   adminUpdateProductSchema,
+  adminGenerateDescriptionSchema,
   adminProductParamsSchema,
   adminUserQuerySchema,
   adminUserParamsSchema,

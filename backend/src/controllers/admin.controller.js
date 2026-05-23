@@ -146,6 +146,60 @@ const deleteImage = async (req, res, next) => {
   }
 };
 
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const generateAiDescription = async (req, res, next) => {
+  try {
+    const { name, specs } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return next(new AppError('Chưa cấu hình GEMINI_API_KEY trong tệp .env', 500, ERROR_CODES.SERVER.INTERNAL_SERVER_ERROR));
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000,
+      }
+    });
+
+    const specsText = specs && Object.keys(specs).length > 0 
+      ? Object.entries(specs).map(([k, v]) => `- **${k}**: ${v}`).join("\n")
+      : "Không có thông số kỹ thuật chi tiết.";
+
+    const prompt = `
+Bạn là chuyên gia marketing sản phẩm công nghệ cao cấp của NexTech.
+Hãy viết một bài mô tả sản phẩm marketing hấp dẫn, thu hút và chuyên nghiệp cho sản phẩm sau đây:
+- Tên sản phẩm: ${name}
+- Thông số kỹ thuật:
+${specsText}
+
+YÊU CẦU:
+1. Giọng văn: Hiện đại, lôi cuốn, chuyên nghiệp, làm nổi bật được giá trị và ưu điểm vượt trội của sản phẩm.
+2. Cấu trúc bài viết (bắt buộc phải có):
+   - Đoạn mở đầu: Giới thiệu ấn tượng về sản phẩm.
+   - Các đặc điểm nổi bật (3-4 mục lớn): Viết chi tiết về thiết kế, hiệu năng, màn hình, camera, thời lượng pin... dựa trên thông số kỹ thuật và suy luận thực tế phù hợp về sản phẩm công nghệ.
+   - Đoạn kết: Khẳng định sự phù hợp của sản phẩm đối với đối tượng người dùng nào và kêu gọi sở hữu.
+3. Định dạng: Trả về văn bản dưới dạng Markdown chuẩn để hiển thị đẹp mắt trên website. Không trả về các thẻ HTML.
+
+Hãy viết bài viết hoàn chỉnh và trả về trực tiếp đoạn văn Markdown, không kèm theo lời thoại chào hỏi nào khác.
+`;
+
+    const result = await model.generateContent(prompt);
+    const description = result.response.text().trim();
+
+    res.status(200).json({
+      success: true,
+      description
+    });
+  } catch (err) {
+    console.error("[AI Description Generation Error]", err);
+    next(err);
+  }
+};
+
 module.exports = {
   getOverviewStats,
   getRevenueStats,
@@ -160,4 +214,5 @@ module.exports = {
   toggleUserStatus,
   uploadImages,
   deleteImage,
+  generateAiDescription,
 };
