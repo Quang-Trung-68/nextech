@@ -3,13 +3,14 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // ── Khởi tạo Gemini Client ────────────────────────────────────────────────────
 const getGeminiModel = (systemInstruction, tools) => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  let apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.warn("[AI Chat] CẢNH BÁO: Chưa cấu hình GEMINI_API_KEY trong tệp .env");
   }
-  const genAI = new GoogleGenerativeAI(apiKey || "DUMMY_KEY");
+  apiKey = apiKey ? apiKey.replace(/^["']|["']$/g, '') : "DUMMY_KEY";
+  const genAI = new GoogleGenerativeAI(apiKey);
   return genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: "gemini-3.5-flash",
     systemInstruction,
     tools,
     generationConfig: {

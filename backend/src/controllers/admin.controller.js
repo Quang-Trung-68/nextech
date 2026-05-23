@@ -151,14 +151,15 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const generateAiDescription = async (req, res, next) => {
   try {
     const { name, specs } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    let apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return next(new AppError('Chưa cấu hình GEMINI_API_KEY trong tệp .env', 500, ERROR_CODES.SERVER.INTERNAL_SERVER_ERROR));
     }
+    apiKey = apiKey.replace(/^["']|["']$/g, '');
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 1000,
@@ -171,25 +172,28 @@ const generateAiDescription = async (req, res, next) => {
 
     const prompt = `
 Bạn là chuyên gia marketing sản phẩm công nghệ cao cấp của NexTech.
-Hãy viết một bài mô tả sản phẩm marketing hấp dẫn, thu hút và chuyên nghiệp cho sản phẩm sau đây:
+Hãy viết một đoạn văn mô tả sản phẩm hấp dẫn, thu hút và ngắn gọn cho sản phẩm sau đây:
 - Tên sản phẩm: ${name}
 - Thông số kỹ thuật:
 ${specsText}
 
-YÊU CẦU:
-1. Giọng văn: Hiện đại, lôi cuốn, chuyên nghiệp, làm nổi bật được giá trị và ưu điểm vượt trội của sản phẩm.
-2. Cấu trúc bài viết (bắt buộc phải có):
-   - Đoạn mở đầu: Giới thiệu ấn tượng về sản phẩm.
-   - Các đặc điểm nổi bật (3-4 mục lớn): Viết chi tiết về thiết kế, hiệu năng, màn hình, camera, thời lượng pin... dựa trên thông số kỹ thuật và suy luận thực tế phù hợp về sản phẩm công nghệ.
-   - Đoạn kết: Khẳng định sự phù hợp của sản phẩm đối với đối tượng người dùng nào và kêu gọi sở hữu.
-3. Định dạng: Trả về văn bản dưới dạng Markdown chuẩn để hiển thị đẹp mắt trên website. Không trả về các thẻ HTML.
-4. Độ dài: Toàn bộ bài viết KHÔNG ĐƯỢC vượt quá 500 từ. Hãy viết súc tích, cô đọng nhưng đầy sức thuyết phục.
+YÊU CẦU BẮT BUỘC:
+1. Định dạng: Chỉ trả về VĂN BẢN THUẦN TÚY (Plain Text). TUYỆT ĐỐI KHÔNG sử dụng bất kỳ ký tự định dạng Markdown hay ký tự đặc biệt nào như dấu thăng (#), dấu sao (*), dấu xuyệt (/), dấu gạch đầu dòng (-), v.v.
+2. Cấu trúc: Viết thành một đoạn văn ngắn gọn liền mạch (không chia tiêu đề, không xuống dòng, không đánh số).
+3. Nội dung: Giới thiệu ấn tượng về sản phẩm, nêu bật một vài ưu điểm chính (hiệu năng, thiết kế, hoặc tính năng nổi trội dựa trên thông số kỹ thuật nếu có) một cách tự nhiên và thuyết phục.
+4. Độ dài: Viết khoảng 80 - 150 từ, đảm bảo nội dung đầy đủ ý nghĩa và kết thúc trọn vẹn bằng dấu câu. Bạn phải tự kiểm soát độ dài này.
+5. TUYỆT ĐỐI KHÔNG được thêm bất kỳ câu chữ nào ngoài đoạn mô tả sản phẩm. KHÔNG đếm từ, KHÔNG viết thêm số lượng từ (ví dụ: "Word count: ..."), KHÔNG giải thích, KHÔNG chào hỏi hay phản hồi ở cuối.
 
-Hãy viết bài viết hoàn chỉnh và trả về trực tiếp đoạn văn Markdown, không kèm theo lời thoại chào hỏi nào khác.
+Hãy trả về trực tiếp đoạn văn bản thuần túy đó, không kèm theo bất kỳ lời chào hay phản hồi nào khác từ AI.
 `;
 
     const result = await model.generateContent(prompt);
-    const description = result.response.text().trim();
+    let description = result.response.text().trim();
+    
+    // Khử các ký tự đặc biệt/Markdown để đảm bảo văn bản thuần túy tuyệt đối
+    description = description.replace(/[*#_`\-\\/]/g, '');
+    // Chuẩn hóa khoảng trắng
+    description = description.replace(/\s+/g, ' ').trim();
 
     res.status(200).json({
       success: true,
