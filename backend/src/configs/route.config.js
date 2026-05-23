@@ -57,6 +57,7 @@ const apiRoutes = [
   { prefix: '/api/categories',   router: require('../routes/category.routes') },
   { prefix: '/api/tags',         router: require('../routes/tag.routes') },
   { prefix: '/api/posts',        router: require('../routes/post.routes') },
+  { prefix: '/api/ai-chat',      router: require('../routes/aiChat.routes') },
 ];
 
 module.exports = { specialRoutes, apiRoutes };

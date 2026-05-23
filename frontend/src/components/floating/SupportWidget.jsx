@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Headphones, X, MessageSquare, Phone, MessageCircle } from 'lucide-react';
+import { Headphones, X, MessageSquare, Phone, MessageCircle, Sparkles } from 'lucide-react';
+import AIChatWindow from './AIChatWindow';
 
 const SubButton = ({ icon, tooltip, label, href, bgColor, delay, onClick, isOpen }) => {
   const isLink = !!href;
@@ -44,6 +45,7 @@ const SubButton = ({ icon, tooltip, label, href, bgColor, delay, onClick, isOpen
 
 export default function SupportWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [showHint, setShowHint] = useState(() => !sessionStorage.getItem('support_hint_shown'));
   const widgetRef = useRef(null);
   const location = useLocation();
@@ -109,11 +111,24 @@ export default function SupportWidget() {
   return (
     <div
       ref={widgetRef}
-      className={`fixed right-5 z-50 flex flex-col items-center gap-3 pointer-events-none transition-all duration-300 ${bottomOffsetClass}`}
+      className={`fixed right-5 ${isAIChatOpen ? 'z-[9999]' : 'z-50'} flex flex-col items-center gap-3 pointer-events-none transition-all duration-300 ${bottomOffsetClass}`}
       role="complementary"
       aria-label="Hỗ trợ khách hàng"
     >
       <div className="flex flex-col items-center gap-3 pointer-events-none">
+        <SubButton
+          isOpen={isOpen}
+          icon={<Sparkles className="text-white animate-pulse" size={20} />}
+          tooltip="Hỏi Trợ lý ảo AI"
+          label="Hỏi Trợ lý ảo AI"
+          bgColor="bg-gradient-to-r from-purple-500 to-indigo-600"
+          delay={200}
+          onClick={() => {
+            setIsOpen(false);
+            window.dispatchEvent(new CustomEvent('support-widget-state', { detail: false }));
+            setIsAIChatOpen(true);
+          }}
+        />
         <SubButton
           isOpen={isOpen}
           icon={<Phone className="text-white" size={20} />}
@@ -203,6 +218,8 @@ export default function SupportWidget() {
           </div>
         </button>
       </div>
+
+      <AIChatWindow isOpen={isAIChatOpen} onClose={() => setIsAIChatOpen(false)} />
     </div>
   );
 }

@@ -33,6 +33,7 @@ model User {
   notifications          Notification[]
   posts                  Post[]
   stockImports           StockImport[]
+  aiChatMessages         AIChatMessage[]
 
   @@map("users")
 }
@@ -675,4 +676,18 @@ model SerialUnit {
   @@index([productId, status])
   @@index([variantId, status])
   @@map("serial_units")
+}
+
+model AIChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // "user" | "model"
+  content   String   // Text content of the message
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_chat_messages")
 }
