@@ -35,6 +35,16 @@ const handleWebhook = async (req, res, next) => {
  */
 const handleSepayWebhook = async (req, res, next) => {
   try {
+    // Xác thực Webhook từ SePay khi ở môi trường production / cấu hình secret
+    const webhookSecret = process.env.SEPAY_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const authHeader = req.headers["authorization"];
+      if (!authHeader || authHeader !== `Apikey ${webhookSecret}`) {
+        console.warn("[SePay Webhook] Yêu cầu webhook không hợp lệ (Unauthorized)");
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+      }
+    }
+
     await paymentService.handleSepayWebhookEvent(req.body);
     res.status(200).json({ success: true });
   } catch (err) {
