@@ -420,7 +420,7 @@ export function ProductEditor({
       {serverError && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Lỗi</AlertTitle>
           <AlertDescription>{serverError}</AlertDescription>
         </Alert>
       )}
@@ -428,20 +428,39 @@ export function ProductEditor({
       <form noValidate onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
+              <Label htmlFor="name">Tên sản phẩm *</Label>
               <Input
                 id="name"
+                placeholder="VD: iPhone 15 Pro Max"
                 {...register("name")}
                 className={errors.name ? "border-red-500" : ""}
               />
               {errors.name && <p className="text-red-500 text-xs">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
-              <Input
-                id="category"
-                {...register("category")}
-                className={errors.category ? "border-red-500" : ""}
+              <Label htmlFor="category">Danh mục *</Label>
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id="category"
+                      className={errors.category ? "border-red-500" : ""}
+                      aria-invalid={!!errors.category}
+                    >
+                      <SelectValue placeholder="Chọn danh mục">
+                        {(val) => val || "Chọn danh mục"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Điện thoại">Điện thoại</SelectItem>
+                      <SelectItem value="Laptop">Laptop</SelectItem>
+                      <SelectItem value="Máy tính bảng">Máy tính bảng</SelectItem>
+                      <SelectItem value="Phụ kiện">Phụ kiện</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
               />
               {errors.category && <p className="text-red-500 text-xs">{errors.category.message}</p>}
             </div>
@@ -449,7 +468,7 @@ export function ProductEditor({
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price">Price (VND) *</Label>
+              <Label htmlFor="price">Giá bán gốc (₫) *</Label>
               <Controller
                 name="price"
                 control={control}
@@ -466,11 +485,12 @@ export function ProductEditor({
               {errors.price && <p className="text-red-500 text-xs">{errors.price.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="stock">Stock *</Label>
+              <Label htmlFor="stock">Tồn kho *</Label>
               <Input
                 id="stock"
                 type="number"
                 inputMode="numeric"
+                placeholder="VD: 50"
                 disabled={watchedHasVariants}
                 {...register("stock")}
                 className={errors.stock ? "border-red-500" : ""}
@@ -492,7 +512,9 @@ export function ProductEditor({
                       className={errors.brandId ? "border-red-500" : ""}
                       aria-invalid={!!errors.brandId}
                     >
-                      <SelectValue placeholder="Chọn hãng" />
+                      <SelectValue placeholder="Chọn thương hiệu">
+                        {(val) => brands.find((b) => b.id === val)?.name || "Chọn thương hiệu"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {brands.map((b) => (
@@ -787,7 +809,7 @@ export function ProductEditor({
 
           {/* Upload ảnh */}
           <div className="space-y-2">
-            <Label>Images *</Label>
+            <Label>Hình ảnh sản phẩm *</Label>
             <Controller
               name="images"
               control={control}
@@ -804,7 +826,7 @@ export function ProductEditor({
 
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading || isUploadingImage}>
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" disabled={isLoading || isUploadingImage}>
               {isLoading ? 'Đang lưu…' : isUploadingImage ? 'Đang tải ảnh…' : 'Lưu sản phẩm'}

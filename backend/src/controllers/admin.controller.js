@@ -161,7 +161,7 @@ const generateAiDescription = async (req, res, next) => {
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 2000,
+        maxOutputTokens: 1000,
       }
     });
 
@@ -183,6 +183,7 @@ YÊU CẦU:
    - Các đặc điểm nổi bật (3-4 mục lớn): Viết chi tiết về thiết kế, hiệu năng, màn hình, camera, thời lượng pin... dựa trên thông số kỹ thuật và suy luận thực tế phù hợp về sản phẩm công nghệ.
    - Đoạn kết: Khẳng định sự phù hợp của sản phẩm đối với đối tượng người dùng nào và kêu gọi sở hữu.
 3. Định dạng: Trả về văn bản dưới dạng Markdown chuẩn để hiển thị đẹp mắt trên website. Không trả về các thẻ HTML.
+4. Độ dài: Toàn bộ bài viết KHÔNG ĐƯỢC vượt quá 500 từ. Hãy viết súc tích, cô đọng nhưng đầy sức thuyết phục.
 
 Hãy viết bài viết hoàn chỉnh và trả về trực tiếp đoạn văn Markdown, không kèm theo lời thoại chào hỏi nào khác.
 `;

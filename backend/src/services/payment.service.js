@@ -182,10 +182,6 @@ const createPaymentIntent = async (amount, currency, metadata) => {
  * → bắt buộc sandbox (hoặc đặt SEPAY_ENV=sandbox). Tự nhận diện key test nếu không set SEPAY_ENV.
  */
 function resolveSepayEnv() {
-  const explicit = (process.env.SEPAY_ENV || "").toLowerCase().trim();
-  if (explicit === "sandbox" || explicit === "production") {
-    return explicit;
-  }
   const mid = process.env.SEPAY_MERCHANT_ID || "";
   const sk = process.env.SEPAY_SECRET_KEY || "";
   const looksLikeTest =
@@ -194,6 +190,10 @@ function resolveSepayEnv() {
     /sandbox/i.test(mid);
   if (looksLikeTest) {
     return "sandbox";
+  }
+  const explicit = (process.env.SEPAY_ENV || "").toLowerCase().trim();
+  if (explicit === "sandbox" || explicit === "production") {
+    return explicit;
   }
   return process.env.NODE_ENV === "production" ? "production" : "sandbox";
 }
