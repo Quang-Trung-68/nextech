@@ -162,7 +162,7 @@ const generateAiDescription = async (req, res, next) => {
       model: "gemini-3.5-flash",
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 1000,
+        maxOutputTokens: 8192,
       }
     });
 
@@ -172,19 +172,17 @@ const generateAiDescription = async (req, res, next) => {
 
     const prompt = `
 Bạn là chuyên gia marketing sản phẩm công nghệ cao cấp của NexTech.
-Hãy viết một đoạn văn mô tả sản phẩm hấp dẫn, thu hút và ngắn gọn cho sản phẩm sau đây:
+Hãy viết một bài mô tả sản phẩm hấp dẫn, thu hút và chi tiết cho sản phẩm sau đây:
 - Tên sản phẩm: ${name}
 - Thông số kỹ thuật:
 ${specsText}
 
-YÊU CẦU BẮT BUỘC:
-1. Định dạng: Chỉ trả về VĂN BẢN THUẦN TÚY (Plain Text). TUYỆT ĐỐI KHÔNG sử dụng bất kỳ ký tự định dạng Markdown hay ký tự đặc biệt nào như dấu thăng (#), dấu sao (*), dấu xuyệt (/), dấu gạch đầu dòng (-), v.v.
-2. Cấu trúc: Viết thành một đoạn văn ngắn gọn liền mạch (không chia tiêu đề, không xuống dòng, không đánh số).
-3. Nội dung: Giới thiệu ấn tượng về sản phẩm, nêu bật một vài ưu điểm chính (hiệu năng, thiết kế, hoặc tính năng nổi trội dựa trên thông số kỹ thuật nếu có) một cách tự nhiên và thuyết phục.
-4. Độ dài: Viết khoảng 80 - 150 từ, đảm bảo nội dung đầy đủ ý nghĩa và kết thúc trọn vẹn bằng dấu câu. Bạn phải tự kiểm soát độ dài này.
-5. TUYỆT ĐỐI KHÔNG được thêm bất kỳ câu chữ nào ngoài đoạn mô tả sản phẩm. KHÔNG đếm từ, KHÔNG viết thêm số lượng từ (ví dụ: "Word count: ..."), KHÔNG giải thích, KHÔNG chào hỏi hay phản hồi ở cuối.
-
-Hãy trả về trực tiếp đoạn văn bản thuần túy đó, không kèm theo bất kỳ lời chào hay phản hồi nào khác từ AI.
+YÊU CẦU:
+1. Định dạng: Chỉ trả về VĂN BẢN THUẦN TÚY (Plain Text), không định dạng Markdown hay HTML. Tuyệt đối không dùng các ký tự như: dấu thăng (#), dấu sao (*), dấu xuyệt (/), dấu gạch đầu dòng (-), v.v.
+2. Cấu trúc: Viết thành các đoạn văn trôi chảy, có xuống dòng giữa các đoạn để dễ đọc (không viết liền thành một khối duy nhất, không chia tiêu đề, không đánh số).
+3. Nội dung: Giới thiệu ấn tượng về sản phẩm, phân tích chi tiết và nêu bật các ưu điểm vượt trội (hiệu năng, thiết kế, màn hình, camera, thời lượng pin... dựa trên thông số kỹ thuật) một cách tự nhiên và thuyết phục nhất.
+4. Độ dài: Viết chi tiết, đầy đủ ý nghĩa và kéo dài nội dung tùy ý để giới thiệu sản phẩm thật đầy đủ, không giới hạn độ dài ngắn. Đảm bảo toàn bộ mô tả kết thúc trọn vẹn bằng dấu câu, không bị cắt cụt.
+5. Tuyệt đối không kèm theo bất kỳ lời chào, phản hồi, ghi chú giải thích hay đếm số từ nào của AI. Chỉ trả về duy nhất nội dung bài mô tả.
 `;
 
     const result = await model.generateContent(prompt);
@@ -192,8 +190,8 @@ Hãy trả về trực tiếp đoạn văn bản thuần túy đó, không kèm 
     
     // Khử các ký tự đặc biệt/Markdown để đảm bảo văn bản thuần túy tuyệt đối
     description = description.replace(/[*#_`\-\\/]/g, '');
-    // Chuẩn hóa khoảng trắng
-    description = description.replace(/\s+/g, ' ').trim();
+    // Chuẩn hóa khoảng trắng nhưng giữ lại xuống dòng (\n)
+    description = description.replace(/[^\S\r\n]+/g, ' ').trim();
 
     res.status(200).json({
       success: true,
