@@ -29,7 +29,7 @@ const adminProductQuerySchema = z.object({
 // Base object (plain ZodObject — no .superRefine so .partial() works on it)
 const adminProductBaseSchema = z.object({
   name: z.string().min(2).max(200).trim(),
-  description: z.string().min(10, 'Mô tả tối thiểu 10 ký tự').max(2000).trim(),
+  description: z.string().min(10, 'Mô tả tối thiểu 10 ký tự').max(50000).trim(),
   price: z.coerce.number().positive('Giá phải lớn hơn 0').max(1_000_000_000),
   stock: z.coerce.number().int('Số lượng phải là số nguyên').min(0),
   category: z.string().trim().min(1, 'Vui lòng chọn danh mục'),
