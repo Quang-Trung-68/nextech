@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sản phẩm yêu thích của bạn đang GIẢM GIÁ! ⚡</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.04);">
+
+          <!-- Premium Gradient Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#FF3B30 0%,#FF9500 100%);padding:48px 40px;text-align:center;">
+              <div style="display:inline-block;background:rgba(255,255,255,0.2);backdrop-filter:blur(10px);border-radius:16px;padding:8px 16px;margin-bottom:16px;">
+                <span style="color:#ffffff;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">⚡ Cơ Hội Mua Sắm Siêu Hời</span>
+              </div>
+              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:900;letter-spacing:-0.5px;line-height:1.2;">
+                GIÁ GIẢM CỰC SỐC!
+              </h1>
+              <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:15px;font-weight:500;">
+                Sản phẩm trong danh sách yêu thích của bạn vừa hạ giá
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content Body -->
+          <tr>
+            <td style="padding:40px;">
+              <p style="margin:0 0 20px 0;color:#1d1d1f;font-size:16px;line-height:1.6;font-weight:600;">
+                Xin chào <%= name %>,
+              </p>
+              <p style="margin:0 0 32px 0;color:#86868b;font-size:15px;line-height:1.6;font-weight:400;">
+                Chúng tôi có một tin cực vui dành cho bạn! Sản phẩm siêu hot <strong><%= productName %></strong> mà bạn đã thêm vào danh sách yêu thích vừa được điều chỉnh giảm giá cực hấp dẫn.
+              </p>
+
+              <!-- Deal Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f7;border-radius:20px;border:1px solid rgba(0,0,0,0.02);margin-bottom:36px;">
+                <tr>
+                  <td style="padding:24px 30px;text-align:center;">
+                    <p style="margin:0 0 8px 0;color:#86868b;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Sản phẩm</p>
+                    <p style="margin:0 0 20px 0;color:#1d1d1f;font-size:18px;font-weight:800;line-height:1.4;"><%= productName %></p>
+                    
+                    <table align="center" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <!-- Old Price -->
+                        <td style="padding:0 20px;text-align:center;border-right:1px solid rgba(0,0,0,0.1);">
+                          <p style="margin:0 0 4px 0;color:#86868b;font-size:12px;font-weight:600;text-transform:uppercase;">Giá cũ</p>
+                          <p style="margin:0;color:#86868b;font-size:16px;font-weight:700;text-decoration:line-through;"><%= oldPrice %></p>
+                        </td>
+                        <!-- Arrow -->
+                        <td style="padding:0 12px;color:#FF3B30;font-size:24px;font-weight:900;">➔</td>
+                        <!-- New Price -->
+                        <td style="padding:0 20px;text-align:center;">
+                          <p style="margin:0 0 4px 0;color:#FF3B30;font-size:12px;font-weight:800;text-transform:uppercase;">Giá mới siêu ưu đãi</p>
+                          <p style="margin:0;color:#FF3B30;font-size:24px;font-weight:900;letter-spacing:-0.5px;"><%= newPrice %></p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Action Button CTA -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px auto;">
+                <tr>
+                  <td style="background-color:#FF3B30;border-radius:14px;box-shadow:0 8px 24px rgba(255,59,48,0.3);">
+                    <a href="<%= productUrl %>"
+                       style="display:inline-block;padding:16px 40px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;border-radius:14px;letter-spacing:0.2px;">
+                      Sở Hữu Ngay Kẻo Lỡ ⏰
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:24px 0 0 0;color:#86868b;font-size:12px;text-align:center;line-height:1.5;">
+                * Ưu đãi có số lượng giới hạn và thời gian diễn ra Flash Sale có thể kết thúc sớm mà không thông báo trước.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Brand Footer -->
+          <tr>
+            <td style="padding:32px 40px;border-top:1px solid #f5f5f7;background-color:#fafafa;text-align:center;">
+              <p style="margin:0 0 8px 0;color:#1d1d1f;font-size:14px;font-weight:700;letter-spacing:0.5px;">
+                <%= appName %>
+              </p>
+              <p style="margin:0 0 16px 0;color:#86868b;font-size:12px;line-height:1.6;">
+                Bạn nhận được email này vì sản phẩm này đã được bạn lưu trữ trong Danh sách Yêu thích (Wishlist).<br/>
+                Nếu bạn muốn dừng nhận các thông báo này, vui lòng bỏ yêu thích sản phẩm trên ứng dụng.
+              </p>
+              <p style="margin:0;color:#cbd5e1;font-size:12px;">
+                © <%= new Date().getFullYear() %> <strong><%= appName %></strong>. Mọi quyền được bảo lưu.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

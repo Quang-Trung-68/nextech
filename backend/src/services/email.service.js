@@ -177,6 +177,27 @@ const EmailService = {
 
     console.log(`[EmailService] Invoice email sent to ${toEmail} for invoice ${invoice.invoiceNumber}`);
   },
+
+  async sendWishlistPriceDropEmail(to, { name, productName, oldPrice, newPrice, productUrl }) {
+    const formatVND = (amount) => Math.round(Number(amount)).toLocaleString('vi-VN') + ' đ';
+    const html = await _renderTemplate('wishlistPriceDrop', {
+      name,
+      productName,
+      oldPrice: formatVND(oldPrice),
+      newPrice: formatVND(newPrice),
+      productUrl,
+    });
+
+    await transporter.sendMail({
+      from: FROM(),
+      to,
+      subject: `[${APP()}] ⚡ Giá cực sốc: ${productName} vừa giảm giá!`,
+      html,
+    });
+
+    console.log(`[EmailService] Wishlist price drop email sent to ${to} for product ${productName}`);
+  },
 };
 
 module.exports = EmailService;
+

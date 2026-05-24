@@ -82,3 +82,22 @@ export const homePostsQueryOptions = () =>
     },
     staleTime: 60_000,
   });
+
+/** Live Flash Sale products */
+export const homeFlashSaleProductsQueryOptions = (limit = 6) =>
+  queryOptions({
+    queryKey: ['home', 'flashSaleProducts', limit],
+    queryFn: async () => {
+      const { data } = await axiosPublic.get('/products', {
+        params: {
+          highlight: 'on-sale',
+          limit,
+          sort: 'newest',
+          page: 1,
+        },
+      });
+      return data.products ?? [];
+    },
+    staleTime: 30_000,
+  });
+

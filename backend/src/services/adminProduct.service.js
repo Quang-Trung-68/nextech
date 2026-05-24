@@ -95,9 +95,77 @@ const createProduct = async (data) => {
   });
 };
 
+const triggerWishlistPriceDropAlerts = async (productId, oldPrice, newPrice, product) => {
+  try {
+    const NotificationService = require('./notification.service');
+    const EmailService = require('./email.service');
+    
+    const favorites = await prisma.favorite.findMany({
+      where: { productId },
+      include: { user: true },
+    });
+    
+    if (!favorites.length) return;
+    
+    const CATEGORY_TO_SLUG = {
+      'Điện thoại': 'phone',
+      'Laptop': 'laptop',
+      'Máy tính bảng': 'tablet',
+      'Phụ kiện': 'accessories',
+    };
+    const getSlugByCategory = (category) => CATEGORY_TO_SLUG[category] || 'phone';
+    
+    const productUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/${getSlugByCategory(product.category)}/${product.slug}`;
+    const formatVND = (amount) => Math.round(Number(amount)).toLocaleString('vi-VN') + ' đ';
+    
+    const title = `⚡ Giá cực sốc: ${product.name} giảm giá!`;
+    const message = `Sản phẩm trong danh sách yêu thích của bạn vừa giảm giá từ ${formatVND(oldPrice)} xuống còn ${formatVND(newPrice)}. Mua ngay kẻo lỡ!`;
+    
+    const promises = favorites.map(async (fav) => {
+      if (!fav.user) return;
+      
+      // 1. Gửi thông báo DB & push socket.io (Soketi)
+      try {
+        await NotificationService.createAndSend(
+          fav.userId,
+          'wishlist_price_drop',
+          title,
+          message,
+          { productId, oldPrice, newPrice, slug: product.slug, category: product.category }
+        );
+      } catch (err) {
+        console.error(`[WishlistAlert] Failed to send WS/DB notification to user ${fav.userId}:`, err);
+      }
+      
+      // 2. Gửi Email thông qua Nodemailer
+      try {
+        if (fav.user.email) {
+          await EmailService.sendWishlistPriceDropEmail(fav.user.email, {
+            name: fav.user.name,
+            productName: product.name,
+            oldPrice,
+            newPrice,
+            productUrl,
+          });
+        }
+      } catch (err) {
+        console.error(`[WishlistAlert] Failed to send price drop email to user ${fav.user.email}:`, err);
+      }
+    });
+    
+    await Promise.all(promises);
+  } catch (error) {
+    console.error('[WishlistAlert] Error in triggerWishlistPriceDropAlerts:', error);
+  }
+};
+
 const updateProduct = async (id, data) => {
   const existing = await prisma.product.findUnique({ where: { id } });
   if (!existing) throw new NotFoundError('Product');
+
+  // Khởi tạo các trường giá trước khi cập nhật
+  const oldProduct = addPriceFields(existing);
+  const oldEffectivePrice = oldProduct.effectivePrice;
 
   // Task 6: Validate salePrice < price
   const priceToCheck = data.price != null ? parseFloat(data.price) : parseFloat(existing.price);
@@ -151,8 +219,20 @@ const updateProduct = async (id, data) => {
     data: payload,
     include: { images: true, ...BRAND_SELECT, ...VARIANT_INCLUDE },
   });
-  return addPriceFields(updated);
+
+  const newProduct = addPriceFields(updated);
+  const newEffectivePrice = newProduct.effectivePrice;
+
+  // Nếu giá thực tế mới rẻ hơn giá thực tế cũ, kích hoạt sự kiện thông báo giảm giá
+  if (newEffectivePrice < oldEffectivePrice) {
+    triggerWishlistPriceDropAlerts(id, oldEffectivePrice, newEffectivePrice, newProduct).catch((err) => {
+      console.error('[WishlistAlert] Failed to trigger wishlist alerts:', err);
+    });
+  }
+
+  return newProduct;
 };
+
 
 const regenerateProductSlug = async (id) => {
   const existing = await prisma.product.findUnique({ where: { id } });

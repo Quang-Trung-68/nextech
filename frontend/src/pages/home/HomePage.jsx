@@ -3,6 +3,7 @@ import usePageTitle from '@/hooks/usePageTitle';
 import { ChevronLeft, ChevronRight, ShieldCheck, Clock, Award } from 'lucide-react';
 import { HeroBannerSlider } from '@/features/home/components/HeroBannerSlider';
 import { BrandCarousel } from '@/features/home/components/BrandCarousel';
+import { FlashSale } from '@/features/home/components/FlashSale';
 import { CategoryProducts } from '@/features/home/components/CategoryProducts';
 import { NewestByBrand } from '@/features/home/components/NewestByBrand';
 import { BlogCarousel } from '@/features/home/components/BlogCarousel';
@@ -252,6 +253,7 @@ const HomePage = () => {
     <div className="w-full bg-apple-gray">
       <HeroBannerSlider />
       <BrandCarousel />
+      <FlashSale />
       <CategoryProducts />
       <NewestByBrand />
 
