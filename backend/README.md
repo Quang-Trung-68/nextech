@@ -23,13 +23,16 @@ The core logic and data processing system (Backend) of the NexTech project. Buil
 
 ## ✨ Key Features
 
-- 🛡️ **Security**: JWT/Refresh token system for secure and convenient user authentication.
-- ⚡ **Real-time**: Instant order status updates and system notifications via Soketi/WebSockets.
-- 📉 **Flash Sale Engine**: Automatically manage inventory and promotion countdowns.
-- 💶 **Coupon System**: Flexible discount code application (percentage or amount-based).
-- 📜 **Digital Invoices**: Automatically generate professional PDF invoices upon order completion.
-- ✉️ **Email Notifications**: Send order confirmations, invoices, and email verification codes.
-- 📦 **Data Management**: Fast product lookup and filtering, with pagination support for large datasets.
+- 🛡️ **Security**: JWT/Refresh token system with cookie-based rotation for robust security.
+- 📖 **Scalar API Documentation**: Premium interactive API reference hosted locally at `/api-docs` with direct test support.
+- ⚡ **Real-time**: Instant order status updates, low-stock alerts, and system notifications via Soketi/WebSockets.
+- 📉 **Flash Sale Engine**: High-performance inventory management and promotion countdowns (with live progress tracking).
+- 🔔 **Wishlist Price Drop Alerts**: Trigger-based price drop detection scans favorites, pushes live events, and delivers HTML emails.
+- 📝 **Internal Notes**: Order models updated with `adminNote` support and secure PATCH updates.
+- 💶 **Coupon System**: Flexible percentage or fixed discount code execution with per-user and global limits.
+- 📜 **Digital Invoices**: Automated PDF invoices via PDFKit delivered automatically on order payment.
+- ✉️ **Email Notifications**: Gmail transport with verification codes, transactional invoices, and price drop templates.
+- 📦 **Data Management**: Layered service design utilizing type-safe Prisma queries with connection pools.
 
 ---
 

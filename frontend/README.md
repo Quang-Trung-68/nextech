@@ -25,11 +25,11 @@ The user-facing part of the NexTech project, built to deliver a modern, smooth, 
 
 - 📱 **Mobile-First Design**: UI specially optimized for mobile devices with 44px tap targets.
 - 🌓 **Dark Mode**: Automatic and manual light/dark theme support.
-- ⚡ **Flash Sale**: Real-time countdown system with live inventory updates via WebSockets.
+- ⚡ **Flash Sale**: Interactive homepage showcase with high-performance real-time countdown, animated fire elements, and custom stock sold indicators with dynamic gradient progress bars.
 - 🛒 **Smart Cart**: Instant updates and session persistence for logged-in users.
 - 🌍 **Multi-language**: Flexible switching between Vietnamese and English.
 - 🔐 **Security**: JWT authentication with refresh tokens and OAuth (Google/Facebook).
-- 📊 **Admin Dashboard**: Detailed administrative interface with charts and pagination.
+- 📊 **Admin Dashboard & Analytics**: Features comprehensive stats charts (Recharts) and an Apple-inspired ranked list of top-selling products. Includes full order detail inspectors with an internal notes editor (`adminNote`) and a customer addresses viewing modal.
 
 ---
 

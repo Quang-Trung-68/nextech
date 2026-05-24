@@ -1143,6 +1143,44 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         }
       }
     },
+    '/api/admin/orders/{id}/note': {
+      patch: {
+        tags: ['Admin Orders'],
+        summary: 'Cập nhật ghi chú nội bộ của admin cho đơn hàng',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  note: { type: 'string', example: 'Khách hàng yêu cầu giao trước 5h chiều' }
+                },
+                required: ['note']
+              }
+            }
+          }
+        },
+        responses: {
+          200: {
+            description: 'Cập nhật ghi chú đơn hàng thành công',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    order: { $ref: '#/components/schemas/Order' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
 
     // ─── ADMIN INVENTORY & SERIALS ────────────────────────────────────────────
     '/api/admin/suppliers': {
@@ -1474,6 +1512,7 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
           paymentMethod: { type: 'string', example: 'SEPAY' },
           paymentStatus: { type: 'string', example: 'PENDING_PAYMENT' },
           orderStatus: { type: 'string', example: 'PENDING' },
+          adminNote: { type: 'string', example: 'Khách hàng yêu cầu giao trước 5h chiều', nullable: true },
           createdAt: { type: 'string', format: 'date-time' }
         }
       }

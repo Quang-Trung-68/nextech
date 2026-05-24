@@ -1,0 +1,7 @@
+
+OLD VPS:
+IP: 103.195.239.181  -  ssh ubuntu@103.195.239.181 password:trung2309
+
+NEW VPS:
+Login: gcloud compute ssh instance-20260506-142755 (Confirm)
+User: ubuntu Password:trung2309

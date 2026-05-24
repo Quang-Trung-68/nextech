@@ -6,6 +6,16 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH — YY
 
 ---
 
+## v1.3.0 — 2026-05-24
+
+### Added
+- **Interactive Scalar API Reference**: Integration of self-hosted `@scalar/express-api-reference` at `/api-docs` using the full OpenAPI 3.0 specification with 3-column UI, interactive testing, and dark mode.
+- **Homepage Live Flash Sale**: Interactive homepage showcase with high-performance real-time countdown, animated fire elements, and custom stock sold indicators with dynamic gradient progress bars.
+- **Wishlist & Price Drop Alerts**: Trigger-based wishlist notification engine. Automatically detects price drops, updates database notifications, broadcasts real-time WebSockets via Soketi, and sends HTML transactional emails using Nodemailer and custom EJS templates.
+- **Admin Dashboard leaderboards**: REST layout featuring top 5 best-selling products list side-by-side with Recharts revenue graphs, equipped with ranking medals, sales progress bars, and product thumbnails.
+- **Customer Addresses Viewer**: Pop-up directory displaying full customer address books dynamically retrieved through database queries in the admin user panel.
+- **Admin Order Notes**: Internal secure annotations (`adminNote` field in Prisma schema and database) with a `PATCH` route `/api/admin/orders/:id/note` and details modal text editor.
+
 ## v1.2.0 — 2026-04-07
 
 ### Added

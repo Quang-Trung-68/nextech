@@ -169,7 +169,7 @@ Both gateways converge on the same `finalizeOrderPaid()` logic, keeping the post
 NexTech uses **Soketi** — a self-hosted, open-source Pusher-compatible WebSocket server — instead of paying for managed Pusher.
 
 ```
-Backend event occurs (order update, low stock, etc.)
+Backend event occurs (order update, low stock, wishlist drop)
      │
      ▼
 service calls pusher.trigger(channel, event, data)
@@ -185,6 +185,35 @@ Frontend (pusher-js) receives event → updates UI / shows toast
 **Private channels** (`private-user-{id}`) require authentication: the frontend calls `POST /api/notifications/auth` which validates the user's JWT and returns the Pusher auth signature.
 
 **Nginx** proxies `api.nextech.io.vn/app/*` and `/apps/*` to Soketi, handling the WSS upgrade.
+
+### Wishlist & Price Drop Alert System
+When an admin updates a product's price or sale price to a lower value, the system automatically triggers the price drop engine:
+1. **Prisma Scan**: Scans the `Favorite` table to find all users who have favorited the modified `productId`.
+2. **Database Notifications**: Creates a `wishlist_price_drop` notification in the `Notification` table for each user.
+3. **Real-time WebSockets**: Broadcasts a WS message via Soketi to their respective private channel (`private-user-{id}`), instantly displaying a live toast alert if they are active on the website.
+4. **Email Delivery**: Renders a custom transactional HTML template (`wishlistPriceDrop.ejs`) using EJS, then dispatches a priority email using Nodemailer.
+
+---
+
+## API Documentation Integration
+
+NexTech features complete and self-hosted API documentation integrated directly into the Express application via `@scalar/express-api-reference`.
+
+```
+                  ┌───────────────────────────────┐
+                  │   docs.routes.js (/api-docs)  │
+                  └───────────────┬───────────────┘
+                                  │
+                                  ▼
+             apiReference({ spec: openapiSpec, theme: 'purple' })
+                                  │
+                                  ▼
+      Renders 3-column interactive Scalar UI (Dark mode & Try it out)
+```
+
+- **OpenAPI 3.0 Specification**: Maintained statically in [openapi.js](file:///home/trungdang/Development/projects/nextech/backend/src/docs/openapi.js), mapping 100% of all public client APIs and protected admin management routes.
+- **Interactive Console**: Supports "Try it out" natively from the browser by resolving environment-based base URLs (`http://localhost:3000` or `https://api.nextech.io.vn`).
+- **Access Route**: Mounted globally at `/api-docs` via Nginx forwarding.
 
 ---
 

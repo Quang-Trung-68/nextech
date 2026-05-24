@@ -16,18 +16,19 @@
 
 ## Features
 
-- **Product catalog** — variants & attributes (e.g. Color × Storage), per-variant pricing, stock, and sale pricing
-- **Dual payment gateway** — Stripe (international cards) and SePay/VietQR (Vietnamese bank transfer), each with webhook-driven order confirmation
-- **IMEI / serial tracking** — stock imports linked to suppliers; individual serial units tracked through `IN_STOCK → RESERVED → SOLD` lifecycle
-- **Order management** — structured status workflow, user cancel/return, admin serial assignment
-- **VAT invoices** — request VAT on checkout, generate PDF invoices with PDFKit, deliver by email
-- **Coupon engine** — percentage and fixed-amount codes with per-user and global usage caps
-- **Time-limited sale pricing** — products and variants support an optional discounted price with an expiry date and sale quota cap
-- **Admin dashboard** — revenue analytics (Recharts), product/order/user/inventory management
-- **Real-time notifications** — self-hosted Soketi (Pusher protocol) with private channel authentication
-- **Blog / news** — TipTap rich text editor, categories, tags, post scheduling, view counts
-- **OAuth2 login** — Google and Facebook authentication via Passport.js
-- **Transactional email** — order lifecycle, invoice PDF delivery, verification, password reset; failed email retry queue
+- **Product catalog** — variants & attributes (e.g. Color × Storage), per-variant pricing, stock, and sale pricing. Equipped with an interactive homepage **Live Flash Sale** component featuring a live countdown timer and vibrant stock progress bars.
+- **Wishlist & Price Drop Alerts** — user product wishlist (favorites) combined with an automated price drop detection engine. Triggers database notifications, real-time WebSockets, and HTML transactional emails.
+- **Interactive Scalar API Reference** — 100% complete self-hosted API documentation at `/api-docs` built on OpenAPI 3.0, featuring a premium 3-column UI, dark mode, and direct interactive testing.
+- **Dual payment gateway** — Stripe (international cards) and SePay/VietQR (Vietnamese bank transfer), each with webhook-driven order confirmation.
+- **IMEI / serial tracking** — stock imports linked to suppliers; individual serial units tracked through `IN_STOCK → RESERVED → SOLD` lifecycle.
+- **Order management & Internal Notes** — structured status workflow, cancellation/return flows, admin serial assignment, and secure admin-only internal order notes (`adminNote`).
+- **Admin dashboard** — comprehensive admin dashboard with dynamic side-by-side Recharts area charts and a custom ranked list of top-selling products, user management (featuring dynamic customer addresses view), and invoice tracking.
+- **VAT invoices** — request VAT on checkout, generate PDF invoices with PDFKit, deliver by email.
+- **Coupon engine** — percentage and fixed-amount codes with per-user and global usage caps.
+- **Real-time notifications** — self-hosted Soketi (Pusher protocol) with private channel authentication.
+- **Blog / news** — TipTap rich text editor, categories, tags, post scheduling, view counts.
+- **OAuth2 login** — Google and Facebook authentication via Passport.js.
+- **Transactional email** — order lifecycle, invoice PDF delivery, verification, password reset; failed email retry queue.
 
 ---
 
@@ -39,7 +40,7 @@
 | **State** | TanStack Query · Zustand · React Hook Form + Zod |
 | **Rich text** | TipTap |
 | **Charts** | Recharts |
-| **Backend** | Node.js · Express · Passport.js |
+| **Backend** | Node.js · Express · Passport.js · `@scalar/express-api-reference` |
 | **Database** | PostgreSQL 16 · Prisma ORM v7 |
 | **Auth** | JWT (cookie-based) · bcryptjs · Google/Facebook OAuth2 |
 | **Payments** | Stripe SDK · SePay (VietQR) |
