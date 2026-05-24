@@ -21,6 +21,7 @@
     "@google/generative-ai": "^0.21.0",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "@scalar/express-api-reference": "^0.9.19",
     "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",

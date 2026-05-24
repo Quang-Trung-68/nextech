@@ -32,6 +32,7 @@ const specialRoutes = [
  * phải đứng TRƯỚC prefix rộng hơn (vd: /api/admin).
  */
 const apiRoutes = [
+  { prefix: '/api-docs',         router: require('../routes/docs.routes') },
   { prefix: '/api/auth',         router: require('../routes/auth.routes') },
   { prefix: '/api/users',        router: require('../routes/user.routes') },
   { prefix: '/api/products',     router: require('../routes/product.routes') },
