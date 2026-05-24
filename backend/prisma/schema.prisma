@@ -275,6 +275,7 @@ model Order {
   trackingCode          String?
   trackingUrl           String?
   carrierName           String?
+  adminNote             String?
 
   // VAT Invoice request (user điền tại checkout)
   vatInvoiceRequested    Boolean       @default(false)

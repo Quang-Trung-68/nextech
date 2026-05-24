@@ -1128,6 +1128,22 @@ const userRequestReturn = async (orderId, userId, reason) => {
   return { order: updated };
 };
 
+const adminUpdateOrderNote = async (orderId, note) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+  });
+
+  if (!order) throw new NotFoundError('Order');
+
+  const updated = await prisma.order.update({
+    where: { id: orderId },
+    data: { adminNote: note },
+    include: ORDER_DETAIL_INCLUDE,
+  });
+  
+  return _addOrderItemDiscounts(updated);
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -1136,6 +1152,7 @@ module.exports = {
   getAllOrders,
   adminGetOrderById,
   adminUpdateOrderStatus,
+  adminUpdateOrderNote,
   getReviewableItems,
   deductInventoryForOrderTx,
   getAvailableSerialsForOrder,

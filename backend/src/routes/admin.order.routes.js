@@ -50,6 +50,13 @@ router.patch(
   orderController.adminUpdateOrderStatus
 );
 
+// PATCH /api/admin/orders/:id/note — Thêm/sửa ghi chú đơn hàng từ admin
+router.patch(
+  '/:id/note',
+  validate(orderParamsSchema, 'params'),
+  orderController.adminUpdateOrderNote
+);
+
 const AdminInvoiceController = require('../controllers/invoice.controller');
 
 // GET /api/admin/orders/:orderId/invoice — Lấy invoice của một order

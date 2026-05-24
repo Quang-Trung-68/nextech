@@ -138,6 +138,16 @@ const reviewableItems = async (req, res, next) => {
   }
 };
 
+const adminUpdateOrderNote = async (req, res, next) => {
+  try {
+    const { note } = req.body;
+    const order = await orderService.adminUpdateOrderNote(req.params.id, note);
+    res.status(200).json({ success: true, order });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
@@ -146,6 +156,7 @@ module.exports = {
   adminGetAllOrders,
   adminGetOrderById,
   adminUpdateOrderStatus,
+  adminUpdateOrderNote,
   adminGetAvailableSerials,
   adminAssignSerials,
   userReturnOrder,

@@ -240,19 +240,84 @@ const AdminDashboardPage = () => {
           </div>
         </div>
 
-        {/* Bảng 5 đơn hàng mới nhất */}
-        <div className="bg-card border rounded-xl p-6 overflow-hidden">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Đơn hàng gần đây</h2>
+        {/* Top sản phẩm bán chạy */}
+        <div className="bg-card border rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-6">Sản phẩm bán chạy nhất</h2>
+          <div className="space-y-4">
+            {stats?.topProducts?.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic text-center py-8">Chưa có dữ liệu bán hàng</p>
+            ) : (
+              stats?.topProducts?.map((item, index) => {
+                const maxSold = stats.topProducts[0]?.totalSold || 1;
+                const percent = Math.round((item.totalSold / maxSold) * 100);
+                const firstImage = item.product?.images?.[0]?.url;
+                
+                return (
+                  <div key={item.product?.id || index} className="flex items-center gap-4 group">
+                    {/* Rank badge */}
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold text-sm ${
+                      index === 0 ? 'bg-amber-100 text-amber-700 shadow-sm shadow-amber-500/10' :
+                      index === 1 ? 'bg-slate-100 text-slate-700' :
+                      index === 2 ? 'bg-orange-100 text-orange-700' :
+                      'bg-gray-50 text-gray-500'
+                    }`}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                    </div>
+
+                    {/* Product Image */}
+                    <div className="h-12 w-12 rounded-xl bg-white border flex items-center justify-center p-1.5 overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
+                      {firstImage ? (
+                        <img src={firstImage} alt={item.product?.name} className="h-full w-full object-contain animate-fade-in" />
+                      ) : (
+                        <Package className="h-5 w-5 text-muted-foreground opacity-50" />
+                      )}
+                    </div>
+
+                    {/* Product details & progress bar */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5 gap-2">
+                        <p className="text-sm font-semibold truncate text-apple-black group-hover:text-primary transition-colors" title={item.product?.name}>
+                          {item.product?.name}
+                        </p>
+                        <span className="text-xs font-bold text-apple-black flex-shrink-0">
+                          {item.totalSold} đã bán
+                        </span>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full bg-gradient-to-r transition-all duration-500 ${
+                            index === 0 ? 'from-amber-400 to-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.2)]' :
+                            index === 1 ? 'from-slate-400 to-slate-500' :
+                            index === 2 ? 'from-orange-400 to-orange-500' :
+                            'from-blue-400 to-blue-500'
+                          }`} 
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
-          <DataTable
-            columns={latestOrdersColumns}
-            data={stats?.latestOrders || []}
-          />
         </div>
+      </div>
+
+      {/* Bảng 5 đơn hàng mới nhất */}
+      <div className="bg-card border rounded-xl p-6 overflow-hidden mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Đơn hàng gần đây</h2>
+        </div>
+        <DataTable
+          columns={latestOrdersColumns}
+          data={stats?.latestOrders || []}
+        />
       </div>
     </div>
   );
 };
 
 export default AdminDashboardPage;
+

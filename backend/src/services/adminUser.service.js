@@ -11,6 +11,7 @@ const USER_SELECT = {
   isActive: true,
   createdAt: true,
   updatedAt: true,
+  addresses: true,
 };
 
 /**

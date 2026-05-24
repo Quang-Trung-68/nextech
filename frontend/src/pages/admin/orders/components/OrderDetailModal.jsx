@@ -152,6 +152,29 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
   const { mutate: updateOrderStatus, isPending: isUpdating } = useUpdateOrderStatus();
 
+  const [note, setNote] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
+  React.useEffect(() => {
+    if (order) {
+      setNote(order.adminNote || '');
+    }
+  }, [order]);
+
+  const handleSaveNote = async () => {
+    if (!orderId) return;
+    setIsSavingNote(true);
+    try {
+      await axiosInstance.patch(`/admin/orders/${orderId}/note`, { note: note.trim() });
+      toast.success('Đã lưu ghi chú nội bộ thành công');
+      await refetch();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Có lỗi xảy ra khi lưu ghi chú');
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
   const handleConfirmCancel = () => {
     if (!orderId) return;
     cancelOrder(orderId, {
@@ -365,6 +388,35 @@ const OrderDetailModal = ({ orderId, open, onClose }) => {
                           Hoàn thành giao hàng
                         </Button>
                       )}
+                    </div>
+
+                    {/* ── Ghi chú của Quản trị viên (Admin Note) ───────────────── */}
+                    <div className="space-y-3 rounded-xl border p-4 bg-muted/10">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                        <Rocket className="h-3.5 w-3.5 text-apple-blue" />
+                        Ghi chú nội bộ (Quản trị viên)
+                      </p>
+                      
+                      <div className="space-y-3">
+                        <textarea
+                          placeholder="Nhập ghi chú nội bộ cho đơn hàng này... (Khách hàng không nhìn thấy)"
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          className="w-full min-h-[80px] rounded-xl border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={handleSaveNote}
+                            disabled={isSavingNote || note.trim() === (order?.adminNote || '')}
+                            className="gap-1.5 h-8 font-semibold"
+                          >
+                            {isSavingNote && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                            Lưu ghi chú
+                          </Button>
+                        </div>
+                      </div>
                     </div>
 
                     {/* ── 1.5. Invoice ────────────────────────────────────── */}
