@@ -13,7 +13,7 @@ router.use(
   apiReference({
     theme: 'purple', // Các theme khả dụng: 'default', 'purple', 'blue', 'green', 'deepSpace', 'saturn'
     spec: {
-      content: () => openApiSpec, // Pass as a function or object
+      content: openApiSpec,
     },
   })
 );
