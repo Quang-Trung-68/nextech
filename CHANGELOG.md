@@ -15,6 +15,7 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH — YY
 - **Admin Dashboard leaderboards**: REST layout featuring top 5 best-selling products list side-by-side with Recharts revenue graphs, equipped with ranking medals, sales progress bars, and product thumbnails.
 - **Customer Addresses Viewer**: Pop-up directory displaying full customer address books dynamically retrieved through database queries in the admin user panel.
 - **Admin Order Notes**: Internal secure annotations (`adminNote` field in Prisma schema and database) with a `PATCH` route `/api/admin/orders/:id/note` and details modal text editor.
+- **Python data crawlers**: `crawl_cellphones.py` and `crawl_sforum.py` scripts for automated product and blog content harvesting from cellphones.com.vn and Sforum.
 
 ## v1.2.0 — 2026-04-07
 

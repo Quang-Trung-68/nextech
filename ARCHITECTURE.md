@@ -46,7 +46,7 @@ Routes → Controllers → Services → Prisma (data access)
 - **Controllers** extract request inputs, call one service method, and return the response. No business logic.
 - **Services** own all business rules, Prisma queries, and cross-cutting operations (emails, notifications, events).
 - **Middleware** (`protect`, `restrictTo`, `requireEmailVerified`, `validateRequest`) are composed per route.
-- **Jobs** (node-cron) run in-process as background tasks. They call the same service layer as controllers.
+- **Jobs** (node-cron) run in-process as background tasks (5 scheduled jobs). They call the same service layer as controllers.
 - **Errors** are handled globally via `AppError` + `catchAsync` + a single `errorHandler` middleware.
 
 ---
@@ -58,16 +58,31 @@ The frontend is organized **by feature**, not by type:
 ```
 src/
 ├── features/
-│   ├── cart/
-│   ├── checkout/
-│   ├── admin/
-│   ├── news/
-│   └── ...
-├── components/ui/       # Shared UI primitives (Shadcn/UI)
+│   ├── admin/           # Admin panel (dashboard, CRUD, analytics)
+│   ├── auth/            # Login, register, OAuth, verification
+│   ├── blog/            # Blog listing and detail
+│   ├── cart/            # Shopping cart drawer and items
+│   ├── checkout/        # Checkout flow with VAT and coupons
+│   ├── home/            # Homepage, flash sale, banners
+│   ├── orders/          # Order history and detail
+│   ├── payments/        # Stripe and SePay payment flows
+│   ├── products/        # Product catalog, detail, wishlist
+│   ├── reviews/         # Product reviews
+│   └── user/            # Profile, addresses, notifications
+├── components/
+│   ├── ui/              # Shadcn/UI primitives (34 components)
+│   ├── form/            # Form fields, image uploader, rich text
+│   └── layout/          # Header, footer, sidebar, notification bell
+├── api/                 # Axios instance & TanStack Query hooks
 ├── hooks/               # Shared custom hooks
+├── stores/              # Zustand stores (auth, cart, theme, notifications, sidebar)
+├── pages/               # 22+ page components
+├── i18n/                # i18next config & locale files (vi, en)
+├── lib/                 # Utility libraries
+├── utils/               # Helper functions
 └── configs/
     ├── routes.config.jsx
-    └── axios.js
+    └── queryClient.js
 ```
 
 Server state is managed by **TanStack Query** (caching, background refetch, pagination). Client-only state (cart UI, modal open/close, auth) uses **Zustand**. Forms use **React Hook Form + Zod**.
@@ -252,7 +267,7 @@ Supplier → StockImport → SerialUnit (serial string, status: IN_STOCK)
 
 ## Database Schema Highlights
 
-The PostgreSQL schema (managed by Prisma) contains **26+ models**. Key relationships:
+The PostgreSQL schema (managed by Prisma) contains **28 models**. Key relationships:
 
 - `User` → `Order` → `OrderItem` → `Product` / `ProductVariant`
 - `Product` → `ProductAttribute` → `ProductAttributeValue` ← `ProductVariantValue` → `ProductVariant`
@@ -298,3 +313,6 @@ HttpOnly cookies are not accessible from JavaScript, protecting against XSS toke
 
 **Why Prisma's driver adapter (`@prisma/adapter-pg`)?**
 Prisma 7 dropped the built-in connection pool in favor of an explicit adapter. Using `@prisma/adapter-pg` with a `pg.Pool` gives explicit control over pool size and reuse across requests.
+
+**Why Express 5 instead of Express 4?**
+Express 5 offers native async error handling (no more `catchAsync` wrappers for async route handlers in newer versions), improved routing, and better TypeScript support. NexTech still uses `catchAsync` for consistent error handling across all routes.

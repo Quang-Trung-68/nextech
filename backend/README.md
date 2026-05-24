@@ -6,9 +6,9 @@ The core logic and data processing system (Backend) of the NexTech project. Buil
 
 | Library / Framework | Role |
 |---|---|
-| [Node.js](https://nodejs.org/) v18+ | Runtime environment |
-| [Express.js](https://expressjs.com/) | Web framework |
-| [Prisma](https://www.prisma.io/) | ORM for PostgreSQL (type-safe queries) |
+| [Node.js](https://nodejs.org/) v20+ | Runtime environment |
+| [Express.js](https://expressjs.com/) | Web framework (v5) |
+| [Prisma](https://www.prisma.io/) | ORM for PostgreSQL v7 (driver adapter with pg.Pool) |
 | [PostgreSQL](https://www.postgresql.org/) | Relational database |
 | [Passport.js](https://www.passportjs.org/) | Auth: JWT, Google/Facebook OAuth |
 | [Soketi](https://docs.soketi.app/) | Self-hosted Pusher-compatible WebSocket server |
@@ -18,6 +18,7 @@ The core logic and data processing system (Backend) of the NexTech project. Buil
 | [Node-cron](https://www.npmjs.com/package/node-cron) | Scheduled background tasks |
 | [Bcrypt.js](https://www.npmjs.com/package/bcryptjs) + JWT | Password hashing & token security |
 | [Zod](https://zod.dev/) + [Express Validator](https://express-validator.github.io/docs/) | Input validation |
+| [@scalar/express-api-reference](https://github.com/scalar/scalar) | Self-hosted interactive API documentation |
 
 ---
 
@@ -40,8 +41,8 @@ The core logic and data processing system (Backend) of the NexTech project. Buil
 
 ### 1. Prerequisites
 
-- [Node.js](https://nodejs.org/) v18+ installed.
-- [PostgreSQL](https://www.postgresql.org/) v14+ running locally.
+- [Node.js](https://nodejs.org/) v20+ installed.
+- [PostgreSQL](https://www.postgresql.org/) v16+ running locally.
 - A [Cloudinary](https://cloudinary.com/) account (free tier works).
 - A Gmail account with [App Password](https://myaccount.google.com/apppasswords) enabled.
 - **Soketi running** — see [Soketi Setup](#-soketi-setup--websocket-server) below.
@@ -198,15 +199,17 @@ See the [root README](../README.md) for the complete Docker quickstart guide.
 
 ```text
 src/
-├── configs/        # Passport, Cloudinary, Stripe, i18n configuration
-├── controllers/    # Business logic handlers for each endpoint
-├── jobs/           # Cron jobs (Flash sale cleanup, Coupon expiry...)
-├── middleware/     # Auth, Upload, Error handler, Role-based access
-├── prisma/         # Database schema & migrations
-├── routes/         # API endpoint definitions
-├── services/       # Complex logic (Email, PDF generation, Stripe)
-├── templates/      # EJS templates for Emails & Invoice PDFs
-└── validations/    # Input validation schemas using Zod
+├── configs/        # Route registration, Passport, Stripe, Cloudinary, CORS, i18n
+├── controllers/    # Thin request/response handlers (23 files)
+├── docs/           # OpenAPI 3.0 specification (openapi.js)
+├── errors/         # AppError hierarchy (6 error classes)
+├── jobs/           # Cron jobs (5 scheduled tasks)
+├── middleware/     # Auth, Upload, Validation, Error handler, Raw body
+├── routes/         # API endpoint definitions (23 route files)
+├── services/       # Business logic layer (18 service files)
+├── templates/      # EJS email templates (11 templates)
+├── utils/          # Prisma client, Pusher, helpers
+└── validations/    # Zod request validation schemas (12 files)
 ```
 
 ---

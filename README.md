@@ -36,19 +36,19 @@
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React 19 · Vite · React Router · Tailwind CSS · Shadcn/UI |
-| **State** | TanStack Query · Zustand · React Hook Form + Zod |
+| **Frontend** | React 19 · Vite · React Router v7 · Tailwind CSS v4 · Shadcn/UI · Radix UI |
+| **State** | TanStack Query v5 · Zustand · React Hook Form + Zod · Lucide React |
 | **Rich text** | TipTap |
 | **Charts** | Recharts |
-| **Backend** | Node.js · Express · Passport.js · `@scalar/express-api-reference` |
+| **Backend** | Node.js · Express 5 · Passport.js · `@scalar/express-api-reference` |
 | **Database** | PostgreSQL 16 · Prisma ORM v7 |
 | **Auth** | JWT (cookie-based) · bcryptjs · Google/Facebook OAuth2 |
-| **Payments** | Stripe SDK · SePay (VietQR) |
+| **Payments** | Stripe SDK · SePay / VietQR (Vietnamese bank transfer) |
 | **Media** | Cloudinary · Multer |
 | **Email** | Nodemailer · EJS templates |
 | **PDF** | PDFKit |
 | **Real-time** | Soketi (self-hosted Pusher) · Pusher-js |
-| **Scheduler** | node-cron (7+ jobs) |
+| **Scheduler** | node-cron (5 scheduled jobs) |
 | **DevOps** | Docker · GitHub Actions · GHCR · Nginx · Certbot · VPS |
 
 ---
@@ -61,15 +61,18 @@ NexTech is organized as a **monorepo** with separate `frontend/` and `backend/` 
 nextech/
 ├── backend/
 │   ├── src/
-│   │   ├── configs/         # Route registration, Passport, DB, mailer
+│   │   ├── configs/         # Route registration, Passport, DB, mailer, Stripe, CORS, i18n
 │   │   ├── controllers/     # Request/response handling
+│   │   ├── docs/            # OpenAPI 3.0 specification
 │   │   ├── services/        # Business logic (payments, orders, inventory…)
 │   │   ├── middleware/       # Auth, upload, validation
 │   │   ├── jobs/            # node-cron scheduled tasks
 │   │   ├── errors/          # AppError hierarchy
+│   │   ├── validations/     # Zod request validation schemas
+│   │   ├── templates/       # EJS email templates
 │   │   └── utils/           # Helpers, Prisma client, Pusher client
 │   └── prisma/
-│       ├── schema.prisma    # 26+ models
+│       ├── schema.prisma    # 28 models
 │       └── migrations/
 ├── frontend/
 │   └── src/
@@ -78,6 +81,7 @@ nextech/
 │       ├── hooks/           # Reusable hooks
 │       └── configs/         # Route config, axios instance
 ├── nginx/                   # Production reverse proxy + TLS config
+├── scripts/                  # deploy.sh, seed-all.sh, reset-and-seed.sh, crawlers
 ├── docker-compose.yml       # Development stack
 └── docker-compose.prod.yml  # Production stack (GHCR images)
 ```
@@ -273,7 +277,7 @@ VITE_SOKETI_FORCE_TLS=false
 
 ## Production Deployment
 
-NexTech runs as a **6-container Docker stack** (Postgres, Soketi, backend, frontend/Nginx, Nginx reverse proxy, Certbot).
+NexTech runs as a **6-service stack** (Postgres, Soketi, backend, frontend/Nginx, Nginx reverse proxy, Certbot).
 
 **Step 1: Prepare the VPS**
 
@@ -314,17 +318,24 @@ The GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) automates this on ev
 ```
 .
 ├── backend/
-│   ├── src/                      # Application source code
-│   ├── prisma/                   # Schema, migrations, seed data
+│   ├── src/                      # Application source code (configs, controllers, docs, validations, templates...)
+│   │   ├── docs/            # OpenAPI 3.0 spec (openapi.js)
+│   │   ├── templates/       # EJS email templates (11 templates)
+│   │   └── validations/     # Zod request validation (15 schemas)
+│   ├── prisma/                   # Schema, migrations, seed data (28 models)
 │   ├── Dockerfile
 │   ├── docker-entrypoint.sh      # Auto-runs migrations on container start
 │   └── .env.example
 ├── frontend/
-│   ├── src/                      # Application source code
+│   ├── src/                      # Application source code (features, components, hooks, api, stores, pages, i18n...)
+│   │   ├── api/             # Axios instance & TanStack Query hooks
+│   │   ├── stores/          # Zustand state stores (5 stores)
+│   │   ├── pages/           # Main application pages (22+ pages)
+│   │   └── i18n/            # i18next locales (vi, en)
 │   ├── Dockerfile
 │   └── .env.example
 ├── nginx/                        # Production Nginx config (TLS, proxy, WS)
-├── scripts/                      # deploy.sh, seed scripts
+├── scripts/                      # deploy.sh, seed-all.sh, reset-and-seed.sh, Python crawlers
 ├── docker-compose.yml            # Development stack
 ├── docker-compose.prod.yml       # Production stack
 └── .env.deploy.template          # Environment variable template

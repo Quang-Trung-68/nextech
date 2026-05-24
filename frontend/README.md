@@ -6,11 +6,11 @@ The user-facing part of the NexTech project, built to deliver a modern, smooth, 
 
 | Library / Framework | Role |
 |---|---|
-| [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) | Core framework + ultra-fast build tooling |
-| [Tailwind CSS](https://tailwindcss.com/) | Utility-first styling with responsive design |
+| [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) | Core framework + ultra-fast build tooling (Vite 6) |
+| [Tailwind CSS](https://tailwindcss.com/) | Utility-first styling v4 with responsive design |
 | [Radix UI](https://www.radix-ui.com/) + [Shadcn UI](https://ui.shadcn.com/) | Accessible, Apple-inspired UI components |
 | [Lucide React](https://lucide.dev/) | Icon library |
-| [Zustand](https://github.com/pmndrs/zustand) | Lightweight global state management |
+| [Zustand](https://github.com/pmndrs/zustand) | Lightweight global state management (5 stores) |
 | [TanStack Query v5](https://tanstack.com/query/latest) | Server state, caching, and data synchronization |
 | [React Router v7](https://reactrouter.com/) | Client-side routing and navigation |
 | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) | Form handling and input validation |
@@ -18,6 +18,9 @@ The user-facing part of the NexTech project, built to deliver a modern, smooth, 
 | [Pusher JS](https://pusher.com/) | WebSocket client (connects to Soketi server) |
 | [Stripe React](https://stripe.com/docs/stripe-js/react) | Payment UI integration |
 | [Recharts](https://recharts.org/) | Admin dashboard charts and analytics |
+| [Embla Carousel](https://www.embla-carousel.com/) | Carousel/slider component |
+| [date-fns](https://date-fns.org/) | Date utility library |
+| [Sonner](https://sonner.emilkowal.dev/) | Toast notification library |
 
 ---
 
@@ -37,7 +40,7 @@ The user-facing part of the NexTech project, built to deliver a modern, smooth, 
 
 ### 1. Prerequisites
 
-- [Node.js](https://nodejs.org/) v18+ installed.
+- [Node.js](https://nodejs.org/) v20+ installed.
 - The **Backend must be running** first — see [backend README](../backend/README.md).
 - **Soketi must be running** — see [Soketi Setup in backend README](../backend/README.md#-soketi-setup--websocket-server).
 
@@ -109,14 +112,19 @@ See the [root README](../README.md) for the complete Docker quickstart guide.
 
 ```text
 src/
-├── api/            # Axios config & TanStack Query hooks
-├── components/     # Shared UI components (Atoms, Molecules, Layouts)
-├── configs/        # Route & i18n configurations
-├── features/       # Logic & UI by feature (Auth, Cart, Orders, Admin...)
-├── hooks/          # Custom hooks for reusable logic
-├── pages/          # Main application pages (mapped to routes)
-├── stores/         # Global state management (Zustand stores)
-└── utils/          # Helper functions (currency formatting, dates...)
+├── api/            # Axios instance & TanStack Query API hooks (11 files)
+├── components/     # Shared UI components
+│   ├── ui/         # Shadcn/UI primitives (34 components)
+│   ├── form/       # Form fields, image uploader, rich text editor
+│   └── layout/     # Header, footer, sidebar, notification bell
+├── configs/        # Route config (routes.config.jsx) & query client
+├── features/       # Feature-based modules (11 feature areas)
+├── hooks/          # Custom hooks (debounce, pusher, pagination...)
+├── i18n/           # i18next config & locales (vi, en)
+├── lib/            # Utility libraries (cn.js)
+├── pages/          # Main application pages (22+ pages)
+├── stores/         # Zustand stores (auth, cart, theme, notifications, sidebar)
+└── utils/          # Helper functions (format, validation, constants)
 ```
 
 ---
