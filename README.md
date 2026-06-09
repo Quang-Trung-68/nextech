@@ -14,6 +14,16 @@
 
 ---
 
+## 📚 Technical Documentation Index
+
+For in-depth explanations of the system's design, database relations, and API endpoints, please refer to our dedicated specifications:
+
+*   **[System Architecture & Workflows](./docs/ARCHITECTURE.md)**: Deep-dive analysis of JWT HttpOnly session token rotations, dual Stripe/SePay webhook integrations, Soketi-driven WebSockets, and background cron jobs.
+*   **[Database Schema & ERD](./docs/DATABASE_ERD.md)**: Full database reference covering all 28 tables managed by Prisma ORM, complete with an interactive **Mermaid ERD** diagram.
+*   **[REST API Endpoints](./docs/API_ENDPOINTS.md)**: Structured reference of core client-facing and admin endpoints with request validation payloads and success responses.
+
+---
+
 ## Features
 
 - **Product catalog** — variants & attributes (e.g. Color × Storage), per-variant pricing, stock, and sale pricing. Equipped with an interactive homepage **Live Flash Sale** component featuring a live countdown timer and vibrant stock progress bars.
@@ -86,7 +96,7 @@ nextech/
 └── docker-compose.prod.yml  # Production stack (GHCR images)
 ```
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for auth flows, payment flows, real-time architecture, and design decisions.
+See the detailed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) document for complete auth flows, payment flows, real-time architectures, and engineering design decisions.
 
 ---
 
@@ -317,6 +327,7 @@ The GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) automates this on ev
 
 ```
 .
+├── docs/                     # Technical specifications (Architecture, Database ERD, REST API reference)
 ├── backend/
 │   ├── src/                      # Application source code (configs, controllers, docs, validations, templates...)
 │   │   ├── docs/            # OpenAPI 3.0 spec (openapi.js)
