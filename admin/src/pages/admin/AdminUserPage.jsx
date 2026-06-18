@@ -66,13 +66,22 @@ const AdminUserPage = () => {
     {
       accessorKey: 'avatar',
       header: 'Ảnh',
-      cell: ({ row }) => (
-        <img
-          src={row.original.avatar || 'https://via.placeholder.com/50'}
-          alt={row.original.name}
-          className="w-10 h-10 object-cover rounded-full"
-        />
-      ),
+      cell: ({ row }) => {
+        const avatar = row.original.avatar;
+        const name = row.original.name || '?';
+        const initial = name.charAt(0).toUpperCase();
+        return avatar ? (
+          <img
+            src={avatar}
+            alt={name}
+            className="w-10 h-10 object-cover rounded-full"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
+            {initial}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'name',
