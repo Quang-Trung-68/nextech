@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import { loginSchema } from '@/schemas/auth.schema';
 import { useLogin } from '@/features/auth/hooks/useAuth';
@@ -124,16 +123,7 @@ const LoginForm = () => {
         )}
       </button>
 
-      {/* ── Link to Register ───────────────────────────────────────────── */}
-      <p className="text-center text-sm text-muted-foreground">
-        {t('auth:login.noAccount')}{' '}
-        <Link
-          to="/register"
-          className="font-medium text-primary hover:underline"
-        >
-          {t('common:nav.register')}
-        </Link>
-      </p>
+
     </form>
   );
 };

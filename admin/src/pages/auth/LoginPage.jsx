@@ -1,4 +1,4 @@
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import usePageTitle from '@/hooks/usePageTitle';
 import { ShoppingBag } from 'lucide-react';
 import useAuthStore from '@/stores/useAuthStore';
@@ -45,12 +45,6 @@ const LoginPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <LoginForm />
-
-            <div className="flex justify-center -mt-1">
-              <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
-                Quên mật khẩu?
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>

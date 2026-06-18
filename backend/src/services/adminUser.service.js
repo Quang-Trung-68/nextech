@@ -18,8 +18,19 @@ const USER_SELECT = {
  * Admin: Danh sách users với phân trang + filter
  */
 const getUsers = async ({ isActive, sortBy, sortOrder, page, limit, search }) => {
-  const where = {};
-  if (isActive !== undefined) where.isActive = isActive;
+  // Lấy danh sách email admin để loại khỏi danh sách user
+  const adminEmails = await prisma.admin.findMany({ select: { email: true } });
+  const excludeEmails = adminEmails.map(a => a.email);
+
+  const AND = [];
+  if (excludeEmails.length > 0) {
+    AND.push({ email: { notIn: excludeEmails } });
+  }
+  if (isActive !== undefined) {
+    AND.push({ isActive });
+  }
+
+  const where = AND.length > 0 ? { AND } : {};
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },
