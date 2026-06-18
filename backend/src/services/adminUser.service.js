@@ -8,7 +8,6 @@ const USER_SELECT = {
   name: true,
   email: true,
   avatar: true,
-  role: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
@@ -21,8 +20,6 @@ const USER_SELECT = {
 const getUsers = async ({ isActive, sortBy, sortOrder, page, limit, search }) => {
   const where = {};
   if (isActive !== undefined) where.isActive = isActive;
-  // Không hiển thị tài khoản admin trong danh sách người dùng
-  where.role = 'USER';
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },

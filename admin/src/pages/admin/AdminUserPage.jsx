@@ -102,7 +102,6 @@ const AdminUserPage = () => {
       header: 'Thao tác',
       cell: ({ row }) => {
         const isActive = row.original.isActive;
-        const isAdmin = row.original.role === 'ADMIN';
         const isSelf = currentUser?.id === row.original.id;
         
         return (
@@ -117,7 +116,7 @@ const AdminUserPage = () => {
               Địa chỉ
             </Button>
             
-            {!isAdmin && !isSelf && (
+            {!isSelf && (
               <Button
                 size="sm"
                 variant={isActive ? 'destructive' : 'outline'}
