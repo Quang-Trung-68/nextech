@@ -1,37 +1,59 @@
 import React, { useState, useMemo } from 'react';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton';
 import usePageTitle from '@/hooks/usePageTitle';
-import { useAdminUsers, useToggleUserStatus } from '@/features/admin/hooks/useAdmin';
+import { useAdminUsers, useAdminAdmins, useToggleUserStatus } from '@/features/admin/hooks/useAdmin';
 import { DataTable } from '@/features/admin/components/DataTable';
 import { CustomPagination } from '@/features/admin/components/CustomPagination';
 import { StatusBadge } from '@/features/admin/components/StatusBadge';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MapPin } from 'lucide-react';
+import { MapPin, Users, Shield } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import useAuthStore from '@/stores/useAuthStore';
+
+const TABS = [
+  { key: 'users', label: 'Người dùng', icon: Users },
+  { key: 'admins', label: 'Quản trị viên', icon: Shield },
+];
 
 const AdminUserPage = () => {
   usePageTitle('Người dùng | Quản trị');
 
   const currentUser = useAuthStore((s) => s.user);
-  const [filterState, setFilterState] = useState({ page: 1, limit: 10 });
-  const [searchInput, setSearchInput] = useState('');
-  const debouncedSearch = useDebounce(searchInput, 500);
-  const params = useMemo(
-    () => ({ ...filterState, search: debouncedSearch }),
-    [debouncedSearch, filterState]
+  const [activeTab, setActiveTab] = useState('users');
+
+  // ─── Users state ──────────────────────────────────────────────────────────
+  const [userFilter, setUserFilter] = useState({ page: 1, limit: 10 });
+  const [userSearch, setUserSearch] = useState('');
+  const debouncedUserSearch = useDebounce(userSearch, 500);
+  const userParams = useMemo(
+    () => ({ ...userFilter, search: debouncedUserSearch }),
+    [debouncedUserSearch, userFilter]
   );
 
   React.useEffect(() => {
-    setFilterState((prev) => ({ ...prev, page: 1 }));
-  }, [debouncedSearch]);
+    setUserFilter((prev) => ({ ...prev, page: 1 }));
+  }, [debouncedUserSearch]);
 
-  const { data, isLoading } = useAdminUsers(params);
+  // ─── Admins state ─────────────────────────────────────────────────────────
+  const [adminFilter, setAdminFilter] = useState({ page: 1, limit: 10 });
+  const [adminSearch, setAdminSearch] = useState('');
+  const debouncedAdminSearch = useDebounce(adminSearch, 500);
+  const adminParams = useMemo(
+    () => ({ ...adminFilter, search: debouncedAdminSearch }),
+    [debouncedAdminSearch, adminFilter]
+  );
+
+  React.useEffect(() => {
+    setAdminFilter((prev) => ({ ...prev, page: 1 }));
+  }, [debouncedAdminSearch]);
+
+  const { data: usersData, isLoading: usersLoading } = useAdminUsers(userParams);
+  const { data: adminsData, isLoading: adminsLoading } = useAdminAdmins(adminParams);
   const { mutate: toggleStatus, isPending: isUpdating } = useToggleUserStatus();
-  
+
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
   const [addressModal, setAddressModal] = useState({ isOpen: false, user: null });
 
@@ -46,8 +68,7 @@ const AdminUserPage = () => {
       { id },
       {
         onSuccess: () => {
-          const newStatus = status === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
-          toast.success(newStatus === 'ACTIVE' ? 'Đã kích hoạt tài khoản' : 'Đã khóa tài khoản');
+          toast.success(status === 'ACTIVE' ? 'Đã khóa tài khoản' : 'Đã kích hoạt tài khoản');
           setConfirmModal({ isOpen: false, user: null });
         },
         onError: (err) => {
@@ -62,7 +83,8 @@ const AdminUserPage = () => {
     setConfirmModal({ isOpen: true, user: userRow });
   };
 
-  const columns = [
+  // ─── User columns ─────────────────────────────────────────────────────────
+  const userColumns = [
     {
       accessorKey: 'avatar',
       header: 'Ảnh',
@@ -112,7 +134,7 @@ const AdminUserPage = () => {
       cell: ({ row }) => {
         const isActive = row.original.isActive;
         const isSelf = currentUser?.id === row.original.id;
-        
+
         return (
           <div className="flex items-center gap-2">
             <Button
@@ -124,7 +146,7 @@ const AdminUserPage = () => {
               <MapPin className="h-3.5 w-3.5" />
               Địa chỉ
             </Button>
-            
+
             {!isSelf && (
               <Button
                 size="sm"
@@ -142,37 +164,146 @@ const AdminUserPage = () => {
     },
   ];
 
+  // ─── Admin columns ────────────────────────────────────────────────────────
+  const adminColumns = [
+    {
+      accessorKey: 'avatar',
+      header: 'Ảnh',
+      cell: ({ row }) => {
+        const avatar = row.original.avatar;
+        const name = row.original.name || '?';
+        const initial = name.charAt(0).toUpperCase();
+        return avatar ? (
+          <img
+            src={avatar}
+            alt={name}
+            className="w-10 h-10 object-cover rounded-full"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
+            {initial}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'name',
+      header: 'Tên',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{row.original.name}</span>
+          {currentUser?.id === row.original.id && (
+            <span className="text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
+              Bạn
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+    },
+    {
+      accessorKey: 'phone',
+      header: 'SĐT',
+      cell: ({ row }) => row.original.phone || '—',
+    },
+    {
+      accessorKey: 'isActive',
+      header: 'Trạng thái',
+      cell: ({ row }) => <StatusBadge status={row.original.isActive ? 'ACTIVE' : 'BANNED'} />,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Ngày tạo',
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString('vi-VN'),
+    },
+  ];
+
+  const renderSearchInput = (value, onChange) => (
+    <input
+      type="text"
+      placeholder="Tìm theo tên hoặc email..."
+      className="border rounded-md px-3 py-2 w-full max-w-sm"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+
+  const renderTabContent = () => {
+    if (activeTab === 'users') {
+      return (
+        <>
+          <div className="py-4">
+            {renderSearchInput(userSearch, setUserSearch)}
+          </div>
+          {usersLoading ? (
+            <LoadingSkeleton />
+          ) : (
+            <DataTable columns={userColumns} data={usersData?.users || []} />
+          )}
+          {usersData?.pagination?.totalPages > 1 && (
+            <div className="mt-4 flex justify-end">
+              <CustomPagination
+                currentPage={userParams.page}
+                totalPages={usersData.pagination.totalPages}
+                onPageChange={(page) => setUserFilter(prev => ({ ...prev, page }))}
+              />
+            </div>
+          )}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="py-4">
+          {renderSearchInput(adminSearch, setAdminSearch)}
+        </div>
+        {adminsLoading ? (
+          <LoadingSkeleton />
+        ) : (
+          <DataTable columns={adminColumns} data={adminsData?.admins || []} />
+        )}
+        {adminsData?.pagination?.totalPages > 1 && (
+          <div className="mt-4 flex justify-end">
+            <CustomPagination
+              currentPage={adminParams.page}
+              totalPages={adminsData.pagination.totalPages}
+              onPageChange={(page) => setAdminFilter(prev => ({ ...prev, page }))}
+            />
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Quản lý người dùng</h1>
       </div>
 
-      <div className="py-4">
-        <input
-          type="text"
-          placeholder="Tìm theo tên hoặc email..."
-          className="border rounded-md px-3 py-2 w-full max-w-sm"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border">
+        {TABS.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
+              activeTab === key
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
       </div>
 
-      {isLoading ? (
-        <LoadingSkeleton />
-      ) : (
-        <DataTable columns={columns} data={data?.users || []} />
-      )}
-
-      {data?.pagination?.totalPages > 1 && (
-        <div className="mt-4 flex justify-end">
-          <CustomPagination
-            currentPage={params.page}
-            totalPages={data.pagination.totalPages}
-            onPageChange={(page) => setFilterState(prev => ({ ...prev, page }))}
-          />
-        </div>
-      )}
+      {renderTabContent()}
 
       {/* Confirm Dialog cho tác vụ Toggle Status */}
       <ConfirmDialog
@@ -194,7 +325,7 @@ const AdminUserPage = () => {
               Địa chỉ của {addressModal.user?.name}
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="py-4 space-y-4 max-h-[400px] overflow-y-auto pr-1">
             {addressModal.user?.addresses?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground italic text-sm">
@@ -202,11 +333,11 @@ const AdminUserPage = () => {
               </div>
             ) : (
               addressModal.user?.addresses?.map((addr) => (
-                <div 
-                  key={addr.id} 
+                <div
+                  key={addr.id}
                   className={`p-4 rounded-2xl border transition-all duration-300 ${
-                    addr.isDefault 
-                      ? 'border-apple-blue bg-blue-50/20 shadow-sm shadow-blue-500/5' 
+                    addr.isDefault
+                      ? 'border-apple-blue bg-blue-50/20 shadow-sm shadow-blue-500/5'
                       : 'border-slate-100 hover:border-slate-200 bg-white'
                   }`}
                 >
@@ -220,7 +351,7 @@ const AdminUserPage = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1.5 text-xs text-slate-600 font-medium">
                     <p className="flex items-center gap-1.5">
                       <span className="text-slate-400 font-semibold w-12">SĐT:</span>
@@ -239,7 +370,7 @@ const AdminUserPage = () => {
               ))
             )}
           </div>
-          
+
           <div className="flex justify-end pt-2 border-t border-black/[0.04]">
             <Button onClick={() => setAddressModal({ isOpen: false, user: null })} variant="secondary">
               Đóng

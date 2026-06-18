@@ -108,6 +108,14 @@ router.delete(
   adminController.deleteProduct
 );
 
+// ─── Admins ───────────────────────────────────────────────────────────────────
+
+// GET /api/admin/admins
+router.get(
+  '/admins',
+  adminController.getAdmins
+);
+
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 // GET /api/admin/users

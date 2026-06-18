@@ -82,6 +82,17 @@ const regenerateProductSlug = async (req, res, next) => {
   }
 };
 
+// ─── Admin Admins ─────────────────────────────────────────────────────────────
+
+const getAdmins = async (req, res, next) => {
+  try {
+    const result = await adminUserService.getAdmins(req.query);
+    res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // ─── Admin Users ──────────────────────────────────────────────────────────────
 
 const getUsers = async (req, res, next) => {
@@ -212,6 +223,7 @@ module.exports = {
   updateProduct,
   deleteProduct,
   regenerateProductSlug,
+  getAdmins,
   getUsers,
   getUserById,
   toggleUserStatus,

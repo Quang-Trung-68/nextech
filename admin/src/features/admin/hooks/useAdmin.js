@@ -35,6 +35,7 @@ export const adminKeys = {
   orders: (params) => [...adminKeys.all, 'orders', params],
   orderDetail: (id) => [...adminKeys.all, 'orders', 'detail', id],
   users: (params) => [...adminKeys.all, 'users', params],
+  admins: (params) => [...adminKeys.all, 'admins', params],
 };
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
@@ -420,6 +421,22 @@ export function useAssignSerials() {
       queryClient.invalidateQueries({ queryKey: adminKeys.orders({}) });
       queryClient.invalidateQueries({ queryKey: adminKeys.orderDetail(v.id) });
     },
+  });
+}
+
+// ─── Admins ───────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/admin/admins?page&limit&search
+ */
+export function useAdminAdmins(params) {
+  return useQuery({
+    queryKey: adminKeys.admins(params),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get('/admin/admins', { params });
+      return data;
+    },
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -134,4 +134,47 @@ const toggleUserStatus = async (targetUserId, requestingAdminId) => {
   };
 };
 
-module.exports = { getUsers, getUserById, toggleUserStatus };
+/**
+ * Admin: Danh sách admin accounts với phân trang + search
+ */
+const getAdmins = async ({ sortBy = 'createdAt', sortOrder = 'desc', page, limit, search }) => {
+  page = Math.max(1, Number(page) || 1);
+  limit = Math.min(100, Math.max(1, Number(limit) || 20));
+
+  const where = {};
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [admins, total] = await Promise.all([
+    prisma.admin.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+        phone: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { [sortBy]: sortOrder },
+      skip,
+      take: limit,
+    }),
+    prisma.admin.count({ where }),
+  ]);
+
+  return {
+    admins,
+    pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+  };
+};
+
+module.exports = { getUsers, getUserById, toggleUserStatus, getAdmins };
