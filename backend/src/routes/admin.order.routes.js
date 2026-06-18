@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/order.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const {
   adminUpdateOrderStatusSchema,
@@ -11,7 +12,7 @@ const {
 } = require('../validations/order.validation');
 
 // Tất cả route tại đây đều yêu cầu đăng nhập + role ADMIN
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 // GET /api/admin/orders — Xem tất cả đơn hàng, filter + sort + phân trang
 router.get(

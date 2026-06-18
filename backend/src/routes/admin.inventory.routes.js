@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const inventoryController = require('../controllers/inventory.controller');
 const {
@@ -16,7 +17,7 @@ const {
   listSuppliersQuerySchema,
 } = require('../validations/inventory.validation');
 
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 router.get('/suppliers', validate(listSuppliersQuerySchema, 'query'), inventoryController.getSuppliers);
 router.post('/suppliers', validate(createSupplierSchema), inventoryController.createSupplier);

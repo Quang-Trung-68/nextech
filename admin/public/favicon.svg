@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="22" y1="6" x2="42" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#e0e7ff" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+
+  <!-- Subtle inner glow -->
+  <rect width="64" height="64" rx="14" fill="white" fill-opacity="0.06"/>
+
+  <!-- "Nt" monogram: N -->
+  <text
+    x="7"
+    y="46"
+    font-family="'Segoe UI', 'Arial', sans-serif"
+    font-size="38"
+    font-weight="800"
+    fill="url(#bolt)"
+    letter-spacing="-2"
+  >Nt</text>
+
+  <!-- Tech accent dot — bottom right -->
+  <circle cx="54" cy="52" r="4" fill="#a5f3fc" fill-opacity="0.85"/>
+</svg>

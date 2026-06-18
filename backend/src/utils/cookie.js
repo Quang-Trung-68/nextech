@@ -12,8 +12,9 @@ const getSameSite = () => (serverConfig.isDev ? 'lax' : 'none');
 /**
  * Set the access token as a secure HttpOnly cookie.
  */
-const setAccessTokenCookie = (res, token, expiresAt) => {
-  res.cookie(ACCESS_COOKIE_NAME, token, {
+const setAccessTokenCookie = (res, token, expiresAt, isAdmin = false) => {
+  const cookieName = isAdmin ? `admin_${ACCESS_COOKIE_NAME}` : ACCESS_COOKIE_NAME;
+  res.cookie(cookieName, token, {
     httpOnly: true,
     secure: serverConfig.nodeEnv === 'production', // HTTPS only in prod
     sameSite: getSameSite(),
@@ -25,8 +26,9 @@ const setAccessTokenCookie = (res, token, expiresAt) => {
 /**
  * Clear the access token cookie.
  */
-const clearAccessTokenCookie = (res) => {
-  res.cookie(ACCESS_COOKIE_NAME, '', {
+const clearAccessTokenCookie = (res, isAdmin = false) => {
+  const cookieName = isAdmin ? `admin_${ACCESS_COOKIE_NAME}` : ACCESS_COOKIE_NAME;
+  res.cookie(cookieName, '', {
     httpOnly: true,
     secure: serverConfig.nodeEnv === 'production',
     sameSite: getSameSite(),
@@ -38,26 +40,28 @@ const clearAccessTokenCookie = (res) => {
 /**
  * Set the refresh token as a secure HttpOnly cookie.
  */
-const setRefreshTokenCookie = (res, token, expiresAt) => {
-  res.cookie(REFRESH_COOKIE_NAME, token, {
+const setRefreshTokenCookie = (res, token, expiresAt, isAdmin = false) => {
+  const cookieName = isAdmin ? `admin_${REFRESH_COOKIE_NAME}` : REFRESH_COOKIE_NAME;
+  res.cookie(cookieName, token, {
     httpOnly: true,
     secure: serverConfig.nodeEnv === 'production',
     sameSite: getSameSite(),
     expires: expiresAt,
-    path: '/api/auth',
+    path: isAdmin ? '/api/admin/auth' : '/api/auth',
   });
 };
 
 /**
  * Clear the refresh token cookie by expiring it immediately.
  */
-const clearRefreshTokenCookie = (res) => {
-  res.cookie(REFRESH_COOKIE_NAME, '', {
+const clearRefreshTokenCookie = (res, isAdmin = false) => {
+  const cookieName = isAdmin ? `admin_${REFRESH_COOKIE_NAME}` : REFRESH_COOKIE_NAME;
+  res.cookie(cookieName, '', {
     httpOnly: true,
     secure: serverConfig.nodeEnv === 'production',
     sameSite: getSameSite(),
     expires: new Date(0),
-    path: '/api/auth',
+    path: isAdmin ? '/api/admin/auth' : '/api/auth',
   });
 };
 

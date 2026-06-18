@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/category.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const {
   createCategorySchema,
@@ -15,16 +16,14 @@ router.get('/', categoryController.getAllCategories);
 // Admin only
 router.post(
   '/',
-  protect,
-  restrictTo('ADMIN'),
+  adminProtect,
   validate(createCategorySchema),
   categoryController.createCategory
 );
 
 router.patch(
   '/:id',
-  protect,
-  restrictTo('ADMIN'),
+  adminProtect,
   validate(categoryParamsSchema, 'params'),
   validate(updateCategorySchema),
   categoryController.updateCategory
@@ -32,8 +31,7 @@ router.patch(
 
 router.delete(
   '/:id',
-  protect,
-  restrictTo('ADMIN'),
+  adminProtect,
   validate(categoryParamsSchema, 'params'),
   categoryController.deleteCategory
 );

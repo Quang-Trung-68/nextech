@@ -172,7 +172,7 @@ async function main() {
 
   console.log(`📚 Bắt đầu seed ${posts.length} bài viết từ posts.json...`);
 
-  const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  const admin = await prisma.admin.findFirst();
   if (!admin) {
     throw new Error(
       'Không tìm thấy user ADMIN. Chạy trước: npm run db:seed (products.json) hoặc tạo admin thủ công.',

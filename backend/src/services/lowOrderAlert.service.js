@@ -142,26 +142,24 @@ async function runLowOrderAlertCheck(tickInterval) {
     return;
   }
 
-  const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
-  if (!admins.length) return;
+  const adminCount = await prisma.admin.count({ where: { isActive: true } });
+  if (!adminCount) return;
 
   const windowLabel = describeWindow(tickInterval, start, end);
   const title = 'Cảnh báo đơn hàng thấp';
   const message = `Số đơn trong ${windowLabel} là ${count}, thấp hơn ngưỡng ${threshold} (theo cài đặt).`;
 
-  for (const admin of admins) {
-    try {
-      await notificationService.createAndSend(admin.id, 'low_order_volume', title, message, {
-        interval: tickInterval,
-        periodKey,
-        count,
-        threshold,
-        rangeStart: start.toISOString(),
-        rangeEnd: end.toISOString(),
-      });
-    } catch (err) {
-      console.error('[LowOrderAlert] notification error:', err);
-    }
+  try {
+    await notificationService.createAndSendToAdmins('low_order_volume', title, message, {
+      interval: tickInterval,
+      periodKey,
+      count,
+      threshold,
+      rangeStart: start.toISOString(),
+      rangeEnd: end.toISOString(),
+    });
+  } catch (err) {
+    console.error('[LowOrderAlert] notification error:', err);
   }
 
   await prisma.shopSettings.update({

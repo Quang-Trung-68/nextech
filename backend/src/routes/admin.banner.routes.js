@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bannerController = require('../controllers/banner.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const { bannerUpload, uploadBannerImage } = require('../middleware/bannerUpload');
 const {
@@ -10,7 +11,7 @@ const {
   bannerIdParamsSchema,
 } = require('../validations/banner.validation');
 
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 const mergeBannerImage = (req, res, next) => {
   if (req.cloudinarySingle?.url) {

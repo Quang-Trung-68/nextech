@@ -59,7 +59,7 @@ function makeRunId() {
 }
 
 async function main() {
-  const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  const admin = await prisma.admin.findFirst();
   if (!admin) {
     throw new Error(
       'Không tìm thấy user ADMIN. Chạy trước: npm run db:seed (hoặc tạo admin thủ công).',

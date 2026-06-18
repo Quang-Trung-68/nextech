@@ -338,15 +338,13 @@ async function main() {
   const adminHash = await bcrypt.hash(adminPass, 10);
   const userHash = await bcrypt.hash(userPassPlain, 10);
 
-  const admin = await prisma.user.upsert({
+  const admin = await prisma.admin.upsert({
     where: { email: adminEmail },
-    update: { role: 'ADMIN', password: adminHash, isEmailVerified: true },
+    update: { password: adminHash },
     create: {
       email: adminEmail,
       name: 'Admin NexTech',
       password: adminHash,
-      role: 'ADMIN',
-      isEmailVerified: true,
     },
   });
 
@@ -357,7 +355,6 @@ async function main() {
       email: 'user1@nextech.com',
       name: 'Nguyễn Văn An',
       password: userHash,
-      role: 'USER',
       isEmailVerified: true,
     },
   });
@@ -369,7 +366,6 @@ async function main() {
       email: 'user2@nextech.com',
       name: 'Trần Thị Bình',
       password: userHash,
-      role: 'USER',
       isEmailVerified: true,
     },
   });

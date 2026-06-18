@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const reviewController = require('../controllers/review.controller');
 const { protect, requireEmailVerified, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const {
   createReviewSchema,
@@ -25,8 +26,7 @@ router.post(
 // DELETE /api/reviews/:reviewId — Admin xóa review (moderation)
 router.delete(
   '/:reviewId',
-  protect,
-  restrictTo('ADMIN'),
+  adminProtect,
   validate(reviewParamsSchema, 'params'),
   reviewController.deleteReview
 );

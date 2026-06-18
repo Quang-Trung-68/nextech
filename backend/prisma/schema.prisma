@@ -11,7 +11,6 @@ model User {
   name                   String
   email                  String               @unique
   password               String?
-  role                   Role                 @default(USER)
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
   isActive               Boolean              @default(true)
@@ -31,11 +30,40 @@ model User {
   revokedTokens          RevokedToken[]
   couponUsages           CouponUsage[]
   notifications          Notification[]
-  posts                  Post[]
-  stockImports           StockImport[]
   aiChatMessages         AIChatMessage[]
 
   @@map("users")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  avatar    String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens AdminRefreshToken[]
+  posts         Post[]
+  stockImports  StockImport[]
+
+  @@map("admins")
+}
+
+model AdminRefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  adminId   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("admin_refresh_tokens")
 }
 
 model Address {
@@ -104,20 +132,20 @@ model OAuthAccount {
 }
 
 model Brand {
-  id                     String    @id @default(cuid())
-  name                   String    @unique
-  slug                   String    @unique
-  logo                   String?
-  description            String?
+  id                   String    @id @default(cuid())
+  name                 String    @unique
+  slug                 String    @unique
+  logo                 String?
+  description          String?
   /// Thứ tự trên carousel trang chủ; null = không hiển thị khi đã có ít nhất một brand được gán thứ tự (seed).
-  carouselOrder          Int?
+  carouselOrder        Int?
   /// Link ngoài (site hãng); nếu có, carousel mở tab mới thay vì /danh-mục?brand=
-  websiteUrl             String?
+  websiteUrl           String?
   /// Slug danh mục nội bộ khi không dùng websiteUrl: phone | laptop | tablet | accessories
-  carouselCategorySlug   String?
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-  products               Product[]
+  carouselCategorySlug String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  products             Product[]
 
   @@index([carouselOrder])
   @@map("brands")
@@ -410,11 +438,6 @@ model CouponUsage {
   @@map("coupon_usages")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 enum VatBuyerType {
   INDIVIDUAL // Cá nhân
   COMPANY // Doanh nghiệp
@@ -585,7 +608,7 @@ model Post {
   scheduledAt DateTime? // When SCHEDULED — publish at this time (scheduler flips to PUBLISHED)
   viewCount   Int        @default(0)
 
-  author   User   @relation(fields: [authorId], references: [id])
+  author   Admin  @relation(fields: [authorId], references: [id])
   authorId String
 
   category   Category? @relation(fields: [categoryId], references: [id])
@@ -647,7 +670,7 @@ model StockImport {
   supplier       Supplier        @relation(fields: [supplierId], references: [id])
   product        Product         @relation(fields: [productId], references: [id])
   variant        ProductVariant? @relation(fields: [variantId], references: [id])
-  importedByUser User            @relation(fields: [importedBy], references: [id])
+  importedByUser Admin           @relation(fields: [importedBy], references: [id])
   serialUnits    SerialUnit[]
   createdAt      DateTime        @default(now())
 
@@ -682,12 +705,12 @@ model SerialUnit {
 model AIChatMessage {
   id        String   @id @default(cuid())
   userId    String
-  role      String   // "user" | "model"
-  content   String   // Text content of the message
+  role      String // "user" | "model"
+  content   String // Text content of the message
   createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([createdAt])
   @@map("ai_chat_messages")

@@ -16,7 +16,7 @@ const demoAddr = {
 };
 
 async function main() {
-  const admin = await prisma.user.findFirst({ where: { email: 'admin@nextech.local' } });
+  const admin = await prisma.admin.findFirst();
   if (!admin) {
     console.error('Chạy trước: npx prisma db seed');
     process.exit(1);
@@ -30,7 +30,6 @@ async function main() {
       email: 'user@nextech.local',
       name: 'User Demo',
       password: userPass,
-      role: 'USER',
       isEmailVerified: true,
     },
   });

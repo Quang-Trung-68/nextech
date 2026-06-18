@@ -32,8 +32,7 @@ const OAuthCallbackPage = () => {
         const { data } = await axiosInstance.get('/auth/me');
         if (data?.success && data?.user) {
           setAuth(data.user);
-          const redirectTo = data.user?.role === 'ADMIN' ? '/admin' : '/';
-          navigate(redirectTo, { replace: true });
+          navigate('/', { replace: true });
         } else {
           navigate('/login?error=oauth_failed', { replace: true });
         }

@@ -15,10 +15,19 @@ const { specialRoutes, apiRoutes } = require('./src/configs/route.config');
 
 const app = express();
 
+// Enable trust proxy so express-rate-limit gets client IP when behind Nginx proxy
+app.set('trust proxy', 1);
+
 // --- CORS ---
 app.use(cors({
-  origin: serverConfig.clientUrl,
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin || serverConfig.allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 
 app.options('*', cors())
@@ -38,8 +47,9 @@ app.use(cookieParser());  // Parse cookies — required for refresh token flow
 app.use(passport.initialize()); // Stateless Passport — NO passport.session()
 
 // --- API routes ---
+const { apiLimiter } = require('./src/middleware/rateLimiter');
 apiRoutes.forEach(({ prefix, router }) => {
-  app.use(prefix, router);
+  app.use(prefix, apiLimiter, router);
 });
 
 // --- Health check ---

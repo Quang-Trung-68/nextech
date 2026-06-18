@@ -295,7 +295,30 @@ const callAiWithFunctionCalling = async (message, chatHistoryContext) => {
     response = await chatSession.sendMessage(functionResponses);
   }
 
-  return response.response.text().trim();
+  // Trích xuất text từ response — an toàn hơn
+  try {
+    const text = response.response.text();
+    if (text && text.trim()) {
+      return text.trim();
+    }
+  } catch (textErr) {
+    console.warn("[AI Chat] response.text() failed, trying alternative extraction:", textErr.message);
+  }
+
+  // Fallback: trích xuất text từ candidates nếu response.text() thất bại
+  const candidate = response.response.candidates?.[0];
+  if (candidate?.content?.parts) {
+    const textParts = candidate.content.parts
+      .filter((p) => p.text)
+      .map((p) => p.text)
+      .join('');
+    if (textParts.trim()) {
+      return textParts.trim();
+    }
+  }
+
+  // Nếu vẫn không có text, trả về thông báo thân thiện
+  return "Xin lỗi, tôi gặp sự cố khi xử lý tin nhắn của bạn. Vui lòng thử lại sau hoặc liên hệ hotline 1800 xxxx để được hỗ trợ trực tiếp.";
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -370,10 +393,16 @@ const sendChatMessage = async (req, res, next) => {
       }));
 
     // 3. Gọi AI với Function Calling
-    const aiResponseText = await callAiWithFunctionCalling(
-      message,
-      chatHistoryContext
-    );
+    let aiResponseText;
+    try {
+      aiResponseText = await callAiWithFunctionCalling(
+        message,
+        chatHistoryContext
+      );
+    } catch (aiErr) {
+      console.error("[AI Chat] Gemini API error:", aiErr.message);
+      aiResponseText = "Xin lỗi, trợ lý AI đang gặp sự cố. Vui lòng thử lại sau hoặc liên hệ hotline 1800 xxxx để được hỗ trợ trực tiếp.";
+    }
 
     // 4. Lưu phản hồi AI vào DB
     const aiMessage = await prisma.aIChatMessage.create({

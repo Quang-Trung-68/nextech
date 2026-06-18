@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminBrandController = require('../controllers/adminBrand.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const { brandUpload, uploadBrandLogo } = require('../middleware/brandUpload');
 const {
@@ -10,7 +11,7 @@ const {
   brandIdParamsSchema,
 } = require('../validations/adminBrand.validation');
 
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 const mergeLogo = (req, res, next) => {
   if (req.cloudinarySingle?.url) {

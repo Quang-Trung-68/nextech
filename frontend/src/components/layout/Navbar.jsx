@@ -43,11 +43,6 @@ const Navbar = () => {
           <div className="flex items-center gap-4">
             <LanguageToggle />
             <span className="text-sm font-medium">{t('common:nav.hello')}, {user?.name}</span>
-            {user?.role === 'ADMIN' && (
-              <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
-                {t('common:nav.admin')}
-              </Link>
-            )}
             <button 
               onClick={clearAuth} 
               className="text-sm font-medium text-destructive hover:underline"

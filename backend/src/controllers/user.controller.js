@@ -23,7 +23,6 @@ const updateProfile = async (req, res, next) => {
         email: true,
         phone: true,
         avatar: true,
-        role: true,
         isEmailVerified: true,
         createdAt: true,
         updatedAt: true,

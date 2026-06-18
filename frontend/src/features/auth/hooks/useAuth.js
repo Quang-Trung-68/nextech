@@ -20,8 +20,7 @@ export function useLogin() {
     onSuccess: (data) => {
       setAuth(data.user);
       // Redirect về trang trước (nếu bị chặn bởi ProtectedRoute) hoặc theo vai trò
-      const defaultRedirect = data.user?.role === 'ADMIN' ? '/admin' : '/';
-      const from = location.state?.from?.pathname || defaultRedirect;
+      const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
     },
   });

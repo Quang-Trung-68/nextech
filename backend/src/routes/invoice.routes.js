@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const AdminInvoiceController = require('../controllers/invoice.controller');
 
 // Tất cả route tại đây đều yêu cầu đăng nhập + role ADMIN
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 // GET /api/admin/invoices/:invoiceId — xem chi tiết hóa đơn (JSON)
 router.get('/:invoiceId', AdminInvoiceController.getDetail);

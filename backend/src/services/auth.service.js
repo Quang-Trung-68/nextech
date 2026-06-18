@@ -6,6 +6,16 @@ const ERROR_CODES = require('../errors/errorCodes');
 
 // ─── Internal helper ──────────────────────────────────────────────────────────
 
+const _rejectAdminEmail = async (email) => {
+  const adminAccount = await prisma.admin.findUnique({ where: { email } });
+  if (adminAccount) {
+    throw new AuthenticationError(
+      'Tài khoản quản trị viên phải đăng nhập qua trang admin.',
+      ERROR_CODES.AUTH.INVALID_CREDENTIALS
+    );
+  }
+};
+
 /**
  * Create an access + refresh token pair, persist the refresh token to DB.
  * @param {object} user         Prisma User object
@@ -15,11 +25,12 @@ const ERROR_CODES = require('../errors/errorCodes');
 const _createTokenPair = async (user, meta) => {
   const accessTokenData = generateAccessToken({
     userId: user.id,
-    role: user.role,
+    type: 'USER',
   });
 
   const { token: refreshToken, expiresAt } = generateRefreshToken({
     userId: user.id,
+    type: 'USER',
   });
 
   await prisma.refreshToken.create({
@@ -41,6 +52,8 @@ const _createTokenPair = async (user, meta) => {
 // ─── Public methods ───────────────────────────────────────────────────────────
 
 const register = async (name, email, password, meta) => {
+  await _rejectAdminEmail(email);
+
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     throw new ConflictError('Email is already registered', ERROR_CODES.AUTH.ACCOUNT_ALREADY_EXISTS);
@@ -59,6 +72,8 @@ const register = async (name, email, password, meta) => {
 };
 
 const login = async (email, password, meta) => {
+  await _rejectAdminEmail(email);
+
   const user = await prisma.user.findUnique({ where: { email } });
 
   // Deliberately vague error — do not distinguish "bad email" vs "bad password"
@@ -100,6 +115,10 @@ const refresh = async (refreshTokenFromCookie, meta) => {
         : 'Invalid refresh token',
       err.name === 'TokenExpiredError' ? ERROR_CODES.AUTH.TOKEN_EXPIRED : ERROR_CODES.AUTH.TOKEN_INVALID
     );
+  }
+
+  if (payload.type === 'ADMIN') {
+    throw new AuthenticationError('Invalid token type', ERROR_CODES.AUTH.TOKEN_INVALID);
   }
 
   // 2. Check token has not been revoked
@@ -172,7 +191,6 @@ const getMe = async (userId) => {
       id: true,
       name: true,
       email: true,
-      role: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -395,6 +413,8 @@ const resetPassword = async (rawToken, newPassword, meta) => {
  * @returns {Promise<object>} Prisma User object
  */
 const findOrCreateOAuthUser = async ({ provider, providerAccountId, email, name }) => {
+  await _rejectAdminEmail(email);
+
   // ── STEP 1: Find existing OAuthAccount ──────────────────────────────────────
   const existingOAuth = await prisma.oAuthAccount.findUnique({
     where: {

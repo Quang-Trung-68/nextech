@@ -7,6 +7,7 @@ const USER_SELECT = {
   id: true,
   name: true,
   email: true,
+  avatar: true,
   role: true,
   isActive: true,
   createdAt: true,
@@ -17,10 +18,11 @@ const USER_SELECT = {
 /**
  * Admin: Danh sách users với phân trang + filter
  */
-const getUsers = async ({ role, isActive, sortBy, sortOrder, page, limit, search }) => {
+const getUsers = async ({ isActive, sortBy, sortOrder, page, limit, search }) => {
   const where = {};
-  if (role !== undefined) where.role = role;
   if (isActive !== undefined) where.isActive = isActive;
+  // Không hiển thị tài khoản admin trong danh sách người dùng
+  where.role = 'USER';
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },

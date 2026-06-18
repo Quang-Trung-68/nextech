@@ -4,12 +4,13 @@ const upload = require('../middleware/upload');
 const { uploadToCloudinary } = require('../middleware/upload');
 const productImageController = require('../controllers/productImage.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const { adminProductParamsSchema } = require('../validations/admin.validation');
 const { deleteImagesSchema } = require('../validations/productImage.validation');
 
 // Route được bảo vệ (Admin only)
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 // Mouting at /api/admin/products/:id/images
 // Do đó router này sẽ xử lý gốc là `/`

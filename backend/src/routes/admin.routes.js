@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/admin.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const upload = require('../middleware/upload');
 const { uploadToCloudinary } = require('../middleware/upload');
@@ -19,7 +20,7 @@ const {
 } = require('../validations/admin.validation');
 
 // Tất cả routes dưới đây đều yêu cầu đăng nhập + role ADMIN
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 // POST /api/admin/products/generate-description
 router.post(

@@ -380,7 +380,7 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
 
   Promise.resolve().then(async () => {
     try {
-      const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+      const adminCount = await prisma.admin.count({ where: { isActive: true } });
       
       // Chỉ gửi thông báo lập tức nếu thanh toán bằng COD
       // Với STRIPE và SEPAY, việc gửi thông báo sẽ được trigger bởi Webhook sau khi thanh toán thành công
@@ -394,9 +394,8 @@ const createOrder = async (userId, shippingAddress, paymentMethod, couponCode, o
           { orderId: order.id, newStatus: initialStatus }
         );
 
-        for (const admin of admins) {
-          await notificationService.createAndSend(
-            admin.id,
+        if (adminCount > 0) {
+          await notificationService.createAndSendToAdmins(
             'new_order',
             'Đơn hàng mới',
             `Có đơn hàng mới #${order.id} vừa được đặt`,
@@ -505,7 +504,7 @@ const getMyOrders = async (userId, { status, search, page, limit }) => {
 
 // ─── User + Admin: Chi tiết đơn hàng ─────────────────────────────────────────
 
-const getOrderById = async (orderId, userId, role) => {
+const getOrderById = async (orderId, userId) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: ORDER_DETAIL_INCLUDE,
@@ -513,7 +512,7 @@ const getOrderById = async (orderId, userId, role) => {
 
   if (!order) throw new NotFoundError('Order');
 
-  if (order.userId !== userId && role !== 'ADMIN') {
+  if (order.userId !== userId) {
     throw new ForbiddenError('You do not have permission to view this order');
   }
 

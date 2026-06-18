@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const productVariantController = require('../controllers/productVariant.controller');
 const {
@@ -11,7 +12,7 @@ const {
   productVariantParamsSchema,
 } = require('../validations/productVariant.validation');
 
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 router.get(
   '/:id/attributes',

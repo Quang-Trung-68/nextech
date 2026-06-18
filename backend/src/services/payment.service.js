@@ -102,12 +102,9 @@ const handleWebhookEvent = async (rawBody, signature) => {
             { orderId: updatedOrder.id, newStatus: "CONFIRMED" },
           );
 
-          const admins = await prisma.user.findMany({
-            where: { role: "ADMIN" },
-          });
-          for (const admin of admins) {
-            await notificationService.createAndSend(
-              admin.id,
+          const adminCount = await prisma.admin.count({ where: { isActive: true } });
+          if (adminCount > 0) {
+            await notificationService.createAndSendToAdmins(
               "new_order",
               "Đơn hàng đã thanh toán",
               `Đơn hàng #${updatedOrder.id} vừa được thanh toán thành công qua thẻ`,
@@ -325,10 +322,9 @@ async function finalizeSepayOrderPaid(orderId) {
         { orderId: updatedOrder.id, newStatus: "CONFIRMED" },
       );
 
-      const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
-      for (const admin of admins) {
-        await notificationService.createAndSend(
-          admin.id,
+      const adminCount = await prisma.admin.count({ where: { isActive: true } });
+      if (adminCount > 0) {
+        await notificationService.createAndSendToAdmins(
           "new_order",
           "Đơn hàng đã thanh toán",
           `Đơn hàng #${updatedOrder.id} vừa được thanh toán thành công qua VietQR`,

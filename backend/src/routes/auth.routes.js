@@ -4,6 +4,7 @@ const passport = require('passport');
 const authController = require('../controllers/auth.controller');
 const { protect, requireEmailVerified } = require('../middleware/auth');
 const { validate } = require('../middleware/validateRequest');
+const { authLimiter } = require('../middleware/rateLimiter');
 const {
   registerSchema,
   loginSchema,
@@ -13,8 +14,8 @@ const {
 } = require('../validations/auth.validation');
 
 // ─── Public routes ────────────────────────────────────────────────────────────
-router.post('/register', validate(registerSchema), authController.register);
-router.post('/login', validate(loginSchema), authController.login);
+router.post('/register', authLimiter, validate(registerSchema), authController.register);
+router.post('/login', authLimiter, validate(loginSchema), authController.login);
 router.post('/refresh', authController.refresh);   // Uses HttpOnly cookie — no Bearer needed
 router.post('/logout', authController.logout);     // Public — works even if access token expired
 
@@ -22,8 +23,8 @@ router.post('/logout', authController.logout);     // Public — works even if a
 router.get('/verify-email', authController.verifyEmail);
 
 // Forgot / Reset password (public — anti-enumeration on forgot)
-router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
-router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
+router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
+router.post('/reset-password', authLimiter, validate(resetPasswordSchema), authController.resetPassword);
 
 // ─── Protected routes ─────────────────────────────────────────────────────────
 router.get('/me', protect, authController.getMe);

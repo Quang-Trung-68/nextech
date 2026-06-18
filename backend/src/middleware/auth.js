@@ -42,6 +42,12 @@ const protect = async (req, res, next) => {
       return next(error);
     }
 
+    if (payload.type === 'ADMIN' || payload.adminId) {
+      const error = new Error('Invalid token type. User access required.');
+      error.statusCode = 403;
+      return next(error);
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
@@ -50,7 +56,6 @@ const protect = async (req, res, next) => {
         email: true,
         phone: true,
         avatar: true,
-        role: true,
         isActive: true,
         isEmailVerified: true,
         createdAt: true,

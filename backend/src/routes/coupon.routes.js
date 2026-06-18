@@ -3,11 +3,12 @@ const router = express.Router();
 
 const couponController = require('../controllers/coupon.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const { validateCouponSchema, createCouponSchema } = require('../validations/coupon.validation');
 
 // Admin-only shorthand
-const adminOnly = [protect, restrictTo('ADMIN')];
+const adminOnly = [adminProtect];
 
 // ─── User route ───────────────────────────────────────────────────────────────
 

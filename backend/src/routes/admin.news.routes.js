@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const postController = require('../controllers/post.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const { blogUpload, uploadBlogCover } = require('../middleware/blogUpload');
 const {
@@ -12,7 +13,7 @@ const {
   schedulePostSchema,
 } = require('../validations/post.validation');
 
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 router.get(
   '/',

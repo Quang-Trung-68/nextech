@@ -36,7 +36,7 @@ const getMyOrders = async (req, res, next) => {
  */
 const getOrderById = async (req, res, next) => {
   try {
-    const order = await orderService.getOrderById(req.params.id, req.user.id, req.user.role);
+    const order = await orderService.getOrderById(req.params.id, req.user.id);
     res.status(200).json({ success: true, order });
   } catch (error) {
     next(error);

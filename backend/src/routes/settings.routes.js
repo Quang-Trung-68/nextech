@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const settingsController = require('../controllers/settings.controller');
 const { protect, restrictTo } = require('../middleware/auth');
+const { adminProtect } = require('../middleware/adminAuth');
 const { validate } = require('../middleware/validateRequest');
 const { shopSettingsSchema } = require('../validations/settings.validation');
 
-router.use(protect, restrictTo('ADMIN'));
+router.use(adminProtect);
 
 // GET /api/admin/settings
 router.get('/', settingsController.getSettings);

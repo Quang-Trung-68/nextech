@@ -56,6 +56,11 @@ jobs:
             file: ./frontend/Dockerfile
             image: nextech-frontend
             needs_vite: true
+          - id: admin
+            context: ./admin
+            file: ./admin/Dockerfile
+            image: nextech-admin
+            needs_vite: true
 
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +90,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push (frontend)
+      - name: Build and push (frontend / admin)
         if: matrix.needs_vite == true
         uses: docker/build-push-action@v6
         with:
@@ -126,7 +131,7 @@ jobs:
             cd "${{ secrets.VPS_DEPLOY_PATH }}"
             git pull origin main
             echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            docker compose -f docker-compose.prod.yml pull backend frontend soketi
+            docker compose -f docker-compose.prod.yml pull backend frontend admin soketi
             docker compose -f docker-compose.prod.yml up -d --no-build
             # Force-recreate nginx to pick up new nginx.conf inode after git pull
             docker compose -f docker-compose.prod.yml up -d --force-recreate nginx

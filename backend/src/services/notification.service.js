@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma');
 const pusher = require('../lib/pusher');
+const { randomUUID } = require('crypto');
 
 class NotificationService {
   async createAndSend(userId, type, title, message, data = {}) {
@@ -24,6 +25,22 @@ class NotificationService {
     const channel = `private-user.${userId}`;
     await pusher.trigger(channel, 'notification.new', notification);
 
+    return notification;
+  }
+
+  /** Broadcast to all admins via private-admin channel (admins table is separate from users). */
+  async createAndSendToAdmins(type, title, message, data = {}) {
+    const notification = {
+      id: randomUUID(),
+      type,
+      title,
+      message,
+      data,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    await pusher.trigger('private-admin', 'notification.new', notification);
     return notification;
   }
 

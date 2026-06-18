@@ -1,6 +1,6 @@
 /**
  * routes.config.jsx
- * Central route configuration for NexTech frontend.
+ * Central route configuration for NexTech frontend (Storefront Edition).
  * App.jsx reads this config and passes it to useRoutes() or <Routes>.
  */
 
@@ -9,10 +9,8 @@ import { Navigate, useParams } from 'react-router-dom';
 
 // Layout & Route guards
 import MainLayout from '@/components/layout/MainLayout';
-import AdminLayout from '@/components/layout/AdminLayout';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import VerifiedRoute from '@/components/auth/VerifiedRoute';
-import AdminRoute from '@/components/auth/AdminRoute';
 
 // ─── Nhóm 1 Public — Loaded normally (small, critical pages) ─────────────────
 import HomePage from '@/pages/home/HomePage';
@@ -59,25 +57,9 @@ const ProfileInfoPage      = lazy(() => import('@/features/profile/pages/Profile
 const ProfileOrdersPage    = lazy(() => import('@/features/profile/pages/ProfileOrdersPage'));
 const ProfileAddressesPage = lazy(() => import('@/features/profile/pages/ProfileAddressesPage'));
 
-// ─── Admin (role = ADMIN) — Lazy ─────────────────────────────────────────────
-const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
-const AdminProductPage     = lazy(() => import('@/pages/admin/AdminProductPage'));
-const AdminProductEditPage = lazy(() => import('@/pages/admin/AdminProductEditPage'));
-const AdminOrdersPage    = lazy(() => import('@/pages/admin/orders/AdminOrdersPage'));
-const AdminUserPage      = lazy(() => import('@/pages/admin/AdminUserPage'));
-const AdminCouponsPage   = lazy(() => import('@/pages/admin/AdminCouponsPage'));
-const AdminSettingsPage  = lazy(() => import('@/pages/admin/AdminSettingsPage'));
-const AdminSuppliersPage = lazy(() => import('@/pages/admin/inventory/AdminSuppliersPage'));
-const AdminStockImportPage = lazy(() => import('@/pages/admin/inventory/AdminStockImportPage'));
-const AdminSerialsPage = lazy(() => import('@/pages/admin/inventory/AdminSerialsPage'));
+// ─── News — Public — Lazy ────────────────────────────────────────────────────
 const NewsPage = lazy(() => import('@/pages/news/NewsPage'));
 const NewsDetailPage = lazy(() => import('@/pages/news/NewsDetailPage'));
-const AdminNewsLayout = lazy(() => import('@/pages/admin/AdminNewsLayout'));
-const AdminNewsPage = lazy(() => import('@/pages/admin/AdminNewsPage'));
-const AdminNewsFormPage = lazy(() => import('@/pages/admin/AdminNewsFormPage'));
-const AdminNewsCategoriesPage = lazy(() => import('@/pages/admin/AdminNewsCategoriesPage'));
-const BannersAdminPage = lazy(() => import('@/features/admin/banners/BannersAdminPage'));
-const BrandsAdminPage = lazy(() => import('@/features/admin/brands/BrandsAdminPage'));
 
 const routes = [
   {
@@ -209,89 +191,8 @@ const routes = [
     ],
   },
   {
-    path: '/admin',
-    element: <AdminRoute />,
-    children: [
-      {
-        element: <AdminLayout />,
-        children: [
-          {
-            index: true,
-            element: <Navigate to="overview" replace />,
-          },
-          {
-            path: 'overview',
-            element: <AdminDashboardPage />,
-          },
-          {
-            path: 'products/:productId/edit',
-            element: <AdminProductEditPage />,
-          },
-          {
-            path: 'products',
-            element: <AdminProductPage />,
-          },
-          {
-            path: 'inventory/suppliers',
-            element: <AdminSuppliersPage />,
-          },
-          {
-            path: 'inventory/stock-imports',
-            element: <AdminStockImportPage />,
-          },
-          {
-            path: 'inventory/serials',
-            element: <AdminSerialsPage />,
-          },
-          {
-            path: 'orders',
-            element: <AdminOrdersPage />,
-          },
-          {
-            path: 'users',
-            element: <AdminUserPage />,
-          },
-          {
-            path: 'coupons',
-            element: <AdminCouponsPage />,
-          },
-          {
-            path: 'settings',
-            element: <AdminSettingsPage />,
-          },
-          {
-            path: 'news',
-            element: <AdminNewsLayout />,
-            children: [
-              {
-                index: true,
-                element: <AdminNewsPage />,
-              },
-              {
-                path: 'categories',
-                element: <AdminNewsCategoriesPage />,
-              },
-              {
-                path: 'create',
-                element: <AdminNewsFormPage />,
-              },
-              {
-                path: ':id/edit',
-                element: <AdminNewsFormPage />,
-              },
-            ],
-          },
-          {
-            path: 'banners',
-            element: <BannersAdminPage />,
-          },
-          {
-            path: 'brands',
-            element: <BrandsAdminPage />,
-          },
-        ],
-      },
-    ],
+    path: '*',
+    element: <Navigate to="/" replace />,
   },
 ];
 

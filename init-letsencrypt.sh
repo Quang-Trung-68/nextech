@@ -41,6 +41,7 @@ fi
 declare -A CERT_GROUPS
 CERT_GROUPS["nextech.io.vn"]="-d nextech.io.vn -d www.nextech.io.vn"
 CERT_GROUPS["api.nextech.io.vn"]="-d api.nextech.io.vn"
+CERT_GROUPS["admin.nextech.io.vn"]="-d admin.nextech.io.vn"
 
 if [ -d "$DATA_PATH" ]; then
   read -p "Existing certbot data found. Continue and replace existing certificate? (y/N) " decision
@@ -72,8 +73,8 @@ for primary_domain in "${!CERT_GROUPS[@]}"; do
 done
 
 # 3. Start stack so nginx can resolve upstreams (frontend, backend, soketi)
-echo "### Starting postgres, soketi, backend, frontend, nginx (build if needed) ..."
-docker compose -f "$COMPOSE_FILE" up --force-recreate -d --build postgres soketi backend frontend nginx
+echo "### Starting postgres, soketi, backend, frontend, admin, nginx (build if needed) ..."
+docker compose -f "$COMPOSE_FILE" up --force-recreate -d --build postgres soketi backend frontend admin nginx
 sleep 5
 echo "### Stack started."
 

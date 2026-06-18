@@ -71,6 +71,7 @@ services:
       PORT: "3000"
       NODE_ENV: development
       CLIENT_URL: http://localhost:5173
+      ADMIN_URL: http://localhost:5174
       FRONTEND_URL: http://localhost:5173
       GOOGLE_CALLBACK_URL: http://localhost:3000/api/auth/google/callback
       FACEBOOK_CALLBACK_URL: http://localhost:3000/api/auth/facebook/callback
@@ -120,7 +121,32 @@ services:
       backend:
         condition: service_healthy
 
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    ports:
+      - "5174:5173"
+    volumes:
+      - ./admin:/app
+      - admin_node_modules:/app/node_modules
+    env_file:
+      - ./admin/.env
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+      DOCKER: "true"
+      VITE_SOKETI_ENABLED: "true"
+      VITE_SOKETI_APP_KEY: nextech-key
+      VITE_SOKETI_HOST: localhost
+      VITE_SOKETI_PORT: "6001"
+      VITE_SOKETI_FORCE_TLS: "false"
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   backend_node_modules:
   frontend_node_modules:
+  admin_node_modules:

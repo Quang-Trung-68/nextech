@@ -56,6 +56,7 @@ services:
       PORT: "3000"
       NODE_ENV: production
       CLIENT_URL: ${CLIENT_URL:-https://nextech.io.vn}
+      ADMIN_URL: ${ADMIN_URL:-https://admin.nextech.io.vn}
       FRONTEND_URL: ${FRONTEND_URL:-https://nextech.io.vn}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-https://api.nextech.io.vn/api/auth/google/callback}
       FACEBOOK_CALLBACK_URL: ${FACEBOOK_CALLBACK_URL:-https://api.nextech.io.vn/api/auth/facebook/callback}
@@ -99,6 +100,26 @@ services:
       backend:
         condition: service_healthy
 
+  admin:
+    image: ${GHCR_PREFIX:?Set GHCR_PREFIX in root .env to match CI e.g. ghcr.io/yourgithubuser}/nextech-admin:latest
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY}
+        VITE_SOKETI_ENABLED: ${VITE_SOKETI_ENABLED:-true}
+        VITE_SOKETI_APP_KEY: ${VITE_SOKETI_APP_KEY}
+        VITE_SOKETI_HOST: ${VITE_SOKETI_HOST}
+        VITE_SOKETI_PORT: ${VITE_SOKETI_PORT}
+        VITE_SOKETI_FORCE_TLS: ${VITE_SOKETI_FORCE_TLS}
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -111,6 +132,7 @@ services:
       - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - frontend
+      - admin
       - backend
       - soketi
     networks:
