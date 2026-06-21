@@ -46,7 +46,8 @@ For in-depth explanations of the system's design, database relations, and API en
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | React 19 · Vite · React Router v7 · Tailwind CSS v4 · Shadcn/UI · Radix UI |
+| **Frontend (Web)** | React 19 · Vite · React Router v7 · Tailwind CSS v4 · Shadcn/UI · Radix UI |
+| **Admin CMS** | React 19 · Vite · Shadcn/UI · Recharts · TanStack Query v5 · Zustand |
 | **State** | TanStack Query v5 · Zustand · React Hook Form + Zod · Lucide React |
 | **Rich text** | TipTap |
 | **Charts** | Recharts |
@@ -137,6 +138,8 @@ docker compose exec backend npx prisma db seed
 
 You can override the admin email and password at seed time with `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (see `seed.js`). The full product catalog seed (`seed_products.js`) uses the same defaults unless those env vars are set.
 
+**Admin login page:** `https://admin.nextech.io.vn` (production) or `http://localhost:5174` (local dev).
+
 > **Note:** If [nextech.io.vn](https://nextech.io.vn) was deployed without this seed or with different credentials, use a local Docker setup above or contact the maintainer for demo access.
 
 ---
@@ -150,7 +153,7 @@ You can override the admin email and password at seed time with `SEED_ADMIN_EMAI
 
 ### Option A — Docker (recommended)
 
-> Starts the entire stack (database, backend, frontend, Soketi) with a single command.
+> Starts the entire stack (database, backend, frontend, admin panel, Soketi) with a single command.
 
 **Step 1: Clone the repository**
 
@@ -206,9 +209,10 @@ docker compose up --build
 **Step 4: Access the app**
 
 | Service | URL |
-|---|---|
-| Web app | http://localhost |
+|---|---|---|
+| Web app (customer) | http://localhost |
 | API | http://localhost/api |
+| Admin CMS | http://localhost:5174 (dev) / https://admin.nextech.io.vn (prod) |
 | Soketi WebSocket | ws://localhost:6001 |
 
 **Useful commands**
@@ -265,6 +269,17 @@ cp .env.example .env
 npm run dev       # App at http://localhost:5173
 ```
 
+**Step 4: Run the admin panel**
+
+```bash
+cd admin
+npm install
+cp .env.example .env
+# Edit .env with VITE_API_URL
+
+npm run dev       # Admin CMS at http://localhost:5174
+```
+
 Key `.env` values for manual dev:
 
 ```dotenv
@@ -282,6 +297,9 @@ VITE_SOKETI_APP_KEY=nextech-key
 VITE_SOKETI_HOST=localhost
 VITE_SOKETI_PORT=6001
 VITE_SOKETI_FORCE_TLS=false
+
+# admin/.env
+VITE_API_URL=http://localhost:3000/api
 ```
 
 ---
