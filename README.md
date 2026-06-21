@@ -30,15 +30,18 @@ For in-depth explanations of the system's design, database relations, and API en
 - **Wishlist & Price Drop Alerts** — user product wishlist (favorites) combined with an automated price drop detection engine. Triggers database notifications, real-time WebSockets, and HTML transactional emails.
 - **Interactive Scalar API Reference** — 100% complete self-hosted API documentation at `/api-docs` built on OpenAPI 3.0, featuring a premium 3-column UI, dark mode, and direct interactive testing.
 - **Dual payment gateway** — Stripe (international cards) and SePay/VietQR (Vietnamese bank transfer), each with webhook-driven order confirmation.
-- **IMEI / serial tracking** — stock imports linked to suppliers; individual serial units tracked through `IN_STOCK → RESERVED → SOLD` lifecycle.
+- **IMEI / serial tracking** — stock imports linked to suppliers; individual serial units tracked through `IN_STOCK → RESERVED → SOLD → RETURNED` lifecycle.
 - **Order management & Internal Notes** — structured status workflow, cancellation/return flows, admin serial assignment, and secure admin-only internal order notes (`adminNote`).
 - **Admin dashboard** — comprehensive admin dashboard with dynamic side-by-side Recharts area charts and a custom ranked list of top-selling products, user management (featuring dynamic customer addresses view), and invoice tracking.
+- **AI Chatbot** — Gemini-powered shopping assistant ("Mua Cùng AI") with persistent history for logged-in users and guest mode support.
 - **VAT invoices** — request VAT on checkout, generate PDF invoices with PDFKit, deliver by email.
 - **Coupon engine** — percentage and fixed-amount codes with per-user and global usage caps.
 - **Real-time notifications** — self-hosted Soketi (Pusher protocol) with private channel authentication.
 - **Blog / news** — TipTap rich text editor, categories, tags, post scheduling, view counts.
 - **OAuth2 login** — Google and Facebook authentication via Passport.js.
-- **Transactional email** — order lifecycle, invoice PDF delivery, verification, password reset; failed email retry queue.
+- **Product reviews** — rate and review purchased items with admin moderation.
+- **Support center** — FAQ, policies, contact form, and support topics.
+- **Transactional email** — order lifecycle, invoice PDF delivery, verification, password reset, price drop alerts; failed email retry queue.
 
 ---
 
@@ -351,8 +354,8 @@ The GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) automates this on ev
 ├── backend/
 │   ├── src/                      # Application source code (configs, controllers, docs, validations, templates...)
 │   │   ├── docs/            # OpenAPI 3.0 spec (openapi.js)
-│   │   ├── templates/       # EJS email templates (11 templates)
-│   │   └── validations/     # Zod request validation (15 schemas)
+│   │   ├── templates/       # EJS email templates (14 templates)
+│   │   └── validations/     # Zod request validation (18 schemas)
 │   ├── prisma/                   # Schema, migrations, seed data (37 models)
 │   ├── Dockerfile
 │   ├── docker-entrypoint.sh      # Auto-runs migrations on container start
@@ -360,7 +363,7 @@ The GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) automates this on ev
 ├── frontend/
 │   ├── src/                      # Application source code (features, components, hooks, api, stores, pages, i18n...)
 │   │   ├── api/             # Axios instance & TanStack Query hooks
-│   │   ├── stores/          # Zustand state stores (5 stores)
+│   │   ├── stores/          # Zustand state stores (6 stores)
 │   │   ├── pages/           # Main application pages (22+ pages)
 │   │   └── i18n/            # i18next locales (vi, en)
 │   ├── Dockerfile

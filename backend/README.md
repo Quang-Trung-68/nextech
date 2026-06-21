@@ -24,15 +24,19 @@ The core logic and data processing system (Backend) of the NexTech project. Buil
 
 ## ✨ Key Features
 
-- 🛡️ **Security**: JWT/Refresh token system with cookie-based rotation for robust security.
+- 🛡️ **Security**: JWT/Refresh token system with cookie-based rotation — separate auth domains for regular users and admin panel (`Admin` table).
 - 📖 **Scalar API Documentation**: Premium interactive API reference hosted locally at `/api-docs` with direct test support.
 - ⚡ **Real-time**: Instant order status updates, low-stock alerts, and system notifications via Soketi/WebSockets.
 - 📉 **Flash Sale Engine**: High-performance inventory management and promotion countdowns (with live progress tracking).
 - 🔔 **Wishlist Price Drop Alerts**: Trigger-based price drop detection scans favorites, pushes live events, and delivers HTML emails.
+- 🤖 **AI Chatbot (Gemini)**: Smart shopping assistant with chat history (DB for logged-in users, localStorage for guests).
 - 📝 **Internal Notes**: Order models updated with `adminNote` support and secure PATCH updates.
 - 💶 **Coupon System**: Flexible percentage or fixed discount code execution with per-user and global limits.
 - 📜 **Digital Invoices**: Automated PDF invoices via PDFKit delivered automatically on order payment.
+- 🔄 **Order Lifecycle**: Full status workflow with cancellation, return requests, and admin serial assignment.
+- ⭐ **Product Reviews**: Verified-purchase review system with admin moderation (delete).
 - ✉️ **Email Notifications**: Gmail transport with verification codes, transactional invoices, and price drop templates.
+- 🏗️ **Inventory & Serials**: Supplier management, stock imports, IMEI/serial tracking (`IN_STOCK → RESERVED → SOLD → RETURNED`).
 - 📦 **Data Management**: Layered service design utilizing type-safe Prisma queries with connection pools.
 
 ---
@@ -200,16 +204,16 @@ See the [root README](../README.md) for the complete Docker quickstart guide.
 ```text
 src/
 ├── configs/        # Route registration, Passport, Stripe, Cloudinary, CORS, i18n
-├── controllers/    # Thin request/response handlers (23 files)
+├── controllers/    # Thin request/response handlers (28 files)
 ├── docs/           # OpenAPI 3.0 specification (openapi.js)
 ├── errors/         # AppError hierarchy (6 error classes)
-├── jobs/           # Cron jobs (5 scheduled tasks)
-├── middleware/     # Auth, Upload, Validation, Error handler, Raw body
-├── routes/         # API endpoint definitions (23 route files)
-├── services/       # Business logic layer (18 service files)
-├── templates/      # EJS email templates (11 templates)
+├── jobs/           # Cron jobs (6 scheduled tasks)
+├── middleware/     # Auth, Upload, Validation, Error handler, Raw body, Rate limiter
+├── routes/         # API endpoint definitions (28 route files)
+├── services/       # Business logic layer (24 service files)
+├── templates/      # EJS email templates (14 templates)
 ├── utils/          # Prisma client, Pusher, helpers
-└── validations/    # Zod request validation schemas (12 files)
+└── validations/    # Zod request validation schemas (18 files)
 ```
 
 ---

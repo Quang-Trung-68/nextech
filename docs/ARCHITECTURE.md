@@ -18,20 +18,23 @@ All services are containerized using **Docker** and orchestrated locally or in p
                    ▼                           ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        Nginx (Reverse Proxy & TLS)                     │
-│    https://nextech.io.vn      → frontend (Port 80)                     │
-│    https://api.nextech.io.vn  → backend (Port 3000)                    │
+│    https://nextech.io.vn        → frontend (Port 80)                   │
+│    https://admin.nextech.io.vn  → admin panel (Port 80)                │
+│    https://api.nextech.io.vn    → backend (Port 3000)                  │
 │    wss://api.nextech.io.vn/app/* → soketi (Port 6001)                  │
-└──────────────────┬───────────────────────────┬─────────────────────────┘
-                   │                           │
-            ┌──────▼──────┐             ┌──────▼──────┐
-            │   Frontend  │             │   Soketi    │
-            │  (Nginx SPA)│             │ (WebSockets)│
-            └─────────────┘             └──────▲──────┘
-                                               │ trigger events
-            ┌─────────────┐             ┌──────┴──────┐
-            │  PostgreSQL │◄────────────┤   Backend   │
-            │ (Prisma ORM)│             │ (Express.js)│
-            └─────────────┘             └─────────────┘
+└──────────────┬──────────────────┬──────────────────┬───────────────────┘
+               │                  │                  │
+        ┌──────▼──────┐    ┌──────▼──────┐    ┌──────▼──────┐
+        │   Frontend  │    │   Admin     │    │   Soketi    │
+        │ (Nginx SPA) │    │  CMS (React)│    │ (WebSockets)│
+        └─────────────┘    └─────────────┘    └──────▲──────┘
+               │                  │                  │ trigger events
+               └──────────────────┼──────────────────┘
+                                  │
+            ┌─────────────┐       │       ┌──────────────┐
+            │  PostgreSQL │◄──────┴───────│   Backend    │
+            │ (Prisma ORM)│               │ (Express.js) │
+            └─────────────┘               └──────────────┘
 ```
 
 ---
@@ -59,7 +62,23 @@ Request → Routes (Middleware) → Controllers → Services → Prisma ORM → 
 
 ---
 
-### 2.2 Frontend Modular Feature-Based Design
+### 2.2 Admin CMS — Separate React Application
+
+The admin control panel is built as a standalone React application in the `admin/` directory. It is served independently by Nginx at `admin.nextech.io.vn` and authenticates against a separate `Admin` database table (not the `User` table) with its own JWT token type (`ADMIN`). Key features include:
+
+- **Dashboard**: Revenue charts (Recharts), top-selling products, order/user statistics, low-stock alerts.
+- **User & Admin Management**: Separate tabs for regular users (`/api/admin/users`) and admin accounts (`/api/admin/admins`) with search, pagination, lock/unlock, and address viewer.
+- **Product Management**: Full CRUD with variant/attribute matrix, Cloudinary image upload, AI-generated descriptions via Gemini.
+- **Order Management**: Status workflow, IMEI/serial assignment, internal notes (`adminNote`).
+- **Inventory**: Supplier management, stock imports, serial unit tracking through lifecycle.
+- **Brand & Banner Management**: CRUD with image upload and toggle activation.
+- **Blog Editor**: TipTap rich text editor with categories, tags, scheduling, and archiving.
+- **VAT Invoicing**: Generate PDF invoices, issue, cancel, resend email.
+- **Coupon Management**: Create percentage/fixed coupons with usage caps and toggle activation.
+- **Shop Settings**: Tax rates, low-stock thresholds, low-order alert configuration.
+- **Real-time Notifications**: Soketi WebSocket alerts with localStorage persistence.
+
+### 2.3 Frontend Modular Feature-Based Design
 
 Rather than grouping components by their technical type (e.g., placing all buttons in `components/`, all routes in `pages/`), the React 19 application is organized **by feature**. This modular structure places all related components, state hooks, and API actions in a single feature directory, maximizing maintainability.
 
@@ -76,11 +95,12 @@ src/
 │   ├── payments/        # Payment gateway wrappers and checkout element forms
 │   ├── products/        # Catalog grid, custom filtering tools, product specifications, wishlist
 │   ├── reviews/         # Product evaluation comments
+│   ├── support/         # FAQ, policies, contact form, support topics
 │   └── user/            # Address books, notification cards, profile forms
-├── components/          # Global shared UI components (Shadcn/UI primitives, Layout templates)
+├── components/          # Global shared UI components (Shadcn/UI primitives, Layout templates, AI chatbot floating widget)
 ├── api/                 # Global Axios instance configurations & TanStack Query hook definitions
-├── hooks/               # Application custom React hook libraries
-├── stores/              # Active client-state engines using Zustand (cart, sidebar, auth)
+├── hooks/               # Application custom React hook libraries (debounce, pusher, pagination, aiChat)
+├── stores/              # Active client-state engines using Zustand (cart, sidebar, auth, aiChat, notifications)
 └── i18n/                # Dynamic localized translations (English/Vietnamese) via i18next
 ```
 
@@ -212,7 +232,41 @@ All user channels (`private-user-{userId}`) require secure subscriptions. The cl
 
 ---
 
-### 3.4 In-Process Scheduled Jobs (node-cron)
+### 3.4 AI Chatbot (Gemini Integration)
+
+NexTech includes an AI-powered shopping assistant ("Mua Cùng AI") integrated with the Google Gemini API. The chatbot can answer product questions, provide recommendations, and assist with the shopping experience.
+
+```
+User opens chat widget → Types a message
+        │
+        ▼
+POST /api/ai-chat/send (authenticated user)
+POST /api/ai-chat/send-guest (guest — no JWT required)
+        │
+        ▼
+Backend constructs a context-rich prompt including:
+  - Active product catalog data (names, prices, categories)
+  - User's chat history (last 20 messages from DB or localStorage)
+  - Current shop settings
+        │
+        ▼
+Send prompt to Gemini API (Google AI)
+        │
+        ▼
+Parse response → Save to AIChatMessage table (if authenticated)
+        │
+        ▼
+Return reply to client → Display in chat UI
+```
+
+- **Authenticated users**: History persisted in `AIChatMessage` table, accessible across sessions.
+- **Guest users**: History stored in browser `localStorage`, sent with each request.
+- **Rate limited**: 10 requests per minute per IP (`aiLimiter` middleware).
+- **Admin**: Can use Gemini to auto-generate product descriptions (`POST /api/admin/products/generate-description`).
+
+---
+
+### 3.5 In-Process Scheduled Jobs (node-cron)
 
 To keep server operations simple and lightweight, NexTech uses in-process **node-cron** workers to manage background schedules. This removes the need for complex, heavy message-queuing infrastructure like Redis and BullMQ.
 
@@ -226,7 +280,7 @@ To keep server operations simple and lightweight, NexTech uses in-process **node
 
 ---
 
-### 3.5 Serial & IMEI Tracking Mechanics
+### 3.6 Serial & IMEI Tracking Mechanics
 
 Premium electronics require precise unit tracking to handle warranty periods and prevent inventory loss. NexTech supports tracking inventory both via simple integer counts and at the individual item level using **Serial/IMEI numbers**.
 

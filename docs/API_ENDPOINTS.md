@@ -53,7 +53,15 @@ All standard JSON responses adhere to the following structures:
 | `POST` | `/api/auth/logout` | Public | Revokes refresh token, deletes client cookies. |
 | `POST` | `/api/auth/refresh` | Public | Rotates access/refresh tokens. |
 | `GET` | `/api/auth/me` | Protected (User) | Returns the currently authenticated user's profile. |
-| `GET` | `/api/auth/verify-email/:token` | Public | Verifies account email address via token link. |
+| `GET` | `/api/auth/verify-email` | Public | Verifies account email address via token link (query param `token`). |
+| `POST` | `/api/auth/send-verification-email` | Protected (User) | Re-sends the verification email for unverified accounts. |
+| `PATCH` | `/api/auth/change-password` | Protected (User, verified email) | Changes the user's password (requires current password). |
+| `POST` | `/api/auth/forgot-password` | Public | Sends password reset email (anti-enumeration — always returns 200). |
+| `POST` | `/api/auth/reset-password` | Public | Resets password using reset token from email link. |
+| `GET` | `/api/auth/google` | Public | Initiates Google OAuth2 consent screen redirect. |
+| `GET` | `/api/auth/google/callback` | Public | Google OAuth2 callback — creates/logs in user. |
+| `GET` | `/api/auth/facebook` | Public | Initiates Facebook OAuth consent screen redirect. |
+| `GET` | `/api/auth/facebook/callback` | Public | Facebook OAuth callback — creates/logs in user. |
 
 #### Authentication Body Payload Examples
 
@@ -110,8 +118,12 @@ All standard JSON responses adhere to the following structures:
 | Method | Path | Auth Level | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/products` | Public | Retrieves products list with rich search/sort/filter options. |
-| `GET` | `/api/products/:slug` | Public | Retrieves full product specification by URL slug. |
-| `GET` | `/api/products/:id/reviews`| Public | Fetch product reviews. |
+| `GET` | `/api/products/brands` | Public | Retrieves distinct brands by product type/category. |
+| `GET` | `/api/products/brands/top` | Public | Retrieves top brands by product count. |
+| `GET` | `/api/products/by-slug/:slug` | Public | Retrieves full product specification by URL slug. |
+| `GET` | `/api/products/:id` | Public | Retrieves product by ID. |
+| `GET` | `/api/products/:id/related` | Public | Retrieves related products (same category, excl. current). |
+| `GET` | `/api/products/:productId/reviews`| Public | Fetch product reviews with pagination. |
 
 #### Product Filtering Parameters
 **GET `/api/products`**
@@ -182,7 +194,9 @@ User-protected. If unauthenticated, the React SPA client manages cart state in b
 | `POST` | `/api/orders` | Verified User | Creates a pending order, lock-reserves inventory. |
 | `GET` | `/api/orders` | Protected (User) | List authenticated user's orders with pagination. |
 | `GET` | `/api/orders/:id` | Protected (User) | Fetch specific order details (including assigned IMEI serials). |
-| `POST` | `/api/orders/:id/cancel`| Protected (User) | User-initiated order cancellation (only if status is PENDING). |
+| `PATCH` | `/api/orders/:id/cancel`| Protected (User) | User-initiated order cancellation (only PENDING/CONFIRMED). |
+| `PATCH` | `/api/orders/:id/return` | Protected (User) | Request return for completed orders (COMPLETED → RETURNED). |
+| `GET`| `/api/orders/:orderId/reviewable-items` | Protected (User, verified email) | List order items eligible for review. |
 
 **POST `/api/orders`**
 *   **Request Body**:
@@ -234,10 +248,12 @@ User-protected. If unauthenticated, the React SPA client manages cart state in b
 
 | Method | Path | Auth Level | Description |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/ai-chat` | Protected (User) | Interacts with the Gemini-powered shop assistant. |
+| `POST` | `/api/ai-chat/send` | Protected (User) | Interacts with the Gemini-powered shop assistant. |
+| `POST` | `/api/ai-chat/send-guest` | Public | Guest chat mode (history stored in localStorage). |
 | `GET` | `/api/ai-chat/history` | Protected (User) | Fetches historical messages for the customer's chat interface. |
+| `DELETE` | `/api/ai-chat/history` | Protected (User) | Clears the user's entire AI chat history. |
 
-**POST `/api/ai-chat`**
+**POST `/api/ai-chat/send`**
 *   **Request Body**:
     ```json
     {
@@ -247,12 +263,98 @@ User-protected. If unauthenticated, the React SPA client manages cart state in b
 *   **Response Example**:
     ```json
     {
-      "status": "success",
+      "success": true,
       "data": {
-        "response": "Based on your budget, I highly recommend the **iPad Air 5 M1**. It features a 10.9-inch Liquid Retina display with wide color gamut and True Tone. Our current price is **14,500,000 VND**, which fits perfectly under your budget of 15 million. Would you like me to add it to your shopping cart?"
+        "reply": "Based on your budget, I highly recommend the **iPad Air 5 M1**. It features a 10.9-inch Liquid Retina display with wide color gamut and True Tone. Our current price is **14,500,000 VND**, which fits perfectly under your budget of 15 million. Would you like me to add it to your shopping cart?"
       }
     }
     ```
+
+---
+
+### 2.7 Product Reviews (`/api/reviews`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/reviews` | Protected (User, verified email) | Create a review for a delivered order item. |
+| `DELETE` | `/api/reviews/:reviewId` | Admin | Admin-only: delete a review (moderation). |
+
+---
+
+### 2.8 Favorites / Wishlist (`/api/favorites`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/favorites` | Protected (User) | List all favorited products with pagination. |
+| `POST` | `/api/favorites/:productId` | Protected (User) | Toggle product in/out of wishlist. |
+
+---
+
+### 2.9 Coupon Validation (`/api/coupons`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/coupons/validate` | Protected (User) | Validate coupon code, return discount amount. |
+
+---
+
+### 2.10 Active Banners (`/api/banners`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/banners/active` | Public | Returns active promotional banners for the homepage. |
+
+---
+
+### 2.11 Public Blog / News (`/api/posts`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/posts` | Public | Published posts list with pagination, category/tag filter. |
+| `GET` | `/api/posts/:slug` | Public | Single post detail by slug. |
+| `GET` | `/api/posts/related/:slug` | Public | Related posts (same category, excl. current). |
+
+---
+
+### 2.12 Product Categories (`/api/categories`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/categories` | Public | List all product categories. |
+
+---
+
+### 2.13 Tags (`/api/tags`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/tags` | Public | List all blog tags. |
+
+---
+
+### 2.14 User Profile & Addresses (`/api/users`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `PATCH` | `/api/users/me` | Protected (User, verified email) | Update profile (name, phone, avatar). |
+| `POST` | `/api/users/me/avatar` | Protected (User, verified email) | Upload avatar image (multipart). |
+| `GET` | `/api/users/me/addresses` | Protected (User, verified email) | List saved shipping addresses. |
+| `POST` | `/api/users/me/addresses` | Protected (User, verified email) | Create a new address. |
+| `PATCH` | `/api/users/me/addresses/:id` | Protected (User, verified email) | Update an address. |
+| `DELETE` | `/api/users/me/addresses/:id` | Protected (User, verified email) | Delete an address. |
+| `PATCH` | `/api/users/me/addresses/:id/default` | Protected (User, verified email) | Set an address as default. |
+
+---
+
+### 2.15 Notifications (`/api/notifications`)
+
+| Method | Path | Auth Level | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/notifications/auth` | Protected (User or Admin) | Pusher/Soketi private channel auth (rate limited: 60 req/min). |
+| `GET` | `/api/notifications` | Protected (User or Admin) | List user/admin notifications with pagination. |
+| `GET` | `/api/notifications/unread-count` | Protected (User or Admin) | Get count of unread notifications. |
+| `PATCH` | `/api/notifications/:id/read` | Protected (User or Admin) | Mark a single notification as read. |
+| `PATCH` | `/api/notifications/read-all` | Protected (User or Admin) | Mark all notifications as read. |
 
 ---
 
@@ -304,22 +406,30 @@ Requires authentication cookie verified by `adminProtect` middleware (separate `
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/admin/orders?page&limit&status&search` | List all orders with advanced filters. |
-| `GET` | `/api/admin/orders/:id` | Single order detail. |
-| `PATCH` | `/api/admin/orders/:id/status` | Transition order status. |
+| `GET` | `/api/admin/orders/:id` | Single order detail including items, user, invoice. |
+| `PATCH` | `/api/admin/orders/:id/status` | Transition order status through workflow. |
 | `PATCH` | `/api/admin/orders/:id/assign-serial` | Assign IMEI/serial to a paid order item. |
-| `GET` | `/api/admin/orders/:id/available-serials` | List available serials for an order. |
+| `GET` | `/api/admin/orders/:id/available-serials` | List available IN_STOCK serials for an order's items. |
+| `PATCH` | `/api/admin/orders/:id/note` | Add/edit internal admin note on an order. |
+| `GET` | `/api/admin/orders/:orderId/invoice` | Get invoice details for an order. |
+| `POST` | `/api/admin/orders/:orderId/invoice` | Manually create invoice for an order. |
 
 ---
 
-### 3.5 Inventory & Serial Tracking
+### 3.5 Inventory & Serial Tracking (`/api/admin/inventory`)
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/admin/suppliers` | List registered suppliers. |
-| `POST` | `/api/admin/suppliers` | Register a new supplier. |
-| `POST` | `/api/admin/stock-imports` | Record bulk stock import with serial numbers. |
-| `GET` | `/api/admin/serial-units` | List serial units with status/SKU filter. |
-| `GET/PUT` | `/api/admin/products/:id/serials` | Manage serial numbers for a product. |
+| `GET` | `/api/admin/inventory/suppliers?page&limit&search` | List registered suppliers. |
+| `POST` | `/api/admin/inventory/suppliers` | Register a new supplier. |
+| `PATCH` | `/api/admin/inventory/suppliers/:id` | Update a supplier. |
+| `GET` | `/api/admin/inventory/stock-imports?page&limit` | List stock import records. |
+| `POST` | `/api/admin/inventory/stock-imports` | Record bulk stock import with serial numbers. |
+| `GET` | `/api/admin/inventory/stock-imports/:id` | Get single stock import detail with serials. |
+| `GET` | `/api/admin/inventory/serials?page&limit&status&search` | List serial units with status/product filter. |
+| `GET` | `/api/admin/inventory/serials/lookup?serial=` | Lookup a specific serial number's details. |
+| `GET` | `/api/admin/inventory/serials/low-stock` | Get low stock threshold alerts. |
+| `GET` | `/api/admin/inventory/products/:id/serials` | List serials for a specific product. |
 
 ---
 
@@ -328,34 +438,96 @@ Requires authentication cookie verified by `adminProtect` middleware (separate `
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/admin/brands` | List all brands. |
-| `POST` | `/api/admin/brands` | Create a brand. |
-| `PUT` | `/api/admin/brands/:id` | Update a brand. |
+| `POST` | `/api/admin/brands` | Create a brand (with logo upload). |
+| `GET` | `/api/admin/brands/:id` | Get single brand details. |
+| `PUT` | `/api/admin/brands/:id` | Update a brand (with logo upload). |
 | `DELETE` | `/api/admin/brands/:id` | Delete a brand. |
-| `GET` | `/api/admin/banners` | List banners. |
-| `POST` | `/api/admin/banners` | Create a banner. |
-| `PUT` | `/api/admin/banners/:id` | Update a banner. |
+| `POST` | `/api/admin/brands/upload-logo` | Upload a brand logo to Cloudinary (multipart). |
+| `GET` | `/api/admin/banners` | List all banners (including inactive). |
+| `POST` | `/api/admin/banners` | Create a banner (with image upload). |
+| `PUT` | `/api/admin/banners/:id` | Update a banner (with image upload). |
 | `DELETE` | `/api/admin/banners/:id` | Delete a banner. |
+| `PATCH` | `/api/admin/banners/:id/toggle` | Toggle banner active/inactive. |
+| `POST` | `/api/admin/banners/upload-image` | Upload a banner image to Cloudinary only. |
 
 ---
 
-### 3.7 Blog / News Management
+### 3.7 Blog / News Management (`/api/admin/posts`)
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/admin/posts?page&limit&status&category` | List posts (including scheduled/drafts). |
-| `POST` | `/api/admin/posts` | Create a post. |
-| `PATCH` | `/api/admin/posts/:id` | Update a post. |
-| `DELETE` | `/api/admin/posts/:id` | Delete a post. |
-| `GET` | `/api/admin/tags?search` | Search/create tags for posts. |
+| `GET` | `/api/admin/posts?page&limit&status&category` | List all posts (including drafts, scheduled, archived). |
+| `POST` | `/api/admin/posts` | Create a post (TipTap content, cover image). |
+| `GET` | `/api/admin/posts/:id` | Get single post by ID (all statuses). |
+| `PATCH` | `/api/admin/posts/:id` | Update a post (content, cover image, category, tags). |
+| `DELETE` | `/api/admin/posts/:id` | Delete a post (soft delete). |
+| `PATCH` | `/api/admin/posts/:id/publish` | Publish a scheduled/draft post immediately. |
+| `PATCH` | `/api/admin/posts/:id/schedule` | Set scheduled publish time for a post. |
+| `PATCH` | `/api/admin/posts/:id/archive` | Archive a published post. |
+| `POST` | `/api/admin/posts/upload-cover` | Upload a cover image to Cloudinary. |
+
+### 3.8 Categories & Tags
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/categories` | Admin: Create a new category. |
+| `PATCH` | `/api/categories/:id` | Admin: Update a category. |
+| `DELETE` | `/api/categories/:id` | Admin: Delete a category. |
+| `POST` | `/api/tags` | Admin: Create a new tag. |
+| `DELETE` | `/api/tags/:id` | Admin: Delete a tag. |
+| `GET` | `/api/admin/tags/search?q=` | Admin: Search tags by name (for autocomplete). |
+
+### 3.9 Coupon Management (`/api/coupons`)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/coupons` | Admin: List all coupons. |
+| `POST` | `/api/coupons` | Admin: Create a new coupon (type, value, caps, expiry). |
+| `DELETE` | `/api/coupons/:id` | Admin: Delete a coupon. |
+| `PATCH` | `/api/coupons/:id/toggle` | Admin: Activate/deactivate a coupon. |
 
 ---
 
-### 3.8 Invoices, Settings & Notifications
+### 3.10 Invoices (`/api/admin/invoices`)
 
 | Method | Path | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/admin/invoices` | List generated VAT invoices. |
-| `POST` | `/api/admin/invoices/generate/:orderId` | Generate VAT invoice PDF. |
-| `GET` | `/api/admin/invoices/:id/pdf` | Download invoice PDF. |
-| `GET/PATCH` | `/api/admin/settings` | Shop configuration (tax, thresholds, etc.). |
-| `POST` | `/api/notifications/auth` | Pusher/Soketi private channel auth (rate limited: 60 req/min). |
+| `GET` | `/api/admin/invoices/:invoiceId` | Get invoice detail (JSON). |
+| `GET` | `/api/admin/invoices/:invoiceId/pdf` | Download invoice as PDF. |
+| `POST` | `/api/admin/invoices/:invoiceId/resend` | Resend invoice email to customer. |
+| `PATCH` | `/api/admin/invoices/:invoiceId/issue` | Transition invoice from DRAFT to ISSUED. |
+| `PATCH` | `/api/admin/invoices/:invoiceId/cancel` | Cancel an invoice. |
+
+### 3.11 Shop Settings (`/api/admin/settings`)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/settings` | Get shop configuration (tax rates, low-stock threshold, order alert settings). |
+| `PATCH` | `/api/admin/settings` | Update shop configuration. |
+
+### 3.12 Admin Authentication (`/api/admin/auth`)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/admin/auth/login` | Admin login (separate from user auth, rate limited). |
+| `POST` | `/api/admin/auth/refresh` | Rotate admin refresh token. |
+| `POST` | `/api/admin/auth/logout` | Admin logout (revoke tokens). |
+| `GET` | `/api/admin/auth/me` | Get current admin profile. |
+
+### 3.13 Product Variants & Attributes (`/api/admin/products/:id/...`)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/products/:id/attributes` | List attribute definitions. |
+| `PUT` | `/api/admin/products/:id/attributes` | Upsert attribute definitions. |
+| `GET` | `/api/admin/products/:id/variants` | List variant matrix. |
+| `PUT` | `/api/admin/products/:id/variants` | Upsert variant matrix (generates SKUs). |
+| `PATCH` | `/api/admin/products/:id/variants/:variantId` | Update a single variant. |
+| `DELETE` | `/api/admin/products/:id/variants/:variantId` | Delete a variant (soft). |
+
+### 3.14 Product Images (`/api/admin/products/:id/images`)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/admin/products/:id/images` | Upload images (max 10, multipart). |
+| `DELETE` | `/api/admin/products/:id/images` | Delete specific images by public IDs. |

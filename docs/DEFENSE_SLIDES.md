@@ -87,24 +87,29 @@ style: |
 Hệ thống được thiết kế tối ưu, điều phối thông qua **Nginx Reverse Proxy** và đóng gói bằng **Docker Containers**.
 
 ```
-                           ┌──────────────────────────┐
-                           │      Client Browser      │
-                           └──────┬────────────┬──────┘
-                   HTTPS (REST)   │            │  WSS (Pusher)
-                                  ▼            ▼
-                           ┌──────────────────────────┐
-                           │   Nginx Reverse Proxy    │
-                           └──────┬────────────┬──────┘
-                                  │            │
-                           ┌──────▼──────┐     │      ┌──────────────┐
-                           │  Frontend   │     ├─────▶│    Soketi    │
-                           │ (Nginx SPA) │     │      │ (WebSockets) │
-                           └─────────────┘     │      └──────▲───────┘
-                                               │             │ trigger
-                           ┌─────────────┐     │      ┌──────┴───────┐
-                           │ PostgreSQL  │◀────┴──────│   Backend    │
-                           │(Prisma ORM) │            │ (Express.js) │
-                           └─────────────┘            └──────────────┘
+                            ┌──────────────────────────┐
+                            │      Client Browser      │
+                            └──────┬────────────┬──────┘
+                    HTTPS (REST)   │            │  WSS (Pusher)
+                                   ▼            ▼
+                            ┌──────────────────────────────┐
+                            │     Nginx Reverse Proxy      │
+                            │  nextech.io.vn → frontend    │
+                            │  admin.nextech.io.vn → admin │
+                            │  api.nextech.io.vn → backend │
+                            └──────┬────────────┬──────────┘
+                                   │            │
+              ┌────────────────────┼────────────┼─────────────────────┐
+              │                    │            │                     │
+       ┌──────▼──────┐     ┌──────▼──────┐     │      ┌──────────────┐
+       │  Frontend   │     │    Admin    │     ├─────▶│    Soketi    │
+       │ (Nginx SPA) │     │  CMS (React)│     │      │ (WebSockets) │
+       └─────────────┘     └─────────────┘     │      └──────▲───────┘
+                                                │             │ trigger
+                            ┌─────────────┐     │      ┌──────┴───────┐
+                            │ PostgreSQL  │◀────┴──────│   Backend    │
+                            │(Prisma ORM) │            │ (Express.js) │
+                            └─────────────┘            └──────────────┘
 ```
 
 ---
@@ -124,13 +129,14 @@ Hệ thống được thiết kế tối ưu, điều phối thông qua **Nginx 
 
 ## 5. Thiết Kế Cơ Sở Dữ Liệu (Database ERD)
 
-PostgreSQL được quản lý bởi Prisma với **28 Models** chặt chẽ, chia làm 5 phân vùng nghiệp vụ chính:
+PostgreSQL được quản lý bởi Prisma với **37 Models** chặt chẽ, chia làm 6 phân vùng nghiệp vụ chính:
 
 *   **1. Người dùng & Bảo mật**: `User`, `Address`, `OAuthAccount`, `RefreshToken`, `RevokedToken`, `PasswordResetToken`.
 *   **2. Danh mục sản phẩm**: `Product`, `ProductImage`, `Brand`, `ProductAttribute`, `ProductAttributeValue`, `ProductVariant`, `ProductVariantValue` (Ma trận cấu hình).
 *   **3. Giỏ hàng & Đơn hàng**: `Cart`, `CartItem`, `Order`, `OrderItem`, `Review`, `Coupon`, `CouponUsage`.
 *   **4. Kho hàng & Serial**: `Supplier`, `StockImport`, `SerialUnit` (Quản lý IMEI từng máy).
 *   **5. Tiện ích & Vận hành**: `ShopSettings`, `Notification`, `Post`, `Category`, `Tag`, `AIChatMessage`, `FailedEmail` (Hàng đợi email lỗi).
+*   **6. Quản trị & Bảo mật nội bộ**: `Admin`, `AdminRefreshToken` (Phiên đăng nhập riêng cho Admin CMS).
 
 ➔ *Đặc biệt*: Toàn bộ tiền tệ dùng kiểu **`Decimal`** để triệt tiêu lỗi làm tròn dấu phẩy động.
 
@@ -281,7 +287,8 @@ Trên máy chủ VPS:
 
 ## 13. Kết Quả Đạt Được & Demo Thực Tế
 
-*   **Địa chỉ Live Demo**: [https://nextech.io.vn](https://nextech.io.vn)  
+*   **Địa chỉ Live Demo (Người dùng)**: [https://nextech.io.vn](https://nextech.io.vn)  
+*   **Địa chỉ Admin CMS**: [https://admin.nextech.io.vn](https://admin.nextech.io.vn)  
 *   **Địa chỉ Swagger API**: [https://api.nextech.io.vn/api-docs](https://api.nextech.io.vn/api-docs)  
 
 ### Tài Khoản Trải Nghiệm Demo (Dành cho Hội đồng / Người đánh giá)

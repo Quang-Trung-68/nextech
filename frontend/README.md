@@ -30,9 +30,16 @@ The user-facing part of the NexTech project, built to deliver a modern, smooth, 
 - 🌓 **Dark Mode**: Automatic and manual light/dark theme support.
 - ⚡ **Flash Sale**: Interactive homepage showcase with high-performance real-time countdown, animated fire elements, and custom stock sold indicators with dynamic gradient progress bars.
 - 🛒 **Smart Cart**: Instant updates and session persistence for logged-in users.
+- 🤖 **AI Chatbot**: Gemini-powered shopping assistant — "Mua Cùng AI" floating widget with chat history for registered users and guest mode support.
+- 🎯 **Wishlist & Price Drop Alerts**: Save favorite products; get real-time WebSocket notifications and email alerts when prices drop.
 - 🌍 **Multi-language**: Flexible switching between Vietnamese and English.
-- 🔐 **Security**: JWT authentication with refresh tokens and OAuth (Google/Facebook).
-- 📊 **Admin Dashboard & Analytics**: Features comprehensive stats charts (Recharts) and an Apple-inspired ranked list of top-selling products. Includes full order detail inspectors with an internal notes editor (`adminNote`) and a customer addresses viewing modal.
+- 🔐 **Security**: JWT authentication with refresh tokens, OAuth (Google/Facebook), and email verification.
+- 📝 **Product Reviews**: Rate and review purchased items after order completion.
+- 📄 **VAT Invoicing**: Request e-invoice at checkout; PDF delivered by email.
+- 📦 **Order Tracking**: Full order history with status timeline, cancellation, and return requests.
+- 🏠 **Support Center**: FAQ, policies, contact form, and support topics.
+- 📰 **Blog / News**: Read technology articles with categories, tags, and related posts.
+- 🔔 **Real-time Notifications**: Live order updates, price drop alerts, and system notifications via Soketi WebSocket.
 
 ---
 
@@ -112,18 +119,18 @@ See the [root README](../README.md) for the complete Docker quickstart guide.
 
 ```text
 src/
-├── api/            # Axios instance & TanStack Query API hooks (11 files)
+├── api/            # Axios instance & TanStack Query API hooks (14 files)
 ├── components/     # Shared UI components
 │   ├── ui/         # Shadcn/UI primitives (34 components)
 │   ├── form/       # Form fields, image uploader, rich text editor
-│   └── layout/     # Header, footer, sidebar, notification bell
+│   └── layout/     # Header, footer, sidebar, notification bell, AI chatbot widget
 ├── configs/        # Route config (routes.config.jsx) & query client
-├── features/       # Feature-based modules (11 feature areas)
-├── hooks/          # Custom hooks (debounce, pusher, pagination...)
+├── features/       # Feature-based modules (12 feature areas)
+├── hooks/          # Custom hooks (debounce, pusher, pagination, aiChat...)
 ├── i18n/           # i18next config & locales (vi, en)
 ├── lib/            # Utility libraries (cn.js)
-├── pages/          # Main application pages (22+ pages)
-├── stores/         # Zustand stores (auth, cart, theme, notifications, sidebar)
+├── pages/          # Main application pages (29+ pages)
+├── stores/         # Zustand stores (auth, cart, theme, notifications, sidebar, aiChat)
 └── utils/          # Helper functions (format, validation, constants)
 ```
 
