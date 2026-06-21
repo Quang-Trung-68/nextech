@@ -22,15 +22,16 @@ The admin control panel for the NexTech e-commerce platform, built for store ope
 
 ## ✨ Key Features
 
-- 📊 **Dashboard**: Revenue charts, top-selling products, order/user statistics.
+- 📊 **Dashboard**: Revenue charts, top-selling products, order/user statistics, low-stock alerts.
 - 👥 **User & Admin Management**: Separate tabs for regular users and admin accounts; search, pagination, lock/unlock users; view customer addresses.
-- 📦 **Product Management**: CRUD with attribute/variant matrix, image upload to Cloudinary, AI-generated descriptions via Gemini.
-- 📋 **Order Management**: Full order lifecycle, serial/IMEI assignment, internal notes.
-- 🏷️ **Brand & Banner Management**: CRUD for brands and promotional banners.
-- 📰 **Blog / News Editor**: TipTap rich text editor, categories, tags, scheduling.
-- 📄 **VAT Invoicing**: Generate and download PDF invoices.
-- 🏭 **Inventory & Serials**: Supplier management, stock imports, serial unit tracking.
-- ⚙️ **Settings**: Shop configuration, tax rates, alert thresholds.
+- 📦 **Product Management**: CRUD with attribute/variant matrix, image upload to Cloudinary, AI-generated descriptions via Gemini, image gallery management.
+- 📋 **Order Management**: Full order lifecycle, serial/IMEI assignment, internal notes, invoice management.
+- 🏷️ **Brand & Banner Management**: CRUD for brands (with logo upload) and promotional banners (with image upload, toggle activation).
+- 📰 **Blog / News Editor**: TipTap rich text editor, categories management, tags, scheduling, archiving, publishing.
+- 🎟️ **Coupon Management**: Create percentage/fixed coupons with per-user and global usage caps, toggle activation.
+- 📄 **VAT Invoicing**: Generate, issue, cancel, download PDF invoices, resend via email.
+- 🏭 **Inventory & Serials**: Supplier CRUD, stock imports, serial unit tracking through lifecycle, low-stock alerts.
+- ⚙️ **Settings**: Shop configuration, tax rates, low-stock thresholds, low-order alert thresholds.
 - 🔔 **Real-time Notifications**: New order alerts via Soketi WebSocket with localStorage persistence.
 
 ---
