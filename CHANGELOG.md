@@ -6,6 +6,23 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH — YY
 
 ---
 
+## v1.4.0 — 2026-06-21
+
+### Added
+- **Admin management tab**: New "Quản trị viên" tab in admin user page with `GET /api/admin/admins` endpoint.
+- **Admin email exclusion**: `getUsers` now excludes any user whose email matches an admin account.
+
+### Fixed
+- **Admin user table 500 error**: Removed non-existent `role` field from `USER_SELECT` and user query; avatar fallback changed from broken `via.placeholder.com` to initials-based inline circle.
+- **AI chat 500 error**: Wrapped `response.text()` in try-catch with alternative extraction; `sendChatMessage` Gemini call now returns friendly fallback on failure.
+- **Rate limiting**: Global `apiLimiter` 100→300 req/15min; AI `aiLimiter` 5→10 req/min; added `pusherAuthLimiter` 60 req/min.
+- **SePay redirect**: Fixed redirect URL construction for VietQR callback.
+- **Admin notification persistence**: Added localStorage save/load in `useNotifications` hook.
+
+### Changed
+- **Admin login page**: Removed "Quên mật khẩu?" and "Đăng ký" links (admin login only).
+- **Admin user page**: Split into "Người dùng" and "Quản trị viên" tabs with independent search/pagination.
+
 ## v1.3.0 — 2026-05-24
 
 ### Added

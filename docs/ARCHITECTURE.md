@@ -51,7 +51,7 @@ Request → Routes (Middleware) → Controllers → Services → Prisma ORM → 
 *   **Services Layer**: Fully encapsulates the platform's business logic, transactional blocks, Prisma queries, and external triggers (e.g., sending emails, pushing events via WebSockets, processing payment computations).
 *   **Middleware Layer**: Composes cross-cutting concerns:
     *   `protect`: Validates cookie-based JWT access tokens (falls back to authorization headers).
-    *   `restrictTo('ADMIN')`: Gates access based on active role configurations.
+    *   `adminProtect`: Validates admin-specific JWT access tokens against the separate `Admin` table (not the `User` table).
     *   `requireEmailVerified`: Demands a verified email flag prior to performing actions like checkouts or updates.
     *   `validateRequest(schema)`: Validates body, query, or path parameters against structured Zod schemas.
 *   **Jobs (node-cron)**: Automated backend processes running in-process. They consume services directly, ensuring business validations are maintained during automated procedures.
@@ -66,7 +66,7 @@ Rather than grouping components by their technical type (e.g., placing all butto
 ```
 src/
 ├── features/
-│   ├── admin/           # Admin dashboard, charts, order assignment, inventory imports
+│   ├── admin/           # Admin dashboard, charts, user/admins management, order assignment, inventory imports
 │   ├── auth/            # Signin, registration, email verifications, passwords
 │   ├── blog/            # Customer articles list and details viewer
 │   ├── cart/            # Sliding checkout drawer, item incrementors

@@ -981,18 +981,44 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         }
       }
     },
-    '/api/admin/users/{id}/role': {
+    '/api/admin/admins': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Danh sách tài khoản quản trị viên',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+        ],
+        responses: {
+          200: { description: 'Thành công' }
+        }
+      }
+    },
+    '/api/admin/users/{id}': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Chi tiết người dùng + lịch sử đơn hàng',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+        ],
+        responses: {
+          200: { description: 'Thành công' }
+        }
+      }
+    },
+    '/api/admin/users/{id}/toggle-status': {
       patch: {
         tags: ['Admin General'],
-        summary: 'Thay đổi chức vụ của tài khoản (USER/ADMIN)',
+        summary: 'Kích hoạt / khóa tài khoản người dùng',
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { type: 'object', properties: { role: { type: 'string', enum: ['USER', 'ADMIN'] } }, required: ['role'] } } }
-        },
         responses: {
-          200: { description: 'Thay đổi chức vụ thành công' }
+          200: { description: 'Thành công' }
         }
       }
     },

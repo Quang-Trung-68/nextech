@@ -26,15 +26,15 @@ All standard JSON responses adhere to the following structures:
 **Success Response**:
 ```json
 {
-  "status": "success",
-  "data": { ... }
+  "success": true,
+  ...data
 }
 ```
 
 **Error Response**:
 ```json
 {
-  "status": "error",
+  "success": false,
   "message": "Detailed error explanation goes here",
   "stack": "..." // Only included in development (NODE_ENV=development)
 }
@@ -70,15 +70,13 @@ All standard JSON responses adhere to the following structures:
 *   **Response (`201 Created`)**:
     ```json
     {
-      "status": "success",
-      "data": {
-        "user": {
-          "id": "clxb93jdf0000u8u084ksd8fk",
-          "name": "Alex Mercer",
-          "email": "alex.mercer@example.com",
-          "role": "USER",
-          "isEmailVerified": false
-        }
+      "success": true,
+      "message": "Registration successful",
+      "user": {
+        "id": "clxb93jdf0000u8u084ksd8fk",
+        "name": "Alex Mercer",
+        "email": "alex.mercer@example.com",
+        "isEmailVerified": false
       }
     }
     ```
@@ -95,15 +93,12 @@ All standard JSON responses adhere to the following structures:
     *(Set-Cookie headers automatically dispatch `access_token` and `refresh_token` as HttpOnly, Secure, SameSite=Lax)*
     ```json
     {
-      "status": "success",
-      "data": {
-        "user": {
-          "id": "clxb93jdf0000u8u084ksd8fk",
-          "name": "Alex Mercer",
-          "email": "alex.mercer@example.com",
-          "role": "USER",
-          "isEmailVerified": false
-        }
+      "success": true,
+      "user": {
+        "id": "clxb93jdf0000u8u084ksd8fk",
+        "name": "Alex Mercer",
+        "email": "alex.mercer@example.com",
+        "isEmailVerified": false
       }
     }
     ```
@@ -263,107 +258,104 @@ User-protected. If unauthenticated, the React SPA client manages cart state in b
 
 ## 3. Administrative Management APIs (Admin-Only)
 
-Requires authentication cookie and active role verification (`restrictTo('ADMIN')`).
+Requires authentication cookie verified by `adminProtect` middleware (separate `Admin` table with its own JWT token type `ADMIN`).
 
-### 3.1 Dashboards & Reporting (`/api/admin`)
+### 3.1 Dashboard & Reporting
 
-| Method | Path | Auth Level | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/admin/stats` | Admin | Fetches revenue, orders count, users count, and top selling products. |
-| `GET` | `/api/admin/sales-chart` | Admin | Timed intervals sales statistics for Recharts chart render. |
-
----
-
-### 3.2 Inventory & Serial Tracking (`/api/admin`)
-
-Used to register stock imports from manufacturers and manage distinct IMEI / Serial units.
-
-| Method | Path | Auth Level | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/admin/suppliers` | Admin | List registered suppliers. |
-| `POST` | `/api/admin/suppliers` | Admin | Register a new supplier. |
-| `POST` | `/api/admin/stock-imports` | Admin | Records bulk stock import from a supplier. |
-| `GET` | `/api/admin/serial-units` | Admin | List individual serial units and filter by status or SKU. |
-
-**POST `/api/admin/stock-imports`**
-*   **Request Body**:
-    ```json
-    {
-      "supplierId": "sup_apple_vn",
-      "productId": "prod_iphone15",
-      "variantId": "var_space_gray_256",
-      "unitCost": 28000000.00,
-      "notes": "Q2 Import Batch",
-      "serials": ["IMEI99887711", "IMEI99887722", "IMEI99887733"] // Automatically creates 3 SerialUnits in IN_STOCK status
-    }
-    ```
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/stats/overview?period=day\|week\|month` | Fetches revenue, orders, users, top products. |
+| `GET` | `/api/admin/stats/revenue?year=YYYY&month=MM\|all` | Timed interval sales stats for Recharts. |
 
 ---
 
-### 3.3 Product & Matrix Setup (`/api/admin/products`)
+### 3.2 User Management
 
-| Method | Path | Auth Level | Description |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/admin/products` | Admin | Create a new parent product listing. |
-| `PATCH` | `/api/admin/products/:id` | Admin | Update product details. |
-| `POST` | `/api/admin/products/:id/variants`| Admin | Setup a new matrix variant for a product. |
-| `PATCH` | `/api/admin/products/variants/:id`| Admin | Update or soft-delete a product variant SKU. |
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/users?page&limit&search&isActive&sortBy&sortOrder` | Paginated list of regular users (excludes admin accounts). |
+| `GET` | `/api/admin/users/:id` | Single user detail with paginated order history. |
+| `PATCH` | `/api/admin/users/:id/toggle-status` | Activate / deactivate a user account. |
+| `GET` | `/api/admin/admins?page&limit&search` | Paginated list of admin accounts. |
+
+---
+
+### 3.3 Product Management
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/products?page&limit&search&category&sort` | List products with rich filtering. |
+| `GET` | `/api/admin/products/:id` | Single product detail + variants + attributes. |
+| `POST` | `/api/admin/products` | Create a new product. |
+| `PATCH` | `/api/admin/products/:id` | Update product details. |
+| `DELETE` | `/api/admin/products/:id` | Delete a product. |
+| `POST` | `/api/admin/products/upload-images` | Upload temporary images to Cloudinary (multipart). |
+| `DELETE` | `/api/admin/products/images/:publicId` | Delete a temporary image from Cloudinary. |
+| `POST` | `/api/admin/products/generate-description` | AI-generated product description via Gemini. |
+| `GET/PUT` | `/api/admin/products/:id/attributes` | Manage product attribute definitions. |
+| `GET/PUT` | `/api/admin/products/:id/variants` | Manage product variant matrix. |
+| `PATCH` | `/api/admin/products/:id/variants/:variantId` | Update a specific variant. |
+| `DELETE` | `/api/admin/products/:id/variants/:variantId` | Delete a variant. |
 
 ---
 
 ### 3.4 Order Operations & Serial Assignment (`/api/admin/orders`)
 
-| Method | Path | Auth Level | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/admin/orders` | Admin | List all system orders with advanced filters. |
-| `PATCH` | `/api/admin/orders/:id/status` | Admin | Transitions order status (e.g. `PENDING` -> `CONFIRMED`). |
-| `PATCH` | `/api/admin/orders/:id/internal-note` | Admin | Update secure internal notes (`adminNote`) for reviews. |
-| `POST` | `/api/admin/orders/assign-serial` | Admin | Assigns a physical IMEI serial number to a paid order item. |
-
-**POST `/api/admin/orders/assign-serial`**
-*   **Request Body**:
-    ```json
-    {
-      "orderItemId": "ord_item_9911",
-      "serialUnitId": "clxb9_serial_cuid" // Transitions SerialUnit.status to SOLD
-    }
-    ```
-*   **Response (`200 OK`)**:
-    ```json
-    {
-      "status": "success",
-      "message": "Serial assigned successfully"
-    }
-    ```
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/orders?page&limit&status&search` | List all orders with advanced filters. |
+| `GET` | `/api/admin/orders/:id` | Single order detail. |
+| `PATCH` | `/api/admin/orders/:id/status` | Transition order status. |
+| `PATCH` | `/api/admin/orders/:id/assign-serial` | Assign IMEI/serial to a paid order item. |
+| `GET` | `/api/admin/orders/:id/available-serials` | List available serials for an order. |
 
 ---
 
-### 3.5 Electronic VAT Invoicing (`/api/admin/invoices`)
+### 3.5 Inventory & Serial Tracking
 
-| Method | Path | Auth Level | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/admin/invoices` | Admin | List generated VAT invoices. |
-| `POST` | `/api/admin/invoices/generate/:orderId` | Admin | Compiles order snapshot, generates PDF, issues invoice. |
-| `GET` | `/api/admin/invoices/:id/pdf` | Admin/User | Generates and pipes PDFKit invoice streams to browser. |
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/suppliers` | List registered suppliers. |
+| `POST` | `/api/admin/suppliers` | Register a new supplier. |
+| `POST` | `/api/admin/stock-imports` | Record bulk stock import with serial numbers. |
+| `GET` | `/api/admin/serial-units` | List serial units with status/SKU filter. |
+| `GET/PUT` | `/api/admin/products/:id/serials` | Manage serial numbers for a product. |
 
 ---
 
-### 3.6 Shop Settings & Threshold Controls (`/api/admin/settings`)
+### 3.6 Brands & Banners
 
-| Method | Path | Auth Level | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/admin/settings` | Admin | Fetch singleton shop and alert configuration variables. |
-| `PATCH` | `/api/admin/settings` | Admin | Modify tax rates, brand headers, and cron parameters. |
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/brands` | List all brands. |
+| `POST` | `/api/admin/brands` | Create a brand. |
+| `PUT` | `/api/admin/brands/:id` | Update a brand. |
+| `DELETE` | `/api/admin/brands/:id` | Delete a brand. |
+| `GET` | `/api/admin/banners` | List banners. |
+| `POST` | `/api/admin/banners` | Create a banner. |
+| `PUT` | `/api/admin/banners/:id` | Update a banner. |
+| `DELETE` | `/api/admin/banners/:id` | Delete a banner. |
 
-**PATCH `/api/admin/settings`**
-*   **Request Body**:
-    ```json
-    {
-      "shopName": "NexTech HQ Store",
-      "vatRate": 0.08, // 8% VAT rate (standard discount period)
-      "lowStockAlertEnabled": true,
-      "lowOrderAlertEnabled": true,
-      "lowOrderAlertThreshold": 10,
-      "lowOrderAlertInterval": "DAILY"
-    }
-    ```
+---
+
+### 3.7 Blog / News Management
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/posts?page&limit&status&category` | List posts (including scheduled/drafts). |
+| `POST` | `/api/admin/posts` | Create a post. |
+| `PATCH` | `/api/admin/posts/:id` | Update a post. |
+| `DELETE` | `/api/admin/posts/:id` | Delete a post. |
+| `GET` | `/api/admin/tags?search` | Search/create tags for posts. |
+
+---
+
+### 3.8 Invoices, Settings & Notifications
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/admin/invoices` | List generated VAT invoices. |
+| `POST` | `/api/admin/invoices/generate/:orderId` | Generate VAT invoice PDF. |
+| `GET` | `/api/admin/invoices/:id/pdf` | Download invoice PDF. |
+| `GET/PATCH` | `/api/admin/settings` | Shop configuration (tax, thresholds, etc.). |
+| `POST` | `/api/notifications/auth` | Pusher/Soketi private channel auth (rate limited: 60 req/min). |
