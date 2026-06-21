@@ -312,32 +312,30 @@ async function finalizeSepayOrderPaid(orderId) {
     order: updatedOrder,
   });
 
-  Promise.resolve().then(async () => {
-    try {
-      await notificationService.createAndSend(
-        updatedOrder.userId,
-        "order_status_changed",
-        "Thanh toán thành công",
-        `Cảm ơn bạn! Đơn hàng #${updatedOrder.id} đã thanh toán VietQR thành công.`,
-        { orderId: updatedOrder.id, newStatus: "CONFIRMED" },
-      );
+  try {
+    await notificationService.createAndSend(
+      updatedOrder.userId,
+      "order_status_changed",
+      "Thanh toán thành công",
+      `Cảm ơn bạn! Đơn hàng #${updatedOrder.id} đã thanh toán VietQR thành công.`,
+      { orderId: updatedOrder.id, newStatus: "CONFIRMED" },
+    );
 
-      const adminCount = await prisma.admin.count({ where: { isActive: true } });
-      if (adminCount > 0) {
-        await notificationService.createAndSendToAdmins(
-          "new_order",
-          "Đơn hàng đã thanh toán",
-          `Đơn hàng #${updatedOrder.id} vừa được thanh toán thành công qua VietQR`,
-          { orderId: updatedOrder.id },
-        );
-      }
-    } catch (err) {
-      console.error(
-        "[Notification Error] Failed to send sepay payment success notification:",
-        err,
+    const adminCount = await prisma.admin.count({ where: { isActive: true } });
+    if (adminCount > 0) {
+      await notificationService.createAndSendToAdmins(
+        "new_order",
+        "Đơn hàng đã thanh toán",
+        `Đơn hàng #${updatedOrder.id} vừa được thanh toán thành công qua VietQR`,
+        { orderId: updatedOrder.id },
       );
     }
-  });
+  } catch (err) {
+    console.error(
+      "[Notification Error] Failed to send sepay payment success notification:",
+      err,
+    );
+  }
 
   return { skipped: false, orderId: order.id, order: updatedOrder };
 }

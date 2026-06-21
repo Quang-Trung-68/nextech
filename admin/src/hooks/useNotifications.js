@@ -63,14 +63,17 @@ export function useNotifications(user) {
     }
   }, [user, queryClient]);
 
-  // 1. Fetch unread count
+  // 1. Fetch unread count — Admin notifications không lưu DB nên dùng localStorage + setQueryData,
+  //    không refetch từ API (luôn trả 0 vì Admin model không có relation với Notification).
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["notifications", "unread-count"],
-    queryFn: async () => {
-      const res = await axios.get("/notifications/unread-count");
-      return res.data.count;
-    },
+    queryFn: async () => 0,
     enabled: !!user,
+    staleTime: Infinity,
+    initialData: () => {
+      const stored = loadNotificationsFromStorage();
+      return stored.filter((n) => !n.isRead).length;
+    },
   });
 
   // 2. Fetch notifications (infinite)
@@ -92,7 +95,11 @@ export function useNotifications(user) {
   // 3. Mutations
   const markOneAsReadMutation = useMutation({
     mutationFn: async (id) => {
-      await axios.patch(`/notifications/${id}/read`);
+      try {
+        await axios.patch(`/notifications/${id}/read`);
+      } catch {
+        // Admin notifications không lưu DB — bỏ qua lỗi
+      }
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["notifications"] });
@@ -138,7 +145,11 @@ export function useNotifications(user) {
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      await axios.patch("/notifications/read-all");
+      try {
+        await axios.patch("/notifications/read-all");
+      } catch {
+        // Admin notifications không lưu DB — bỏ qua lỗi
+      }
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["notifications"] });
@@ -183,10 +194,8 @@ export function useNotifications(user) {
 
   // Helper: thêm notification vào cache + localStorage
   const prependNotification = useCallback((notification) => {
-    // Invalidate count
-    queryClient.invalidateQueries({
-      queryKey: ["notifications", "unread-count"],
-    });
+    // Increment count (không invalidate — admin notifications không lưu DB)
+    queryClient.setQueryData(["notifications", "unread-count"], (old) => (old || 0) + 1);
 
     // Prepend to list cache
     queryClient.setQueryData(["notifications", "list"], (oldData) => {

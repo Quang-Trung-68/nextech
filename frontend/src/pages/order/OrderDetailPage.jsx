@@ -161,6 +161,7 @@ const OrderDetailPage = () => {
     if (!isSuccessPage || order?.paymentStatus !== 'PAID') return;
     queryClient.invalidateQueries({ queryKey: ['cart'] });
     queryClient.refetchQueries({ queryKey: ['cart'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
   }, [isSuccessPage, order?.paymentStatus, queryClient]);
 
   /**
