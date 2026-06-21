@@ -17,7 +17,9 @@ Format: [Semantic Versioning](https://semver.org/) — `MAJOR.MINOR.PATCH — YY
 - **AI chat 500 error**: Wrapped `response.text()` in try-catch with alternative extraction; `sendChatMessage` Gemini call now returns friendly fallback on failure.
 - **Rate limiting**: Global `apiLimiter` 100→300 req/15min; AI `aiLimiter` 5→10 req/min; added `pusherAuthLimiter` 60 req/min.
 - **SePay redirect**: Fixed redirect URL construction for VietQR callback.
-- **Admin notification persistence**: Added localStorage save/load in `useNotifications` hook.
+- **Admin notification badge**: Added `staleTime: Infinity` + `initialData` from localStorage to unread count query; `prependNotification` uses `setQueryData` increment instead of `invalidateQueries`; API calls wrapped in try/catch.
+- **User notification blank state (protectUserOrAdmin)**: `protectUserOrAdmin` middleware now prefers `access_token` (user) over `admin_access_token` (admin) — fixes empty notification list when user also logged into admin panel.
+- **Pusher auth 403 (cookie priority)**: Pusher auth route moved before `protectUserOrAdmin` middleware; `authenticatePusher` rewritten to manually verify JWT tokens (tries `access_token` first, falls back to `admin_access_token`) instead of relying on `req.user` from middleware.
 
 ### Changed
 - **Admin login page**: Removed "Quên mật khẩu?" and "Đăng ký" links (admin login only).

@@ -228,7 +228,7 @@ For each target user:
 ```
 
 #### Private Channel Security
-All user channels (`private-user-{userId}`) require secure subscriptions. The client library (`pusher-js`) requests auth validation by calling `POST /api/notifications/auth`. The backend's validation middleware protects this route, ensuring users can only subscribe to channels that match their authenticated user ID.
+All user channels (`private-user-{userId}`) require secure subscriptions. The client library (`pusher-js`) requests auth validation by calling `POST /api/notifications/auth`. The backend validates JWT from cookies (checks `access_token` first, falls back to `admin_access_token`), ensuring users can only subscribe to channels that match their authenticated user ID.
 
 ---
 
