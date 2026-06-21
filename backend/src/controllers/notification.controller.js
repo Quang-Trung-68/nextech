@@ -1,21 +1,44 @@
 const notificationService = require('../services/notification.service');
 const pusher = require('../lib/pusher');
+const { verifyAccessToken } = require('../utils/jwt');
+const prisma = require('../utils/prisma');
 
 class NotificationController {
-  authenticatePusher = (req, res) => {
-    const socketId = req.body.socket_id;
-    const channelName = req.body.channel_name;
-    const userId = req.user.id;
+  authenticatePusher = async (req, res) => {
+    try {
+      const socketId = req.body.socket_id;
+      const channelName = req.body.channel_name;
 
-    const isUserChannel = channelName === `private-user.${userId}`;
-    const isAdminChannel = channelName === 'private-admin' && req.user.role === 'ADMIN';
+      const userToken = req.cookies['access_token'];
+      const adminToken = req.cookies['admin_access_token'];
 
-    if (!isUserChannel && !isAdminChannel) {
+      // Thử lần lượt user token rồi admin token cho đến khi tìm được token hợp lệ
+      const tokens = [
+        { token: userToken, getUserId: (p) => p.userId, getRole: (p) => p.role || 'USER' },
+        { token: adminToken, getUserId: (p) => p.adminId, getRole: () => 'ADMIN' },
+      ];
+
+      for (const { token, getUserId, getRole } of tokens) {
+        if (!token) continue;
+        try {
+          const payload = verifyAccessToken(token);
+          const userId = getUserId(payload);
+          const role = getRole(payload);
+
+          const isUserChannel = channelName === `private-user.${userId}`;
+          const isAdminChannel = channelName === 'private-admin' && role === 'ADMIN';
+
+          if (isUserChannel || isAdminChannel) {
+            const authResponse = pusher.authorizeChannel(socketId, channelName);
+            return res.json(authResponse);
+          }
+        } catch {}
+      }
+
       return res.status(403).json({ message: 'Forbidden' });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: 'Auth failed' });
     }
-
-    const authResponse = pusher.authorizeChannel(socketId, channelName);
-    return res.json(authResponse);
   };
 
   getNotifications = async (req, res, next) => {

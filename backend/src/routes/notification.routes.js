@@ -5,15 +5,6 @@ const notificationController = require('../controllers/notification.controller')
 const { protect } = require('../middleware/auth');
 const { adminProtect } = require('../middleware/adminAuth');
 
-const protectUserOrAdmin = (req, res, next) => {
-  if (req.cookies['admin_access_token']) {
-    return adminProtect(req, res, next);
-  }
-  return protect(req, res, next);
-};
-
-router.use(protectUserOrAdmin);
-
 // Limiter riêng cho Pusher auth — Pusher gọi endpoint này mỗi khi reconnect/subscribe
 const pusherAuthLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 phút
@@ -27,7 +18,22 @@ const pusherAuthLimiter = rateLimit({
   },
 });
 
+// Pusher auth — không dùng protectUserOrAdmin vì user có thể có cả access_token lẫn admin_access_token
+// Cần tự verify token để lấy đúng userId dựa trên channel_name
 router.post('/auth', pusherAuthLimiter, notificationController.authenticatePusher);
+
+const protectUserOrAdmin = (req, res, next) => {
+  if (req.cookies['access_token']) {
+    return protect(req, res, next);
+  }
+  if (req.cookies['admin_access_token']) {
+    return adminProtect(req, res, next);
+  }
+  return res.status(401).json({ success: false, message: 'Not authenticated' });
+};
+
+router.use(protectUserOrAdmin);
+
 router.get('/', notificationController.getNotifications);
 router.get('/unread-count', notificationController.getUnreadCount);
 router.patch('/:id/read', notificationController.markOneAsRead);
