@@ -19,7 +19,7 @@
 For in-depth explanations of the system's design, database relations, and API endpoints, please refer to our dedicated specifications:
 
 *   **[System Architecture & Workflows](./docs/ARCHITECTURE.md)**: Deep-dive analysis of JWT HttpOnly session token rotations, dual Stripe/SePay webhook integrations, Soketi-driven WebSockets, and background cron jobs.
-*   **[Database Schema & ERD](./docs/DATABASE_ERD.md)**: Full database reference covering all 28 tables managed by Prisma ORM, complete with an interactive **Mermaid ERD** diagram.
+*   **[Database Schema & ERD](./docs/DATABASE_ERD.md)**: Full database reference covering all 37 tables managed by Prisma ORM, complete with an interactive **Mermaid ERD** diagram.
 *   **[REST API Endpoints](./docs/API_ENDPOINTS.md)**: Structured reference of core client-facing and admin endpoints with request validation payloads and success responses.
 
 ---
@@ -82,7 +82,7 @@ nextech/
 │   │   ├── templates/       # EJS email templates
 │   │   └── utils/           # Helpers, Prisma client, Pusher client
 │   └── prisma/
-│       ├── schema.prisma    # 28 models
+│       ├── schema.prisma    # 37 models
 │       └── migrations/
 ├── frontend/
 │   └── src/
@@ -90,6 +90,7 @@ nextech/
 │       ├── components/      # Shared UI components
 │       ├── hooks/           # Reusable hooks
 │       └── configs/         # Route config, axios instance
+├── admin/                   # Admin CMS (React + Vite + Shadcn, served by Nginx)
 ├── nginx/                   # Production reverse proxy + TLS config
 ├── scripts/                  # deploy.sh, seed-all.sh, reset-and-seed.sh, crawlers
 ├── docker-compose.yml       # Development stack
@@ -287,12 +288,13 @@ VITE_SOKETI_FORCE_TLS=false
 
 ## Production Deployment
 
-NexTech runs as a **6-service stack** (Postgres, Soketi, backend, frontend/Nginx, Nginx reverse proxy, Certbot).
+NexTech runs as a **7-service stack** (Postgres, Soketi, backend, frontend, admin panel, Nginx reverse proxy, Certbot).
 
 **Step 1: Prepare the VPS**
 
 Install Docker and Docker Compose. Point two DNS records to your VPS IP:
-- `nextech.io.vn` → Frontend
+- `nextech.io.vn` → Frontend (customer-facing)
+- `admin.nextech.io.vn` → Admin CMS
 - `api.nextech.io.vn` → Backend API + Soketi WebSocket
 
 **Step 2: Clone and configure**
@@ -333,7 +335,7 @@ The GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) automates this on ev
 │   │   ├── docs/            # OpenAPI 3.0 spec (openapi.js)
 │   │   ├── templates/       # EJS email templates (11 templates)
 │   │   └── validations/     # Zod request validation (15 schemas)
-│   ├── prisma/                   # Schema, migrations, seed data (28 models)
+│   ├── prisma/                   # Schema, migrations, seed data (37 models)
 │   ├── Dockerfile
 │   ├── docker-entrypoint.sh      # Auto-runs migrations on container start
 │   └── .env.example
@@ -345,6 +347,12 @@ The GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) automates this on ev
 │   │   └── i18n/            # i18next locales (vi, en)
 │   ├── Dockerfile
 │   └── .env.example
+├── admin/                        # Admin CMS (React + Vite + Shadcn, served by Nginx)
+│   ├── src/
+│   │   ├── pages/           # Admin pages (users, orders, products, dashboard...)
+│   │   ├── features/        # Admin feature modules (hooks, components)
+│   │   └── stores/          # Zustand stores (auth, sidebar, notifications)
+│   └── Dockerfile
 ├── nginx/                        # Production Nginx config (TLS, proxy, WS)
 ├── scripts/                      # deploy.sh, seed-all.sh, reset-and-seed.sh, Python crawlers
 ├── docker-compose.yml            # Development stack
