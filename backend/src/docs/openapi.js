@@ -479,6 +479,33 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         }
       }
     },
+    '/api/products/{id}/related': {
+      get: {
+        tags: ['Products'],
+        summary: 'Sản phẩm liên quan',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/products/{productId}/reviews': {
+      get: {
+        tags: ['Products'],
+        summary: 'Xem đánh giá của sản phẩm',
+        parameters: [
+          { name: 'productId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 10 } },
+        ],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/products/brands/top': {
+      get: {
+        tags: ['Products'],
+        summary: 'Top thương hiệu theo số lượng sản phẩm',
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
 
     // ─── CART ─────────────────────────────────────────────────────────────────
     '/api/cart': {
@@ -669,6 +696,37 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         responses: {
           200: { description: 'OK' }
         }
+      }
+    },
+    '/api/payments/sepay/sync/{orderId}': {
+      post: {
+        tags: ['Orders'],
+        summary: 'Đồng bộ trạng thái SePay sau redirect',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'orderId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Đồng bộ thành công' } }
+      }
+    },
+    '/api/orders/{id}/return': {
+      patch: {
+        tags: ['Orders'],
+        summary: 'Yêu cầu hoàn trả đơn hàng',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', properties: { reason: { type: 'string' } }, required: ['reason'] } } }
+        },
+        responses: { 200: { description: 'Đã gửi yêu cầu hoàn trả' } }
+      }
+    },
+    '/api/orders/{orderId}/reviewable-items': {
+      get: {
+        tags: ['Orders'],
+        summary: 'Danh sách sản phẩm có thể đánh giá',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'orderId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
       }
     },
 
@@ -901,13 +959,23 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         }
       }
     },
-    '/api/posts/by-slug/{slug}': {
+    '/api/posts/{slug}': {
       get: {
         tags: ['Posts'],
         summary: 'Xem chi tiết bài viết blog theo Slug',
         parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           200: { description: 'Tìm thấy bài viết' }
+        }
+      }
+    },
+    '/api/posts/related/{slug}': {
+      get: {
+        tags: ['Posts'],
+        summary: 'Bài viết liên quan',
+        parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          200: { description: 'Thành công' }
         }
       }
     },
@@ -959,16 +1027,61 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
       }
     },
 
-    // ─── ADMIN GENERAL ────────────────────────────────────────────────────────
-    '/api/admin/stats/dashboard': {
+    // ─── ADMIN AUTH ───────────────────────────────────────────────────────────
+    '/api/admin/auth/login': {
+      post: {
+        tags: ['Admin General'],
+        summary: 'Đăng nhập quản trị viên',
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { type: 'object', properties: { email: { type: 'string' }, password: { type: 'string' } }, required: ['email', 'password'] } } }
+        },
+        responses: { 200: { description: 'Đăng nhập thành công' } }
+      }
+    },
+    '/api/admin/auth/refresh': {
+      post: {
+        tags: ['Admin General'],
+        summary: 'Làm mới token admin',
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/auth/logout': {
+      post: {
+        tags: ['Admin General'],
+        summary: 'Đăng xuất admin',
+        responses: { 200: { description: 'Đã đăng xuất' } }
+      }
+    },
+    '/api/admin/auth/me': {
       get: {
         tags: ['Admin General'],
-        summary: 'Báo cáo thống kê tổng quan (Dashboard)',
-        description: 'Trả về doanh thu, tổng số đơn hàng, tổng số khách hàng và biểu đồ tăng trưởng.',
+        summary: 'Lấy thông tin admin hiện tại',
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
-        responses: {
-          200: { description: 'Thành công' }
-        }
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+
+    // ─── ADMIN GENERAL ────────────────────────────────────────────────────────
+    '/api/admin/stats/overview': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Thống kê dashboard tổng quan',
+        parameters: [{ name: 'period', in: 'query', schema: { type: 'string', enum: ['day', 'week', 'month'], default: 'month' } }],
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/stats/revenue': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Biểu đồ doanh thu theo tháng/ngày',
+        parameters: [
+          { name: 'year', in: 'query', schema: { type: 'integer' } },
+          { name: 'month', in: 'query', schema: { type: 'string', description: 'Tháng (1-12) hoặc "all" để xem cả năm' } },
+        ],
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        responses: { 200: { description: 'Thành công' } }
       }
     },
     '/api/admin/users': {
@@ -1062,7 +1175,48 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         }
       }
     },
+    '/api/admin/products/upload-images': {
+      post: {
+        tags: ['Admin General'],
+        summary: 'Upload ảnh tạm thời lên Cloudinary',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object', properties: { images: { type: 'array', items: { type: 'string', format: 'binary' } } } } } } },
+        responses: { 200: { description: 'Upload thành công' } }
+      }
+    },
+    '/api/admin/products/images/{publicId}': {
+      delete: {
+        tags: ['Admin General'],
+        summary: 'Xoá ảnh trên Cloudinary',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'publicId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Xoá thành công' } }
+      }
+    },
+    '/api/admin/products/generate-description': {
+      post: {
+        tags: ['Admin General'],
+        summary: 'Tạo mô tả sản phẩm bằng AI (Gemini)',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { productName: { type: 'string' }, keywords: { type: 'string' } }, required: ['productName'] } } } },
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
     '/api/admin/products/{id}': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Chi tiết sản phẩm (admin, kèm variants + attributes)',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      },
+      patch: {
+        tags: ['Admin General'],
+        summary: 'Cập nhật sản phẩm',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Cập nhật thành công' } }
+      },
       put: {
         tags: ['Admin General'],
         summary: 'Cập nhật thông tin sản phẩm',
@@ -1084,6 +1238,162 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         responses: {
           200: { description: 'Xóa sản phẩm thành công' }
         }
+      }
+    },
+    '/api/admin/products/{id}/regenerate-slug': {
+      post: {
+        tags: ['Admin General'],
+        summary: 'Tạo lại slug sản phẩm',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/products/{id}/attributes': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Danh sách thuộc tính sản phẩm',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      },
+      put: {
+        tags: ['Admin General'],
+        summary: 'Cập nhật thuộc tính sản phẩm',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/products/{id}/variants': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Danh sách biến thể sản phẩm',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      },
+      put: {
+        tags: ['Admin General'],
+        summary: 'Cập nhật ma trận biến thể',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/products/{id}/variants/{variantId}': {
+      patch: {
+        tags: ['Admin General'],
+        summary: 'Cập nhật biến thể',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'variantId', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: { 200: { description: 'Thành công' } }
+      },
+      delete: {
+        tags: ['Admin General'],
+        summary: 'Xoá biến thể',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'variantId', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: { 200: { description: 'Đã xoá' } }
+      }
+    },
+    '/api/admin/products/{id}/images': {
+      post: {
+        tags: ['Admin General'],
+        summary: 'Upload ảnh sản phẩm (multipart, tối đa 10)',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object', properties: { images: { type: 'array', items: { type: 'string', format: 'binary' } } } } } } },
+        responses: { 200: { description: 'Upload thành công' } }
+      },
+      delete: {
+        tags: ['Admin General'],
+        summary: 'Xoá ảnh sản phẩm',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { publicIds: { type: 'array', items: { type: 'string' } } }, required: ['publicIds'] } } } },
+        responses: { 200: { description: 'Xoá thành công' } }
+      }
+    },
+    '/api/admin/banners/upload-image': {
+      post: {
+        tags: ['Admin Banners & Brands'],
+        summary: 'Upload ảnh banner lên Cloudinary',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object', properties: { image: { type: 'string', format: 'binary' } } } } } },
+        responses: { 200: { description: 'Upload thành công' } }
+      }
+    },
+    '/api/admin/brands/upload-logo': {
+      post: {
+        tags: ['Admin Banners & Brands'],
+        summary: 'Upload logo thương hiệu lên Cloudinary',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object', properties: { logo: { type: 'string', format: 'binary' } } } } } },
+        responses: { 200: { description: 'Upload thành công' } }
+      }
+    },
+    '/api/admin/brands/{id}': {
+      get: {
+        tags: ['Admin Banners & Brands'],
+        summary: 'Chi tiết thương hiệu',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/coupons': {
+      get: {
+        tags: ['Coupons'],
+        summary: 'Danh sách mã giảm giá (Admin)',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        responses: { 200: { description: 'Thành công' } }
+      },
+      post: {
+        tags: ['Coupons'],
+        summary: 'Tạo mã giảm giá mới',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        responses: { 201: { description: 'Tạo thành công' } }
+      }
+    },
+    '/api/admin/coupons/{id}': {
+      delete: {
+        tags: ['Coupons'],
+        summary: 'Xoá mã giảm giá',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Đã xoá' } }
+      }
+    },
+    '/api/admin/coupons/{id}/toggle': {
+      patch: {
+        tags: ['Coupons'],
+        summary: 'Bật/tắt mã giảm giá',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/tags/search': {
+      get: {
+        tags: ['Admin General'],
+        summary: 'Tìm kiếm tag (Admin)',
+        parameters: [{ name: 'q', in: 'query', schema: { type: 'string' } }],
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/banners/active': {
+      get: {
+        tags: ['Products'],
+        summary: 'Danh sách banner đang hoạt động',
+        responses: { 200: { description: 'Thành công' } }
       }
     },
 
@@ -1119,30 +1429,24 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         summary: 'Cập nhật trạng thái đơn đặt hàng',
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { type: 'object', properties: { orderStatus: { type: 'string', enum: ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'] } }, required: ['orderStatus'] } } }
-        },
-        responses: {
-          200: { description: 'Đổi trạng thái thành công' }
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { type: 'object', properties: { status: { type: 'string', enum: ['PENDING', 'CONFIRMED', 'PACKING', 'SHIPPING', 'COMPLETED', 'CANCELLED', 'RETURNED'] } }, required: ['status'] } } }
+          },
+          responses: {
+            200: { description: 'Đổi trạng thái thành công' }
+          }
         }
-      }
-    },
-    '/api/admin/orders/{id}/payment': {
-      patch: {
-        tags: ['Admin Orders'],
-        summary: 'Cập nhật trạng thái thanh toán thủ công',
-        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { type: 'object', properties: { paymentStatus: { type: 'string', enum: ['PENDING_PAYMENT', 'PAID', 'REFUNDED', 'FAILED'] } }, required: ['paymentStatus'] } } }
-        },
-        responses: {
-          200: { description: 'Cập nhật thành công' }
+      },
+      '/api/admin/orders/{id}/available-serials': {
+        get: {
+          tags: ['Admin Orders'],
+          summary: 'Danh sách serial IN_STOCK khả dụng cho đơn hàng',
+          security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { 200: { description: 'Thành công' } }
         }
-      }
-    },
+      },
     '/api/admin/orders/{id}/assign-serial': {
       post: {
         tags: ['Admin Orders'],
@@ -1209,10 +1513,11 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
     },
 
     // ─── ADMIN INVENTORY & SERIALS ────────────────────────────────────────────
-    '/api/admin/suppliers': {
+    '/api/admin/inventory/suppliers': {
       get: {
         tags: ['Admin Inventory & Serials'],
         summary: 'Lấy danh sách các nhà cung cấp',
+        parameters: [{ name: 'page', in: 'query', schema: { type: 'integer' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }, { name: 'search', in: 'query', schema: { type: 'string' } }],
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
         responses: { 200: { description: 'Thành công' } }
       },
@@ -1241,10 +1546,20 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         responses: { 201: { description: 'Tạo thành công' } }
       }
     },
-    '/api/admin/stock-imports': {
+    '/api/admin/inventory/suppliers/{id}': {
+      patch: {
+        tags: ['Admin Inventory & Serials'],
+        summary: 'Cập nhật thông tin nhà cung cấp',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Cập nhật thành công' } }
+      }
+    },
+    '/api/admin/inventory/stock-imports': {
       get: {
         tags: ['Admin Inventory & Serials'],
         summary: 'Xem các phiếu nhập kho',
+        parameters: [{ name: 'page', in: 'query', schema: { type: 'integer' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }],
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
         responses: { 200: { description: 'Thành công' } }
       },
@@ -1285,30 +1600,70 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
         responses: { 201: { description: 'Nhập kho thành công' } }
       }
     },
-    '/api/admin/serials': {
+    '/api/admin/inventory/stock-imports/{id}': {
+      get: {
+        tags: ['Admin Inventory & Serials'],
+        summary: 'Chi tiết phiếu nhập kho',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/inventory/serials': {
       get: {
         tags: ['Admin Inventory & Serials'],
         summary: 'Danh sách tất cả mã số Serial/IMEI trong hệ thống',
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
-        parameters: [{ name: 'status', in: 'query', schema: { type: 'string', enum: ['IN_STOCK', 'RESERVED', 'SOLD'] } }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['IN_STOCK', 'RESERVED', 'SOLD', 'RETURNED'] } },
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+        ],
         responses: { 200: { description: 'Thành công' } }
       }
     },
-    '/api/admin/serials/lookup': {
+    '/api/admin/inventory/serials/lookup': {
       get: {
         tags: ['Admin Inventory & Serials'],
         summary: 'Truy cứu thông tin chi tiết một mã Serial',
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
-        parameters: [{ name: 'serialNumber', in: 'query', required: true, schema: { type: 'string' } }],
+        parameters: [{ name: 'serial', in: 'query', required: true, schema: { type: 'string' } }],
         responses: { 200: { description: 'Tìm thấy thông tin chi tiết' } }
       }
     },
-    '/api/admin/serials/low-stock': {
+    '/api/admin/inventory/serials/low-stock': {
       get: {
         tags: ['Admin Inventory & Serials'],
         summary: 'Cảnh báo sản phẩm sắp hết hàng trong kho',
         security: [{ cookieAuth: [] }, { bearerAuth: [] }],
         responses: { 200: { description: 'Thành công' } }
+      }
+    },
+    '/api/admin/inventory/products/{id}/serials': {
+      get: {
+        tags: ['Admin Inventory & Serials'],
+        summary: 'Serial/IMEI của một sản phẩm',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      }
+    },
+
+    '/api/admin/orders/{orderId}/invoice': {
+      get: {
+        tags: ['Admin Orders'],
+        summary: 'Xem invoice của đơn hàng',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'orderId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'Thành công' } }
+      },
+      post: {
+        tags: ['Admin Orders'],
+        summary: 'Tạo invoice thủ công cho đơn hàng',
+        security: [{ cookieAuth: [] }, { bearerAuth: [] }],
+        parameters: [{ name: 'orderId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 201: { description: 'Tạo thành công' } }
       }
     },
 
@@ -1493,7 +1848,7 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
           id: { type: 'string', example: 'usr-872412' },
           name: { type: 'string', example: 'Nguyen Van A' },
           email: { type: 'string', format: 'email', example: 'vana@nextech.io.vn' },
-          role: { type: 'string', example: 'USER', enum: ['USER', 'ADMIN'] },
+          phone: { type: 'string', example: '0901234567' },
           isEmailVerified: { type: 'boolean', example: true },
           createdAt: { type: 'string', format: 'date-time' },
         },
@@ -1536,8 +1891,8 @@ Hệ thống tài liệu này bao gồm **tất cả mọi endpoint** có mặt 
           shippingAddress: { type: 'string', example: '123 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh' },
           shippingPhone: { type: 'string', example: '0901234567' },
           paymentMethod: { type: 'string', example: 'SEPAY' },
-          paymentStatus: { type: 'string', example: 'PENDING_PAYMENT' },
-          orderStatus: { type: 'string', example: 'PENDING' },
+          paymentStatus: { type: 'string', example: 'UNPAID', enum: ['UNPAID', 'PAID', 'REFUNDING', 'REFUNDED', 'FAILED'] },
+          status: { type: 'string', example: 'PENDING', enum: ['PENDING', 'CONFIRMED', 'PACKING', 'SHIPPING', 'COMPLETED', 'CANCELLED', 'RETURNED'] },
           adminNote: { type: 'string', example: 'Khách hàng yêu cầu giao trước 5h chiều', nullable: true },
           createdAt: { type: 'string', format: 'date-time' }
         }
