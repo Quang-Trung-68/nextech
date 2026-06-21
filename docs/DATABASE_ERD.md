@@ -1,12 +1,12 @@
 # NexTech — Database Schema & Entity-Relationship Diagram (ERD)
 
-This document provides a comprehensive view of the database layer for the NexTech platform. The system uses a PostgreSQL database, managed entirely via **Prisma ORM**. The schema is comprised of **28 models** which capture the platform's rich capabilities, from product variant matrix configurations to dual payment webhooks, individual IMEI/serial inventory tracking, and electronic VAT invoice snapshots.
+This document provides a comprehensive view of the database layer for the NexTech platform. The system uses a PostgreSQL database, managed entirely via **Prisma ORM**. The schema is comprised of **37 models** which capture the platform's rich capabilities, from product variant matrix configurations to dual payment webhooks, individual IMEI/serial inventory tracking, electronic VAT invoice snapshots, and separate admin authentication.
 
 ---
 
 ## 1. Visual Entity-Relationship Diagram (ERD)
 
-The following interactive diagram shows how all 28 models in the NexTech system are connected.
+The following interactive diagram shows how all 37 models in the NexTech system are connected.
 
 ```mermaid
 erDiagram
